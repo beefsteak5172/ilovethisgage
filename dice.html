@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>骰子每日挑戰</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <style>
+    @font-face {
+      font-family: 'Pixel';
+      src: url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype');
+    }
+    
+    :root { 
+      --primary: #4a6cf7; 
+      --secondary: #10b981;
+      --success: #00b09b; 
+      --jackpot: #ff416c; 
+      --lose-color: #F44336;
+      --bg-color: #1e293b;
+      --dice-size: clamp(70px, 15vw, 100px);
+    } 
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+    
+    body {
+      background-color: #111; color: #f8fafc;
+      font-family: 'Pixel', 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden; width: 100vw; height: 100vh;
+      position: fixed; display: flex; align-items: center; justify-content: center;
+    }
+
+    #main-container, #game-result-display {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      overflow-y: auto; padding: 10px;
+    }
+
+    #main-container { z-index: 10; background-color: #111; }
+    
+    #game-wrapper {
+      z-index: 20; background: var(--bg-color);
+      opacity: 0; transform: scale(0.95);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+      display: none;
+      flex-direction: row; 
+      align-items: flex-start;
+      justify-content: center;
+      gap: 20px; 
+      width: 100%; height: 100%;
+      padding: 20px;
+      overflow: auto;
+    }
+    #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
+
+    #game-instructions {
+        flex: 0 0 280px; 
+        background: rgba(0,0,0,0.3);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid var(--primary);
+        align-self: stretch; 
+        display: none; 
+        flex-direction: column;
+        font-family: 'Microsoft JhengHei', sans-serif;
+        max-height: 100%;
+        overflow-y: auto;
+    }
+    #game-instructions h3 { color: var(--primary); font-family: 'Pixel', sans-serif; margin-bottom: 15px; font-size: 1.2rem; }
+    #game-instructions p { font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px; }
+    #game-instructions .step { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 3px solid var(--secondary); }
+    
+    .container {
+      width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px; padding: clamp(15px, 3vw, 25px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); text-align: center; position: relative;
+      flex-grow: 1; max-height: 100%; overflow-y: auto;
+    }
+    
+    h1, h2, h3 {
+      margin-bottom: 20px; font-size: clamp(1.5rem, 6vw, 2.5rem);
+      color: #e2e8f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.2;
+    }
+    h2 { font-size: clamp(1.2rem, 5vw, 2rem); }
+    h3 { font-size: clamp(1rem, 4vw, 1.5rem); color: #94a3b8;}
+    
+    .form-section {
+      background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px;
+      margin-bottom: 25px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .input-group { margin-bottom: 15px; text-align: left;}
+    label { display: block; margin-bottom: 8px; font-size: clamp(0.8rem, 3vw, 1rem); color: #cbd5e1; }
+    input {
+      width: 100%; font-size: clamp(0.9rem, 4vw, 1.1rem); padding: 12px 15px;
+      border: none; border-radius: 8px; background: rgba(255,255,255,0.9);
+      color: #333; text-align: center; font-weight: 600;
+    }
+    
+    button, .mode-btn, .game-btn {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-weight: 600;
+      font-size: clamp(1rem, 4vw, 1.2rem); padding: 12px 24px;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: #fff; border: none; border-radius: 8px; cursor: pointer;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2); margin: 10px; min-width: 220px;
+      transition: all 0.3s ease;
+    }
+    button:hover, .mode-btn:hover, .game-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+    button:disabled, .mode-btn:disabled, .game-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none; background: #64748b; }
+    .forfeit-btn { 
+        position: absolute; top: 15px; right: 15px; 
+        background: #c0392b; min-width: auto; padding: 8px 16px; 
+        font-size: 0.9rem; z-index: 100;
+    }
+
+    #mode-selection, .game-content { display: none; flex-direction: column; align-items: center; width: 100%; }
+    
+    #result {
+        padding: 20px; border-radius: 15px; text-align: center; font-weight: 600; font-size: 1.2rem;
+        width: 100%; max-width: 500px; display: none; flex-direction: column; align-items: center;
+        justify-content: center; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid rgba(255,255,255,0.2); color: #f8fafc;
+    }
+    #result.show { display: flex; }
+    
+    #game-result-display {
+        z-index: 50; display: none;
+        background-color: var(--bg-color);
+    }
+    #game-result-display.show { display: flex; }
+    
+    #game-result-display .result-container {
+        width: 100%; max-width: 600px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; padding: 20px;
+    }
+    #game-result-display h2 { text-shadow: 2px 2px 4px #000; font-size: 2.5rem; margin-bottom: 25px; }
+    #game-result-display .logout-btn { margin-top: 20px; padding: 15px 30px; min-width: 250px; background: #475569; }
+    
+    .jackpot { background: linear-gradient(135deg, var(--jackpot), #f43f5e); animation: pulse 1.5s infinite; } 
+    .success { background: linear-gradient(135deg, var(--success), #34d399); } 
+    .error, .lose { background: linear-gradient(135deg, #f97316, #ef4444); } 
+    .loading { background: linear-gradient(135deg, #f59e0b, #facc15); color: #333; } 
+    .result-icon { font-size: 3rem; margin-bottom: 15px; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    
+    #rules-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
+    #rules-modal.visible { opacity: 1; pointer-events: auto; }
+    #rules-content { background: #1e293b; border-radius: 15px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid #4a6cf7; position: relative; padding-bottom: 60px; }
+    #countdown-timer { position: absolute; top: 15px; right: 15px; background: #ef4444; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
+
+    .dice-area { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px; width: 100%; margin-bottom: 15px; }
+    .dice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--dice-size), 1fr)); gap: 15px; justify-items: center; margin: 15px 0; }
+    .dice-grid.four-dice { grid-template-columns: repeat(auto-fit, minmax(calc(var(--dice-size) - 10px), 1fr)); }
+    .dice-grid.eight-dice { grid-template-columns: repeat(auto-fit, minmax(calc(var(--dice-size) - 20px), 1fr)); }
+
+    .scene { width: var(--dice-size); height: var(--dice-size); perspective: 700px; }
+    .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1s ease-in-out; }
+    .face { position: absolute; width: 100%; height: 100%; background: linear-gradient(145deg, #f5f5f5, #a3a3a3); border-radius: 15%; border: 1.5px solid #555; box-shadow: inset 2px 2px 8px rgba(255,255,255,0.8), inset -2px -2px 6px rgba(0,0,0,0.4), 2px 2px 5px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; backface-visibility: hidden; }
+    .face1 { background: linear-gradient(145deg, #ffffcc, #e6e600); } .face2 { background: linear-gradient(145deg, #d2b48c, #8b4513); } .face3 { background: linear-gradient(145deg, #ffcccc, #e60000); } .face4 { background: linear-gradient(145deg, #cce5ff, #0047ab); } .face5 { background: linear-gradient(145deg, #ffe6cc, #e67e22); } .face6 { background: linear-gradient(145deg, #ccffcc, #006600); }
+    .dot { width: 18%; height: 18%; border-radius: 50%; margin: 5%; background: radial-gradient(circle at 30% 30%, #222, #000); box-shadow: inset 1px 1px 2px rgba(255,255,255,0.2), 1px 1px 1px rgba(0,0,0,0.9); }
+    .face1 { transform: translateZ(calc(var(--dice-size) / 2)); } .face2 { transform: rotateY(90deg) translateZ(calc(var(--dice-size) / 2)); } .face3 { transform: rotateY(180deg) translateZ(calc(var(--dice-size) / 2)); } .face4 { transform: rotateY(-90deg) translateZ(calc(var(--dice-size) / 2)); } .face5 { transform: rotateX(90deg) translateZ(calc(var(--dice-size) / 2)); } .face6 { transform: rotateX(-90deg) translateZ(calc(var(--dice-size) / 2)); }
+    
+    .dice.rolling-0 { animation: spin-0 0.5s infinite linear; } .dice.rolling-1 { animation: spin-1 0.6s infinite linear; } .dice.rolling-2 { animation: spin-2 0.45s infinite ease-in-out; } .dice.rolling-3 { animation: spin-3 0.55s infinite linear; } .dice.rolling-4 { animation: spin-4 0.65s infinite ease-out; } .dice.rolling-5 { animation: spin-5 0.5s infinite linear; }
+    @keyframes spin-0 { 100% { transform: rotateX(360deg) rotateY(720deg); } } @keyframes spin-1 { 100% { transform: rotateX(-720deg) rotateY(360deg); } } @keyframes spin-2 { 100% { transform: rotateY(360deg) rotateZ(720deg); } } @keyframes spin-3 { 100% { transform: rotateX(-360deg) rotateZ(-720deg); } } @keyframes spin-4 { 100% { transform: rotateY(-720deg) rotateZ(360deg); } } @keyframes spin-5 { 100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); } }
+
+    .combo-text { font-family: 'Microsoft JhengHei', sans-serif; font-weight: bold; font-size: 1rem; color: #f59e0b; margin-top: 10px; min-height: 25px; }
+    
+    #main-instructions { max-height: 0; opacity: 0; overflow: hidden; padding: 0 15px; margin-top: 0; transition: max-height 0.5s ease-out, opacity 0.5s ease-out, margin-top 0.5s, padding 0.5s; }
+    #main-instructions.open { max-height: 1000px; opacity: 1; margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+    
+    .prize-highlight { 
+        display: inline-block; padding: 12px 24px; margin: 10px 0; 
+        background: linear-gradient(45deg, #f59e0b, #ef4444); 
+        border-radius: 8px; font-size: 1.8em; 
+        font-family: 'Microsoft JhengHei', sans-serif; 
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        color: #fff;
+        border: 2px solid #fff;
+    }
+    
+    #fullscreen-prompt { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #fullscreen-prompt.visible { opacity: 1; }
+    
+    #results-history-container { width: 100%; max-width: 900px; margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); }
+    #results-history-list { list-style-type: decimal; list-style-position: inside; padding-left: 5px; max-height: 150px; overflow-y: auto; text-align: left; font-family: 'Microsoft JhengHei', sans-serif; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
+    
+    .duel-area { display: flex; justify-content: space-around; width: 100%; align-items: flex-start; flex-wrap: wrap; gap: 20px;}
+    .competitor-zone { flex: 1; min-width: 280px; display: flex; flex-direction: column; align-items: center; }
+    .score-board { font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+    .score-board span { display: inline-block; padding: 5px 10px; border-radius: 5px; }
+    .score-board .player-score { background-color: var(--primary); }
+    .score-board .computer-score { background-color: var(--lose-color); }
+    
+    /* ── 等待畫面 Loading Spinner ── */
+    @keyframes ld-spin { to { transform: rotate(360deg); } }
+    .ld-spinner {
+      width: 40px; height: 40px;
+      border: 4px solid rgba(74,108,247,0.3);
+      border-top-color: #4a6cf7;
+      border-radius: 50%;
+      animation: ld-spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+  </style>
+
+  <!-- whole_screen 外框樣式 -->
+  <style>
+    .video-background {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0; overflow: hidden; pointer-events: none;
+      background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4e 25%, #0d2137 50%, #1a1a4e 75%, #0a0a2a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .video-background video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; width: auto; height: auto; transform: translateX(-50%) translateY(-50%); object-fit: cover; }
+    .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,42,0.72); }
+    #main-container, #game-wrapper, #game-result-display { position: relative; z-index: 10; }
+    #ws-fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99998; color: #fff; backdrop-filter: blur(6px); }
+    #ws-fullscreen-overlay p { font-size: 1.3rem; margin-bottom: 24px; font-family: 'Microsoft JhengHei', sans-serif; text-align: center; line-height: 1.8; }
+    #ws-fs-btn { padding: 16px 40px; background: linear-gradient(45deg, #ff6600, #ff9933); color: #fff; border: none; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-fs-btn:hover { transform: scale(1.06); }
+    #ws-violation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; backdrop-filter: blur(6px); }
+    #ws-violation .ws-vbox { background: #1e2240; padding: 40px 36px; border-radius: 16px; border: 2px solid #ff6600; max-width: 480px; text-align: center; }
+    #ws-violation h2 { color: #ff6600; font-size: 1.8rem; margin-bottom: 16px; }
+    #ws-violation p  { font-size: 1.1rem; line-height: 1.7; margin-bottom: 28px; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-violation button { padding: 12px 28px; background: #ff6600; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-video-controls { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; gap: 10px; }
+    #ws-video-controls button { background: rgba(0,0,0,0.55); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
+    #ws-badge { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.55); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 7px; z-index: 200; opacity: 0.8; }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans antialiased">
+
+<!-- whole_screen：背景影片 -->
+<div class="video-background">
+  <video id="ws-bg-video" autoplay muted loop playsinline>
+    <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
+  </video>
+  <div class="video-overlay"></div>
+</div>
+
+<!-- whole_screen：全螢幕提示 -->
+<div id="ws-fullscreen-overlay">
+  <p>🎲 骰子每日挑戰<br><span style="font-size:0.9rem;color:#aaa;">請進入全螢幕以開始遊戲</span></p>
+  <button id="ws-fs-btn">📱 進入全螢幕</button>
+</div>
+
+<!-- whole_screen：違規提示 -->
+<div id="ws-violation">
+  <div class="ws-vbox">
+    <h2><i class="fas fa-exclamation-circle"></i></h2>
+    <p id="ws-violation-msg"></p>
+    <button id="ws-violation-ok">確定</button>
+  </div>
+</div>
+
+<!-- whole_screen：影片控制 -->
+<div id="ws-video-controls">
+  <button id="ws-mute"><i class="fas fa-volume-mute"></i></button>
+  <button id="ws-pause"><i class="fas fa-pause"></i></button>
+</div>
+
+<!-- whole_screen：保護徽章 -->
+<div id="ws-badge"><i class="fas fa-shield-alt"></i></div>
+
+<div id="fullscreen-prompt">按 ESC 鍵退出全螢幕模式</div>
+
+<!-- VIEW 1: QR CODE WAITING SCREEN -->
+<div id="main-container">
+  <div class="container">
+    <h1 style="font-family:'Pixel', sans-serif;">骰子每日挑戰</h1>
+    <div class="form-section" id="formSection" style="text-align:center; padding: 30px 20px;">
+      <div id="qr-waiting-msg">
+        <svg width="90" height="90" viewBox="0 0 100 100" style="margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="5" width="38" height="38" rx="4" stroke="#4a6cf7" stroke-width="5" fill="none"/>
+          <rect x="15" y="15" width="18" height="18" rx="2" fill="#4a6cf7"/>
+          <rect x="57" y="5" width="38" height="38" rx="4" stroke="#4a6cf7" stroke-width="5" fill="none"/>
+          <rect x="67" y="15" width="18" height="18" rx="2" fill="#4a6cf7"/>
+          <rect x="5" y="57" width="38" height="38" rx="4" stroke="#4a6cf7" stroke-width="5" fill="none"/>
+          <rect x="15" y="67" width="18" height="18" rx="2" fill="#4a6cf7"/>
+          <rect x="57" y="57" width="8" height="8" fill="#4a6cf7"/>
+          <rect x="70" y="57" width="8" height="8" fill="#4a6cf7"/>
+          <rect x="83" y="57" width="12" height="8" fill="#4a6cf7"/>
+          <rect x="57" y="70" width="12" height="8" fill="#4a6cf7"/>
+          <rect x="75" y="70" width="8" height="8" fill="#4a6cf7"/>
+          <rect x="57" y="83" width="8" height="12" fill="#4a6cf7"/>
+          <rect x="70" y="83" width="25" height="12" fill="#4a6cf7"/>
+        </svg>
+        <p style="font-family:'Microsoft JhengHei',sans-serif; font-size:1.15rem; color:#cbd5e1; line-height:2; margin-bottom:8px;">
+          請掃描桌上的 <strong style="color:#4a6cf7; font-size:1.2rem;">QR Code</strong> 進入遊戲
+        </p>
+        <p style="font-size:0.88rem; color:#64748b; font-family:'Microsoft JhengHei',sans-serif; margin-bottom:20px;">每人每日限玩一次</p>
+        <!-- 測試按鈕（開發用，上線前可移除） -->
+        <button id="test-enter-btn" style="margin-top:8px; padding:10px 28px; background:linear-gradient(45deg,#4a6cf7,#10b981); color:#fff; border:none; border-radius:8px; font-size:0.95rem; cursor:pointer; font-family:'Microsoft JhengHei',sans-serif; opacity:0.75;">
+          🧪 測試進入（無需掃碼）
+        </button>
+        <div id="qr-error-msg" style="display:none; margin-top:20px; padding:15px; background:rgba(239,68,68,0.15); border-radius:10px; border:1px solid #ef4444; font-family:'Microsoft JhengHei',sans-serif; color:#fca5a5; font-size:0.95rem;"></div>
+      </div>
+    </div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<!-- 遊戲規則模板（hidden，由 JS clone 至 modal） -->
+<div id="main-instructions-template" style="display:none;">
+    <h3 style="text-align:center;margin-bottom:15px; font-family: 'Pixel', sans-serif;">遊戲規則</h3>
+    <ul style="list-style-type:none;padding-left:10px; font-family: 'Microsoft JhengHei', sans-serif; text-align: left;">
+        <li style="margin-bottom: 15px;"><i class="fas fa-user"></i> <strong>模式一：個人組 (運氣挑戰)</strong>
+          <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+            <li>共 8 次擲骰機會，每次擲出六顆骰子。</li>
+            <li><strong>目標：</strong>完成8次投擲，以期間擲出的最佳牌型贏得獎勵！</li>
+            <li><p>中獎條件 (8次擲完後結算)：</p>
+              <ul style="margin-left:20px;margin-top:5px; list-style-type: circle;">
+                <li><strong>六骰同號：</strong>贏得「免費吃到堡或指定商品」</li>
+                <li><strong>五骰同號：</strong>贏得「吃到堡買一送一或指定商品買一送一」</li>
+                <li><strong>四骰同號：</strong>贏得「吃到堡買一第二件半價或指定商品買一第二件半價」</li>
+                <li><strong>三條：</strong>贏得「買五送一卷(可寄放)」</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-users"></i> <strong>模式二：挑戰組 (技巧對決)</strong>
+          <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+            <li>共 5 回合，與電腦對戰，每回合各擲六顆骰子。</li>
+            <li><strong>勝利：</strong>贏得「吃到堡買一送一或指定商品買一送一」</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-dice"></i> <strong>模式三：四骰對決 (比大小)</strong>
+          <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+            <li>共 5 回合，與電腦對戰，每回合各擲四顆骰子，比點數總和。</li>
+            <li><strong>勝利：</strong>贏得「吃到堡買一第二件半價或指定商品買一第二件半價」</li>
+          </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-bolt"></i> <strong>模式四：急速連擲挑戰</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+                <li>在 90 秒內盡可能多次擲出六顆骰子，以最佳牌型結算。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-balance-scale"></i> <strong>模式五：風險與獎勵</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+                <li>共 5 回合，可選「安全擲骰」(6顆) 或「風險擲骰」(8顆)，累積最高分數。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-shield-halved"></i> <strong>模式六：骰子消除戰</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+                <li>玩家與電腦各有 15 點生命值，共 10 回合，點數低者損失生命。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-link"></i> <strong>模式七：組合連鎖</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+                <li>共有 3 次失敗機會，依序擲出「對子→三條→四條→五條→六條」。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-gem"></i> <strong>模式八：雙倍賭注</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
+                <li>初始 3 次機會獲得基礎獎勵，之後可選擇「領取」或「雙倍賭注」。</li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<!-- VIEW 2: GAME SCREEN -->
+<div id="game-wrapper">
+  <div id="game-instructions"></div>
+  
+  <div class="container">
+    <button id="forfeit-btn" class="forfeit-btn">放棄比賽</button>
+    <div id="mode-selection" style="display:flex;">
+        <h2>請選擇今日挑戰模式 (選定後無法更改)</h2>
+        <button id="solo-mode-btn" class="mode-btn">個人組 (運氣挑戰)</button>
+        <button id="competitive-mode-btn" class="mode-btn">挑戰組 (技巧對決)</button>
+        <button id="vs-mode-btn" class="mode-btn">四骰對決 (比大小)</button>
+        <button id="speed-mode-btn" class="mode-btn">急速連擲挑戰</button>
+        <button id="risk-mode-btn" class="mode-btn">風險與獎勵</button>
+        <button id="elimination-mode-btn" class="mode-btn">骰子消除戰</button>
+        <button id="combo-mode-btn" class="mode-btn">組合連鎖</button>
+        <button id="double-mode-btn" class="mode-btn">雙倍賭注</button>
+    </div>
+
+    <!-- Mode 1 -->
+    <div id="solo-challenge-content" class="game-content">
+        <h2>個人組</h2>
+        <div class="progress-display">第 <span id="current-solo-spin">1</span> / 8 次機會</div>
+        <div id="best-solo-result" class="combo-text" style="color: #34d399; font-weight: bold; font-size: 1.1rem;">目前最佳成績: 無 (未達獎勵門檻)</div>
+        <div class="dice-area" style="margin-top:20px;"><div id="dice-grid-solo" class="dice-grid"></div><div id="combo-text-solo" class="combo-text"></div></div>
+        <button id="spin-btn-solo" class="game-btn">擲骰子</button>
+    </div>
+    
+    <!-- Mode 2 -->
+    <div id="competitive-challenge-content" class="game-content">
+        <h2>挑戰組 (技巧對決)</h2>
+        <div class="progress-display">第 <span id="current-competitive-round">1</span> / 5 回合</div>
+        <div class="score-board">比分: <span class="player-score" id="competitive-player-score">0</span> - <span class="computer-score" id="competitive-computer-score">0</span></div>
+        <div class="duel-area">
+          <div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dice-grid-player" class="dice-grid"></div></div><div id="combo-text-player" class="combo-text"></div></div>
+          <div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dice-grid-computer" class="dice-grid"></div></div><div id="combo-text-computer" class="combo-text"></div></div>
+        </div>
+        <button id="spin-btn-competitive" class="game-btn">擲骰子</button>
+    </div>
+
+    <!-- Mode 3 -->
+    <div id="vs-challenge-content" class="game-content">
+      <h2>四骰對決 (比大小)</h2>
+      <div class="progress-display">第 <span id="current-vs-round">1</span> / 5 回合</div>
+      <div class="score-board">比分: <span class="player-score" id="vs-player-score">0</span> - <span class="computer-score" id="vs-computer-score">0</span></div>
+      <div class="duel-area">
+        <div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dice-grid-vs-player" class="dice-grid four-dice"></div></div><div id="combo-text-vs-player" class="combo-text"></div></div>
+        <div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dice-grid-vs-computer" class="dice-grid four-dice"></div></div><div id="combo-text-vs-computer" class="combo-text"></div></div>
+      </div>
+      <button id="spin-btn-vs" class="game-btn">擲骰子</button>
+    </div>
+    
+    <!-- Mode 4 -->
+    <div id="speed-challenge-content" class="game-content">
+        <h2>急速連擲挑戰</h2>
+        <div class="progress-display">剩餘時間: <span id="speed-timer" style="font-size: 1.5em; color: #ef4444;">90</span> 秒</div>
+        <div id="best-speed-result" class="combo-text" style="color: #34d399; font-weight: bold; font-size: 1.1rem; line-height: 1.5;">目前最佳成績: 無 (未達獎勵門檻)</div>
+        <div class="dice-area" style="margin-top:20px;"><div id="dice-grid-speed" class="dice-grid"></div><div id="combo-text-speed" class="combo-text"></div></div>
+        <button id="spin-btn-speed" class="game-btn">擲骰子</button>
+    </div>
+
+    <!-- Mode 5 -->
+    <div id="risk-challenge-content" class="game-content">
+        <h2>風險與獎勵</h2>
+        <div class="progress-display">第 <span id="current-risk-round">1</span> / 5 回合</div>
+        <div id="total-risk-score" class="combo-text" style="font-size: 1.2rem;">總分: 0</div>
+        <div class="dice-area" style="margin-top:20px;"><div id="dice-grid-risk" class="dice-grid eight-dice"></div><div id="combo-text-risk" class="combo-text"></div></div>
+        <div class="button-group">
+            <button id="spin-btn-risk-safe" class="game-btn" style="background: linear-gradient(45deg, #3b82f6, #10b981);">安全擲骰 (6顆)</button>
+            <button id="spin-btn-risk-gamble" class="game-btn" style="background: linear-gradient(45deg, #f59e0b, #ef4444);">風險擲骰 (8顆)</button>
+        </div>
+    </div>
+
+    <!-- Mode 6 -->
+    <div id="elimination-challenge-content" class="game-content">
+        <h2>骰子消除戰</h2>
+        <div class="progress-display">第 <span id="current-elimination-round">1</span> / 10 回合</div>
+        <div class="score-board">生命值: <span class="player-score" id="elimination-player-life">15</span> - <span class="computer-score" id="elimination-computer-life">15</span></div>
+        <div class="duel-area">
+            <div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dice-grid-elimination-player" class="dice-grid"></div></div><div id="combo-text-elimination-player" class="combo-text"></div></div>
+            <div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dice-grid-elimination-computer" class="dice-grid"></div></div><div id="combo-text-elimination-computer" class="combo-text"></div></div>
+        </div>
+        <button id="spin-btn-elimination" class="game-btn">擲骰對決</button>
+    </div>
+
+    <!-- Mode 7 -->
+    <div id="combo-challenge-content" class="game-content">
+        <h2>組合連鎖</h2>
+        <div class="progress-display">生命: <span id="combo-lives">3</span> | 目標: <strong id="combo-target-text" style="color: #f59e0b;">對子</strong></div>
+        <div id="current-combo-prize" class="combo-text" style="color: #34d399; font-weight: bold; font-size: 1.1rem;">目前獎勵: 無</div>
+        <div class="dice-area" style="margin-top:20px;"><div id="dice-grid-combo" class="dice-grid"></div><div id="combo-text-combo" class="combo-text"></div></div>
+        <button id="spin-btn-combo" class="game-btn">擲骰子</button>
+    </div>
+
+    <!-- Mode 8 -->
+    <div id="double-challenge-content" class="game-content">
+        <h2>雙倍賭注</h2>
+        <div class="progress-display">剩餘機會: <span id="double-rolls-left">3</span></div>
+        <div id="current-double-prize" class="combo-text" style="font-size: 1.2rem;">擲骰以獲得初始獎勵</div>
+        <div class="dice-area" style="margin-top:20px;"><div id="dice-grid-double" class="dice-grid"></div><div id="combo-text-double" class="combo-text"></div></div>
+        <div id="double-button-area">
+            <button id="spin-btn-double" class="game-btn">擲骰</button>
+            <button id="claim-btn-double" class="game-btn" style="display: none; background: linear-gradient(45deg, #10b981, #00b09b);">領取獎勵</button>
+            <button id="gamble-btn-double" class="game-btn" style="display: none; background: linear-gradient(45deg, #f59e0b, #ef4444);">雙倍賭注!</button>
+        </div>
+    </div>
+
+    <div id="results-history-container" style="display: none;">
+      <h3>即時戰況紀錄</h3>
+      <ol id="results-history-list"></ol>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW 3: FULLSCREEN RESULT PAGE -->
+<div id="game-result-display"></div>
+
+<!-- MODAL for rules countdown -->
+<div id="rules-modal"> 
+  <div id="rules-content"> 
+    <div id="countdown-timer">5</div> 
+  </div> 
+</div>
+
+<!-- Audio -->
+<audio id="sound-click"    src="https://www.myinstants.com/media/sounds/mouse-click.mp3" preload="auto"></audio>
+<audio id="sound-roll"     src="https://assets.mixkit.co/sfx/preview/mixkit-game-dice-roll-2021.mp3" preload="auto"></audio>
+<audio id="sound-win"      src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" preload="auto"></audio>
+<audio id="sound-lose"     src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto"></audio>
+<audio id="sound-jackpot"  src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3" preload="auto"></audio>
+<audio id="music-main"     src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
+<audio id="music-competitive" src="https://assets.mixkit.co/music/preview/mixkit-epic-battle-cinematic-trailer-689.mp3" loop preload="auto"></audio>
+<audio id="music-speed"    src="https://assets.mixkit.co/music/preview/mixkit-arcade-retro-background-219.mp3" loop preload="auto"></audio>
+
+<script>
+  // ══════════════════════════════════════════════════════
+  //  設定區
+  // ══════════════════════════════════════════════════════
+
+  // 與 index.html 共用同一支 Google Apps Script
+  const CHECKIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW_vv9Y-J9J7YoSLpsPRcKBmeI7LjVjn2dv2dI-Y6X2i03GXrlZjGQrWr4Ra995os/exec';
+
+  // ══════════════════════════════════════════════════════
+  //  遊戲狀態
+  // ══════════════════════════════════════════════════════
+  const gameState = {
+    isGameActive: false, isSpinning: false, isEnding: false,
+    playerInfo: {}, playerData: {}, ipAddress: '載入中...',
+    mode: null,
+    vid: null,   // 從 URL ?vid=xxx 取得
+    soloSpins: 0,
+    soloBestResult: { prize: null, score: 0 },
+    competitiveRounds: 0, roundWins: { player: 0, computer: 0 },
+    vsRounds: 0, vsWins: { player: 0, computer: 0 },
+    totalRounds: 5,
+    speedTimeLeft: 90, speedTimerId: null,
+    speedBestResult: { prize: null, score: 0, text: '無' },
+    riskRounds: 0, riskTotalScore: 0,
+    eliminationRounds: 0, eliminationPlayerLife: 15, eliminationComputerLife: 15,
+    comboChainLevel: 0, comboLives: 3,
+    comboTargets: [
+        { score: 2000, text: '對子' }, { score: 3000, text: '三條' },
+        { score: 4000, text: '四條' }, { score: 5000, text: '五條' }, { score: 6000, text: '六條' }
+    ],
+    doubleRollsLeft: 3, doubleCurrentPrize: { prize: null, score: 0 },
+    isGamblePhase: false,
+    currentMusic: null, endGameTimerId: null,
+  };
+
+  // DOM refs
+  const mainContainer = document.getElementById('main-container');
+  const gameWrapper = document.getElementById('game-wrapper');
+  const resultDiv = document.getElementById('result');
+  const rulesModal = document.getElementById('rules-modal');
+  const rulesContent = document.getElementById('rules-content');
+  const countdownTimer = document.getElementById('countdown-timer');
+  const mainInstructionsTemplate = document.getElementById('main-instructions-template');
+  const fullscreenPrompt = document.getElementById('fullscreen-prompt');
+  const qrErrorMsg = document.getElementById('qr-error-msg');
+  const modeSelectionEl = document.getElementById('mode-selection');
+  const forfeitBtn = document.getElementById('forfeit-btn');
+  const gameInstructionsEl = document.getElementById('game-instructions');
+
+  const soloContentEl = document.getElementById('solo-challenge-content'), currentSoloSpinEl = document.getElementById('current-solo-spin'), bestSoloResultEl = document.getElementById('best-solo-result'), diceGridSolo = document.getElementById('dice-grid-solo'), comboTextSolo = document.getElementById('combo-text-solo'), spinBtnSolo = document.getElementById('spin-btn-solo');
+  const competitiveContentEl = document.getElementById('competitive-challenge-content'), currentCompetitiveRoundEl = document.getElementById('current-competitive-round'), competitivePlayerScoreEl = document.getElementById('competitive-player-score'), competitiveComputerScoreEl = document.getElementById('competitive-computer-score'), diceGridPlayer = document.getElementById('dice-grid-player'), diceGridComputer = document.getElementById('dice-grid-computer'), comboTextPlayer = document.getElementById('combo-text-player'), comboTextComputer = document.getElementById('combo-text-computer'), spinBtnCompetitive = document.getElementById('spin-btn-competitive');
+  const vsContentEl = document.getElementById('vs-challenge-content'), currentVsRoundEl = document.getElementById('current-vs-round'), vsPlayerScoreEl = document.getElementById('vs-player-score'), vsComputerScoreEl = document.getElementById('vs-computer-score'), diceGridVSPlayer = document.getElementById('dice-grid-vs-player'), diceGridVSComputer = document.getElementById('dice-grid-vs-computer'), comboTextVSPlayer = document.getElementById('combo-text-vs-player'), comboTextVSComputer = document.getElementById('combo-text-vs-computer'), spinBtnVs = document.getElementById('spin-btn-vs');
+  const speedContentEl = document.getElementById('speed-challenge-content'), speedTimerEl = document.getElementById('speed-timer'), bestSpeedResultEl = document.getElementById('best-speed-result'), diceGridSpeed = document.getElementById('dice-grid-speed'), comboTextSpeed = document.getElementById('combo-text-speed'), spinBtnSpeed = document.getElementById('spin-btn-speed');
+  const riskContentEl = document.getElementById('risk-challenge-content'), currentRiskRoundEl = document.getElementById('current-risk-round'), totalRiskScoreEl = document.getElementById('total-risk-score'), diceGridRisk = document.getElementById('dice-grid-risk'), comboTextRisk = document.getElementById('combo-text-risk'), spinBtnRiskSafe = document.getElementById('spin-btn-risk-safe'), spinBtnRiskGamble = document.getElementById('spin-btn-risk-gamble');
+  const eliminationContentEl = document.getElementById('elimination-challenge-content'), currentEliminationRoundEl = document.getElementById('current-elimination-round'), eliminationPlayerLifeEl = document.getElementById('elimination-player-life'), eliminationComputerLifeEl = document.getElementById('elimination-computer-life'), diceGridEliminationPlayer = document.getElementById('dice-grid-elimination-player'), diceGridEliminationComputer = document.getElementById('dice-grid-elimination-computer'), comboTextEliminationPlayer = document.getElementById('combo-text-elimination-player'), comboTextEliminationComputer = document.getElementById('combo-text-elimination-computer'), spinBtnElimination = document.getElementById('spin-btn-elimination');
+  const comboContentEl = document.getElementById('combo-challenge-content'), comboLivesEl = document.getElementById('combo-lives'), comboTargetTextEl = document.getElementById('combo-target-text'), diceGridCombo = document.getElementById('dice-grid-combo'), comboTextCombo = document.getElementById('combo-text-combo'), spinBtnCombo = document.getElementById('spin-btn-combo'), currentComboPrizeEl = document.getElementById('current-combo-prize');
+  const doubleContentEl = document.getElementById('double-challenge-content'), doubleRollsLeftEl = document.getElementById('double-rolls-left'), currentDoublePrizeEl = document.getElementById('current-double-prize'), diceGridDouble = document.getElementById('dice-grid-double'), comboTextDouble = document.getElementById('combo-text-double'), doubleButtonArea = document.getElementById('double-button-area'), spinBtnDouble = document.getElementById('spin-btn-double'), claimBtnDouble = document.getElementById('claim-btn-double'), gambleBtnDouble = document.getElementById('gamble-btn-double');
+  const resultsHistoryContainer = document.getElementById('results-history-container');
+  const resultsHistoryList = document.getElementById('results-history-list');
+  const gameResultDiv = document.getElementById('game-result-display');
+  let dailyCountdownTimerId;
+
+  let diceElementsSolo=[], diceElementsPlayer=[], diceElementsComputer=[], diceElementsVSPlayer=[], diceElementsVSComputer=[];
+  let diceElementsSpeed=[], diceElementsRisk=[], diceElementsEliminationPlayer=[], diceElementsEliminationComputer=[], diceElementsCombo=[], diceElementsDouble=[];
+  const faceAngles = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:0,y:180}, 4:{x:0,y:90}, 5:{x:-90,y:0}, 6:{x:90,y:0} };
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  function init() {
+    diceElementsSolo            = generateDiceHTML(diceGridSolo, 6);
+    diceElementsPlayer          = generateDiceHTML(diceGridPlayer, 6);
+    diceElementsComputer        = generateDiceHTML(diceGridComputer, 6);
+    diceElementsVSPlayer        = generateDiceHTML(diceGridVSPlayer, 4);
+    diceElementsVSComputer      = generateDiceHTML(diceGridVSComputer, 4);
+    diceElementsSpeed           = generateDiceHTML(diceGridSpeed, 6);
+    diceElementsRisk            = generateDiceHTML(diceGridRisk, 8);
+    diceElementsEliminationPlayer = generateDiceHTML(diceGridEliminationPlayer, 6);
+    diceElementsEliminationComputer = generateDiceHTML(diceGridEliminationComputer, 6);
+    diceElementsCombo           = generateDiceHTML(diceGridCombo, 6);
+    diceElementsDouble          = generateDiceHTML(diceGridDouble, 6);
+
+    document.getElementById('solo-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('solo'); });
+    document.getElementById('competitive-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('competitive'); });
+    document.getElementById('vs-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('vs'); });
+    document.getElementById('speed-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('speed'); });
+    document.getElementById('risk-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('risk'); });
+    document.getElementById('elimination-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('elimination'); });
+    document.getElementById('combo-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('combo'); });
+    document.getElementById('double-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('double'); });
+    
+    spinBtnSolo.addEventListener('click', runSoloSpin);
+    spinBtnCompetitive.addEventListener('click', runCompetitiveSpin);
+    spinBtnVs.addEventListener('click', runVsSpin);
+    spinBtnSpeed.addEventListener('click', runSpeedSpin);
+    spinBtnRiskSafe.addEventListener('click', () => runRiskRound(false));
+    spinBtnRiskGamble.addEventListener('click', () => runRiskRound(true));
+    spinBtnElimination.addEventListener('click', runEliminationRound);
+    spinBtnCombo.addEventListener('click', runComboSpin);
+    spinBtnDouble.addEventListener('click', runDoubleSpin);
+    claimBtnDouble.addEventListener('click', handleDoubleClaim);
+    gambleBtnDouble.addEventListener('click', handleDoubleGamble);
+    forfeitBtn.addEventListener('click', handleForfeit);
+    document.addEventListener('fullscreenchange', updateFullscreenUI);
+    
+    const rulesClone = mainInstructionsTemplate.cloneNode(true);
+    rulesClone.style.display = 'block';
+    rulesContent.appendChild(rulesClone);
+
+    getIPAddress();
+    enterFullscreen();
+
+    // ── 主入口：QR Code 驗證 ────────────────────────────
+    checkQRAndEnter();
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  每日限玩（localStorage 快取）
+  // ══════════════════════════════════════════════════════
+  function getTodayKey() {
+    const d = new Date();
+    return `dice_played_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+  }
+  function hasPlayedToday() {
+    try { return localStorage.getItem(getTodayKey()) === '1'; } catch(e) { return false; }
+  }
+  function markPlayedToday() {
+    try {
+      localStorage.setItem(getTodayKey(), '1');
+      // 清理 7 天前的舊 key
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('dice_played_') && k !== getTodayKey()) localStorage.removeItem(k);
+      }
+    } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  QR Code 驗證入口（整合 index.html 的 checkin API）
+  // ══════════════════════════════════════════════════════
+  function checkQRAndEnter() {
+    // 測試按鈕
+    const testBtn = document.getElementById('test-enter-btn');
+    if (testBtn) {
+      testBtn.addEventListener('click', () => {
+        gameState.vid = 'TEST-' + Date.now().toString(36);
+        gameState.playerInfo = { nameTail: 'TEST', numberCode: '001' };
+        gameState.playerData = { roundCount: 0, hasClaimed: false };
+        loginPlayer();
+      });
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type'); // 應為 'dice'
+    const vid  = urlParams.get('vid');  // index.html 產生的唯一識別碼
+
+    // 沒有合法參數 → 停留在 QR 等待畫面
+    if (!vid || type !== 'dice') {
+      showQRError('');
+      return;
+    }
+
+    gameState.vid = vid;
+    gameState.playerInfo = { nameTail: vid.slice(0, 4).toUpperCase(), numberCode: vid.slice(-4).toUpperCase() };
+
+    // 本地快取：今日已玩
+    if (hasPlayedToday()) {
+      showDailyLockScreen('您');
+      return;
+    }
+
+    // 呼叫與 index.html 相同的後端 checkin API
+    verifyWithCheckin(vid);
+  }
+
+  async function verifyWithCheckin(vid) {
+    // 顯示載入中
+    document.getElementById('qr-waiting-msg').innerHTML = `
+      <div class="ld-spinner"></div>
+      <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">驗證身份中，請稍候…</p>`;
+
+    try {
+      const res  = await fetch(
+        `${CHECKIN_SCRIPT_URL}?action=checkin&type=dice&vid=${encodeURIComponent(vid)}&t=${Date.now()}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+
+      if (json.status === 'OK') {
+        // ✅ 首次進入
+        gameState.playerData = { roundCount: 0, hasClaimed: false };
+        loginPlayer();
+      } else if (json.status === 'DENY') {
+        // 🚫 今日已參加
+        markPlayedToday();
+        showDailyLockScreen('您');
+      } else {
+        throw new Error(json.message || '驗證失敗');
+      }
+    } catch(e) {
+      console.warn('Checkin API error:', e.message);
+      // 後端無法連線時，允許進入（不應因網路問題擋住玩家）
+      gameState.playerData = { roundCount: 0, hasClaimed: false };
+      loginPlayer();
+    }
+  }
+
+  function showQRError(msg) {
+    if (!qrErrorMsg) return;
+    qrErrorMsg.textContent = msg;
+    qrErrorMsg.style.display = msg ? 'block' : 'none';
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  音效
+  // ══════════════════════════════════════════════════════
+  function playSound(id) {
+    const s = document.getElementById(id);
+    if (s) { s.currentTime = 0; s.play().catch(() => {}); }
+  }
+  function playBackgroundMusic(trackId) {
+    stopBackgroundMusic();
+    const m = document.getElementById(trackId);
+    if (m) { m.currentTime = 0; m.play().catch(() => {}); gameState.currentMusic = m; }
+  }
+  function stopBackgroundMusic() {
+    if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  骰子 HTML 生成
+  // ══════════════════════════════════════════════════════
+  function generateDiceHTML(gridElement, count) {
+    if (!gridElement) return [];
+    gridElement.innerHTML = ''; const elements = [];
+    for (let i = 0; i < count; i++) {
+      const scene = document.createElement('div'); scene.className = 'scene';
+      const dice  = document.createElement('div'); dice.className = 'dice';
+      for (let f = 1; f <= 6; f++) {
+        const face = document.createElement('div'); face.className = `face face${f}`;
+        for (let d = 0; d < f; d++) { const dot = document.createElement('div'); dot.className = 'dot'; face.appendChild(dot); }
+        dice.appendChild(face);
+      }
+      scene.appendChild(dice); gridElement.appendChild(scene); elements.push(dice);
+    }
+    return elements;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  登入 & 遊戲開始
+  // ══════════════════════════════════════════════════════
+  function loginPlayer() {
+    markPlayedToday();
+    enterFullscreen();
+    resultDiv.classList.remove('show');
+    mainContainer.style.display = 'none';
+    gameWrapper.classList.add('visible');
+    showRulesAndStart();
+  }
+
+  function showRulesAndStart() {
+    rulesModal.classList.add('visible');
+    let countdown = 5;
+    countdownTimer.textContent = countdown;
+    const timer = setInterval(() => {
+      countdown--;
+      countdownTimer.textContent = countdown;
+      if (countdown <= 0) {
+        clearInterval(timer);
+        rulesModal.classList.remove('visible');
+        if (!isFullscreen()) enterFullscreen().catch(() => {});
+        modeSelectionEl.style.display = 'flex';
+        playBackgroundMusic('music-main');
+      }
+    }, 1000);
+  }
+  
+  function selectMode(mode) {
+    gameState.mode = mode; gameState.isEnding = false;
+    modeSelectionEl.style.display = 'none';
+    resetGameStates();
+    gameState.isGameActive = true;
+    forfeitBtn.style.display = 'block';
+    resultsHistoryContainer.style.display = 'block';
+    gameInstructionsEl.style.display = 'flex';
+    updateGameInstructions(mode, 0);
+    document.querySelectorAll('.game-content').forEach(c => c.style.display = 'none');
+    if (mode === 'solo')        { soloContentEl.style.display = 'flex'; playBackgroundMusic('music-main'); }
+    else if (mode === 'competitive') { competitiveContentEl.style.display = 'flex'; playBackgroundMusic('music-competitive'); }
+    else if (mode === 'vs')          { vsContentEl.style.display = 'flex'; playBackgroundMusic('music-competitive'); }
+    else if (mode === 'speed')       { speedContentEl.style.display = 'flex'; playBackgroundMusic('music-speed'); startSpeedChallenge(); }
+    else if (mode === 'risk')        { riskContentEl.style.display = 'flex'; playBackgroundMusic('music-main'); }
+    else if (mode === 'elimination') { eliminationContentEl.style.display = 'flex'; playBackgroundMusic('music-competitive'); }
+    else if (mode === 'combo')       { comboContentEl.style.display = 'flex'; playBackgroundMusic('music-main'); }
+    else if (mode === 'double')      { doubleContentEl.style.display = 'flex'; playBackgroundMusic('music-main'); }
+  }
+
+  function updateGameInstructions(mode, step) {
+    const instructions = {
+      solo:         [`<div class="step"><strong>目標：</strong>在 8 次機會中擲出最佳牌型，以期間最佳成績贏得獎勵。</div>`],
+      competitive:  [`<div class="step"><strong>目標：</strong>5 回合中贏得比電腦更多的回合 (至少3回合) 即獲獎。</div>`],
+      vs:           [`<div class="step"><strong>目標：</strong>4 顆骰子比點數總和，5 回合中贏得較多者獲獎。</div>`],
+      speed:        [`<div class="step"><strong>目標：</strong>90 秒內快速擲骰，以期間最佳牌型結算獎勵。</div>`],
+      risk:         [`<div class="step"><strong>目標：</strong>5 回合累積最高分數，依總分決定獎勵等級。</div>`],
+      elimination:  [`<div class="step"><strong>目標：</strong>10 回合消除戰，生命值較高者（或將電腦歸零）獲勝。</div>`],
+      combo:        [`<div class="step"><strong>目標：</strong>依序完成「對子→三條→四條→五條→六條」，共 3 次失敗機會。</div>`],
+      double:       [`<div class="step"><strong>步驟 1：</strong>3 次機會擲出初始獎勵。</div>`,`<div class="step"><strong>步驟 2：</strong>選擇「領取」或「雙倍賭注」，成功升級，失敗歸零。</div>`]
+    };
+    let html = `<h3>遊戲即時說明</h3>`;
+    if (instructions[mode]) html += instructions[mode].join('');
+    gameInstructionsEl.innerHTML = html;
+  }
+  
+  function handleForfeit() {
+    if (!gameState.isGameActive || gameState.isEnding) return;
+    playSound('sound-click');
+    if (confirm('您確定要放棄比賽嗎？放棄後將無法獲得任何獎勵。')) {
+      endGame({ prize: null, remark: '玩家放棄比賽' });
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 1: Solo
+  // ══════════════════════════════════════════════════════
+  async function runSoloSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnSolo.disabled = true;
+    gameState.soloSpins++;
+    currentSoloSpinEl.textContent = gameState.soloSpins;
+    const diceValues = rollDice(6);
+    await animateDice(diceElementsSolo, diceValues, comboTextSolo, getDiceCombination);
+    const currentResult = checkSoloWin(diceValues);
+    const { bestComboText } = getDiceCombination(diceValues);
+    let historyMessage = `第 ${gameState.soloSpins} 次: 擲出 <strong>${bestComboText}</strong>`;
+    if (currentResult.score > gameState.soloBestResult.score) {
+      gameState.soloBestResult = currentResult;
+      bestSoloResultEl.textContent = `目前最佳成績: ${gameState.soloBestResult.prize || '無 (未達獎勵門檻)'}`;
+      historyMessage += ` (新紀錄!)`;
+      playSound('sound-win');
+    }
+    addResultToHistory(historyMessage);
+    if (gameState.soloSpins >= 8) {
+      endGame({ prize: gameState.soloBestResult.prize, remark: gameState.soloBestResult.prize ? `8次挑戰中最佳成績為【${gameState.soloBestResult.prize}】` : '8次挑戰結束，本次未獲得獎品。' });
+    } else { gameState.isSpinning = false; spinBtnSolo.disabled = false; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 2: Competitive
+  // ══════════════════════════════════════════════════════
+  async function runCompetitiveSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnCompetitive.disabled = true;
+    gameState.competitiveRounds++;
+    currentCompetitiveRoundEl.textContent = gameState.competitiveRounds;
+    const playerDice = rollDice(6), computerDice = rollDice(6);
+    await Promise.all([
+      animateDice(diceElementsPlayer, playerDice, comboTextPlayer, getDiceCombination),
+      animateDice(diceElementsComputer, computerDice, comboTextComputer, getDiceCombination)
+    ]);
+    const pR = getDiceCombination(playerDice), cR = getDiceCombination(computerDice);
+    let winner = '平手';
+    if (pR.score > cR.score)      { gameState.roundWins.player++;   winner = '玩家'; playSound('sound-win'); }
+    else if (cR.score > pR.score) { gameState.roundWins.computer++; winner = '電腦'; playSound('sound-lose'); }
+    competitivePlayerScoreEl.textContent  = gameState.roundWins.player;
+    competitiveComputerScoreEl.textContent = gameState.roundWins.computer;
+    addResultToHistory(`第 ${gameState.competitiveRounds} 回合: 玩家(${pR.bestComboText}) vs 電腦(${cR.bestComboText}) - <strong>${winner}勝</strong>`);
+    if (gameState.competitiveRounds >= gameState.totalRounds) {
+      const pw = gameState.roundWins.player, cw = gameState.roundWins.computer;
+      endGame(pw > cw
+        ? { prize: '吃到堡買一送一或指定商品買一送一', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
+        : { prize: null, remark: `挑戰結束，比分 ${pw}:${cw}。` });
+    } else { gameState.isSpinning = false; spinBtnCompetitive.disabled = false; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 3: VS (四骰)
+  // ══════════════════════════════════════════════════════
+  async function runVsSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnVs.disabled = true;
+    gameState.vsRounds++;
+    currentVsRoundEl.textContent = gameState.vsRounds;
+    const playerDice = rollDice(4), computerDice = rollDice(4);
+    await Promise.all([
+      animateDice(diceElementsVSPlayer, playerDice, comboTextVSPlayer, getVsCombination),
+      animateDice(diceElementsVSComputer, computerDice, comboTextVSComputer, getVsCombination)
+    ]);
+    const pR = getVsCombination(playerDice), cR = getVsCombination(computerDice);
+    let winner = '平手';
+    if (pR.score > cR.score)      { gameState.vsWins.player++;   winner = '玩家'; playSound('sound-win'); }
+    else if (cR.score > pR.score) { gameState.vsWins.computer++; winner = '電腦'; playSound('sound-lose'); }
+    vsPlayerScoreEl.textContent  = gameState.vsWins.player;
+    vsComputerScoreEl.textContent = gameState.vsWins.computer;
+    addResultToHistory(`第 ${gameState.vsRounds} 回合: 玩家(${pR.bestComboText}) vs 電腦(${cR.bestComboText}) - <strong>${winner}勝</strong>`);
+    if (gameState.vsRounds >= gameState.totalRounds) {
+      const pw = gameState.vsWins.player, cw = gameState.vsWins.computer;
+      endGame(pw > cw
+        ? { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
+        : { prize: null, remark: `挑戰結束，比分 ${pw}:${cw}。` });
+    } else { gameState.isSpinning = false; spinBtnVs.disabled = false; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 4: Speed
+  // ══════════════════════════════════════════════════════
+  function startSpeedChallenge() {
+    gameState.isSpinning = false; spinBtnSpeed.disabled = false;
+    gameState.speedTimerId = setInterval(() => {
+      gameState.speedTimeLeft--;
+      speedTimerEl.textContent = gameState.speedTimeLeft;
+      if (gameState.speedTimeLeft <= 0) {
+        clearInterval(gameState.speedTimerId);
+        spinBtnSpeed.disabled = true;
+        if (!gameState.isEnding) {
+          const finalPrize = getPrizeByDiceCombinationScore(gameState.speedBestResult.score);
+          endGame({ prize: finalPrize, remark: `時間到！最佳成績：【${gameState.speedBestResult.text || '無'}】。` });
+        }
+      }
+    }, 1000);
+  }
+  async function runSpeedSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning || gameState.speedTimeLeft <= 0) return;
+    gameState.isSpinning = true; spinBtnSpeed.disabled = true;
+    const diceValues = rollDice(6);
+    await animateDice(diceElementsSpeed, diceValues, comboTextSpeed, getDiceCombination);
+    const r = getDiceCombination(diceValues);
+    if (r.score > gameState.speedBestResult.score) {
+      const p = getPrizeByDiceCombinationScore(r.score);
+      gameState.speedBestResult = { prize: p, score: r.score, text: r.bestComboText };
+      bestSpeedResultEl.innerHTML = `目前最佳成績: ${r.bestComboText}<br><span style="font-size:0.9em;color:#a5b4fc;">${p ? '可獲得: ' + p : '未達獎勵門檻'}</span>`;
+      playSound('sound-win');
+    }
+    gameState.isSpinning = false;
+    if (gameState.speedTimeLeft > 0 && !gameState.isEnding) spinBtnSpeed.disabled = false;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 5: Risk
+  // ══════════════════════════════════════════════════════
+  async function runRiskRound(isRisky) {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnRiskSafe.disabled = true; spinBtnRiskGamble.disabled = true;
+    gameState.riskRounds++;
+    currentRiskRoundEl.textContent = gameState.riskRounds;
+    const diceCount = isRisky ? 8 : 6;
+    diceElementsRisk.forEach((de, i) => de.parentElement.style.display = i < diceCount ? 'block' : 'none');
+    const diceValues = rollDice(diceCount);
+    await animateDice(diceElementsRisk.slice(0, diceCount), diceValues, comboTextRisk, getVsCombination);
+    const comboResult = getDiceCombination(diceValues), sumResult = getVsCombination(diceValues);
+    let roundScore = 0;
+    if (isRisky) {
+      if (comboResult.score >= 2000) { roundScore = sumResult.score * 1.5; comboTextRisk.textContent += ` (風險成功! +${Math.floor(roundScore)}分)`; playSound('sound-win'); }
+      else                           { roundScore = 0; comboTextRisk.textContent += ' (風險失敗! 0分)'; playSound('sound-lose'); }
+    } else { roundScore = sumResult.score; }
+    gameState.riskTotalScore += Math.floor(roundScore);
+    const p = getPrizeByFinalRiskScore(gameState.riskTotalScore);
+    totalRiskScoreEl.textContent = `總分: ${gameState.riskTotalScore}${p ? ' (目前獎勵: ' + p + ')' : ''}`;
+    if (gameState.riskRounds >= 5) {
+      endGame({ prize: getPrizeByFinalRiskScore(gameState.riskTotalScore), remark: `5回合結束，總分 ${gameState.riskTotalScore}。` });
+    } else { gameState.isSpinning = false; spinBtnRiskSafe.disabled = false; spinBtnRiskGamble.disabled = false; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 6: Elimination
+  // ══════════════════════════════════════════════════════
+  async function runEliminationRound() {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnElimination.disabled = true;
+    gameState.eliminationRounds++;
+    currentEliminationRoundEl.textContent = gameState.eliminationRounds;
+    const playerDice = rollDice(6), computerDice = rollDice(6);
+    await Promise.all([
+      animateDice(diceElementsEliminationPlayer, playerDice, comboTextEliminationPlayer, getVsCombination),
+      animateDice(diceElementsEliminationComputer, computerDice, comboTextEliminationComputer, getVsCombination)
+    ]);
+    const pSum = getVsCombination(playerDice).score, cSum = getVsCombination(computerDice).score;
+    const diff = Math.abs(pSum - cSum);
+    if      (pSum > cSum) { gameState.eliminationComputerLife -= diff; playSound('sound-win'); addResultToHistory(`玩家點數(${pSum}) > 電腦點數(${cSum})，電腦失去 ${diff} 點`); }
+    else if (cSum > pSum) { gameState.eliminationPlayerLife  -= diff; playSound('sound-lose'); addResultToHistory(`電腦點數(${cSum}) > 玩家點數(${pSum})，玩家失去 ${diff} 點`); }
+    else                  { addResultToHistory(`雙方平手 (${pSum})`); }
+    eliminationPlayerLifeEl.textContent  = Math.max(0, gameState.eliminationPlayerLife);
+    eliminationComputerLifeEl.textContent = Math.max(0, gameState.eliminationComputerLife);
+    if (gameState.eliminationPlayerLife <= 0 || gameState.eliminationComputerLife <= 0 || gameState.eliminationRounds >= 10) {
+      endGame(gameState.eliminationPlayerLife > gameState.eliminationComputerLife
+        ? { prize: '吃到堡買一送一或指定商品買一送一', remark: `恭喜獲勝！生命值 ${Math.max(0,gameState.eliminationPlayerLife)} vs ${Math.max(0,gameState.eliminationComputerLife)}` }
+        : { prize: null, remark: `挑戰結束，生命值 ${Math.max(0,gameState.eliminationPlayerLife)} vs ${Math.max(0,gameState.eliminationComputerLife)}` });
+    } else { gameState.isSpinning = false; spinBtnElimination.disabled = false; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 7: Combo Chain
+  // ══════════════════════════════════════════════════════
+  async function runComboSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning) return;
+    gameState.isSpinning = true; spinBtnCombo.disabled = true;
+    const diceValues = rollDice(6);
+    await animateDice(diceElementsCombo, diceValues, comboTextCombo, getDiceCombination);
+    const result = getDiceCombination(diceValues);
+    const currentTarget = gameState.comboTargets[gameState.comboChainLevel];
+    if (result.score >= currentTarget.score) {
+      playSound('sound-win');
+      gameState.comboChainLevel++;
+      const p = getPrizeByDiceCombinationScore(gameState.comboTargets[gameState.comboChainLevel-1].score);
+      currentComboPrizeEl.textContent = `目前獎勵: ${p || '無'}`;
+      addResultToHistory(`成功達成【${currentTarget.text}】！`);
+      if (gameState.comboChainLevel >= gameState.comboTargets.length) {
+        endGame({ prize: '免費吃到堡或指定商品', remark: '恭喜完成所有組合連鎖挑戰！' }); return;
+      }
+      comboTargetTextEl.textContent = gameState.comboTargets[gameState.comboChainLevel].text;
+    } else {
+      playSound('sound-lose');
+      gameState.comboLives--;
+      comboLivesEl.textContent = gameState.comboLives;
+      addResultToHistory(`挑戰【${currentTarget.text}】失敗，剩餘 ${gameState.comboLives} 條生命。`);
+      if (gameState.comboLives <= 0) {
+        const p = gameState.comboChainLevel > 0 ? getPrizeByDiceCombinationScore(gameState.comboTargets[gameState.comboChainLevel-1].score) : null;
+        endGame({ prize: p, remark: `生命用盡！最高達成【${gameState.comboChainLevel > 0 ? gameState.comboTargets[gameState.comboChainLevel-1].text : '無'}】。` }); return;
+      }
+    }
+    gameState.isSpinning = false; spinBtnCombo.disabled = false;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  Mode 8: Double or Nothing
+  // ══════════════════════════════════════════════════════
+  async function runDoubleSpin() {
+    if (!gameState.isGameActive || gameState.isSpinning || gameState.doubleRollsLeft <= 0 || gameState.isGamblePhase) return;
+    gameState.isSpinning = true; spinBtnDouble.disabled = true;
+    gameState.doubleRollsLeft--;
+    doubleRollsLeftEl.textContent = gameState.doubleRollsLeft;
+    const diceValues = rollDice(6);
+    await animateDice(diceElementsDouble, diceValues, comboTextDouble, getDiceCombination);
+    const result = checkSoloWin(diceValues);
+    if (result.score > gameState.doubleCurrentPrize.score) gameState.doubleCurrentPrize = result;
+    currentDoublePrizeEl.textContent = `目前獎勵: ${gameState.doubleCurrentPrize.prize || '無'}`;
+    if (gameState.doubleCurrentPrize.prize) {
+      spinBtnDouble.style.display = 'none';
+      claimBtnDouble.style.display = 'inline-block';
+      gambleBtnDouble.style.display = 'inline-block';
+      currentDoublePrizeEl.innerHTML += `<br><span style="font-size:1rem;color:#facc15;">選擇領取或雙倍賭注！</span>`;
+    }
+    if (!gameState.doubleCurrentPrize.prize && gameState.doubleRollsLeft <= 0) {
+      endGame({ prize: null, remark: '3次機會用完，未能獲得初始獎勵。' }); return;
+    }
+    if (!gameState.doubleCurrentPrize.prize && gameState.doubleRollsLeft > 0) spinBtnDouble.disabled = false;
+    gameState.isSpinning = false;
+  }
+  function handleDoubleClaim() {
+    if (gameState.isEnding) return;
+    playSound('sound-click');
+    endGame({ prize: gameState.doubleCurrentPrize.prize, remark: `您選擇領取【${gameState.doubleCurrentPrize.prize}】。` });
+  }
+  async function handleDoubleGamble() {
+    if (gameState.isEnding || gameState.isSpinning) return;
+    playSound('sound-click');
+    gameState.isSpinning = true; claimBtnDouble.disabled = true; gambleBtnDouble.disabled = true;
+    comboTextDouble.textContent = '賭注中...';
+    const gambleRoll = rollDice(1)[0];
+    diceElementsDouble.forEach((de, i) => de.parentElement.style.display = i === 0 ? 'block' : 'none');
+    await animateDice([diceElementsDouble[0]], [gambleRoll], comboTextDouble, (d) => ({ bestComboText: `賭注結果: ${d[0]}` }));
+    if (gambleRoll >= 4) {
+      playSound('sound-jackpot');
+      const newPrize = checkSoloWinByScore(Math.min(gameState.doubleCurrentPrize.score + 1, 4));
+      endGame({ prize: newPrize.prize, remark: `賭注成功！贏得【${newPrize.prize}】！` });
+    } else {
+      playSound('sound-lose');
+      endGame({ prize: null, remark: '賭注失敗，所有獎勵歸零。' });
+    }
+  }
+  function checkSoloWinByScore(score) {
+    if (score >= 4) return { prize: '免費吃到堡或指定商品', score: 4 };
+    if (score >= 3) return { prize: '吃到堡買一送一或指定商品買一送一', score: 3 };
+    if (score >= 2) return { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', score: 2 };
+    if (score >= 1) return { prize: '買五送一卷(可寄放)', score: 1 };
+    return { prize: null, score: 0 };
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  骰子計算邏輯
+  // ══════════════════════════════════════════════════════
+  function getDiceCombination(dice) {
+    const counts = {};
+    dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    const combos = Object.entries(counts).map(([num, count]) => ({ num: parseInt(num), count }))
+      .filter(c => c.count >= 2).sort((a, b) => b.count - a.count || b.num - a.num);
+    const sum = dice.reduce((a, b) => a + b, 0);
+    let score = sum, bestComboText = '散牌';
+    if (combos.length > 0) {
+      const best = combos[0];
+      if      (best.count === 6) { bestComboText = `六條(${best.num})`; score = 6000 + best.num; }
+      else if (best.count === 5) { bestComboText = `五條(${best.num})`; score = 5000 + best.num; }
+      else if (best.count === 4) { bestComboText = `四條(${best.num})`; score = 4000 + best.num; }
+      else if (best.count === 3) { bestComboText = `三條(${best.num})`; score = 3000 + best.num; }
+      else                        { bestComboText = `對子(${best.num})`; score = 2000 + best.num + sum; }
+    }
+    return { score, bestComboText };
+  }
+  function getVsCombination(dice) {
+    const sum = dice.reduce((a, b) => a + b, 0);
+    return { score: sum, bestComboText: `總點數: ${sum}` };
+  }
+  function checkSoloWin(dice) {
+    const counts = {};
+    dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    const max = Math.max(...Object.values(counts));
+    if (max >= 6) return { prize: '免費吃到堡或指定商品', score: 4 };
+    if (max >= 5) return { prize: '吃到堡買一送一或指定商品買一送一', score: 3 };
+    if (max >= 4) return { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', score: 2 };
+    if (max >= 3) return { prize: '買五送一卷(可寄放)', score: 1 };
+    return { prize: null, score: 0 };
+  }
+  function getPrizeByDiceCombinationScore(score) {
+    if (score >= 6000) return '免費吃到堡或指定商品';
+    if (score >= 5000) return '吃到堡買一送一或指定商品買一送一';
+    if (score >= 4000) return '吃到堡買一第二件半價或指定商品買一第二件半價';
+    if (score >= 3000) return '買五送一卷(可寄放)';
+    return null;
+  }
+  function getPrizeByFinalRiskScore(score) {
+    if (score >= 400) return '免費吃到堡或指定商品';
+    if (score >= 300) return '吃到堡買一送一或指定商品買一送一';
+    if (score >= 200) return '吃到堡買一第二件半價或指定商品買一第二件半價';
+    if (score >= 100) return '免費吃到堡買五送一或指定商品買5送一';
+    return null;
+  }
+  function rollDice(count) { return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1); }
+
+  async function animateDice(elements, values, comboEl, comboFunc) {
+    playSound('sound-roll');
+    if (comboEl) comboEl.textContent = '...';
+    elements.forEach((d, i) => { d.className = `dice rolling-${i % 6}`; });
+    await new Promise(r => setTimeout(r, 1500));
+    elements.forEach((d, i) => {
+      d.className = 'dice';
+      const v = values[i];
+      const ex = 360 * (Math.floor(Math.random() * 2) + 2), ey = 360 * (Math.floor(Math.random() * 2) + 2);
+      d.style.transform = `rotateX(${faceAngles[v].x + ex}deg) rotateY(${faceAngles[v].y + ey}deg)`;
+    });
+    if (comboEl && comboFunc) comboEl.textContent = comboFunc(values).bestComboText;
+  }
+
+  function addResultToHistory(message) {
+    const li = document.createElement('li');
+    li.innerHTML = message;
+    resultsHistoryList.appendChild(li);
+    resultsHistoryList.scrollTop = resultsHistoryList.scrollHeight;
+  }
+
+  function clearAllPendingEndGameTimers() {
+    if (gameState.endGameTimerId)  { clearTimeout(gameState.endGameTimerId); gameState.endGameTimerId = null; }
+    if (gameState.speedTimerId)    { clearInterval(gameState.speedTimerId);  gameState.speedTimerId   = null; }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  6% 中獎抽籤（唯一決定是否得獎的邏輯）
+  // ══════════════════════════════════════════════════════
+  const PRIZE_POOL = [
+    '免費吃到堡或指定商品',
+    '吃到堡買一送一或指定商品買一送一',
+    '吃到堡買一第二件半價或指定商品買一第二件半價',
+    '買五送一卷(可寄放)'
+  ];
+  function drawLottery() {
+    if (Math.random() >= 0.06) return null;
+    return PRIZE_POOL[Math.floor(Math.random() * PRIZE_POOL.length)];
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  遊戲結束
+  // ══════════════════════════════════════════════════════
+  function endGame({ prize = null, remark = null }) {
+    if (gameState.isEnding) return;
+    gameState.isEnding = true; gameState.isGameActive = false;
+
+    // 6% 抽籤覆蓋所有骰子邏輯
+    const wonPrize = drawLottery();
+    prize  = wonPrize;
+    remark = wonPrize
+      ? '🎊 恭喜！您在本次挑戰中獲得獎勵！'
+      : '本次挑戰結束，再接再厲！下次好運！';
+
+    clearAllPendingEndGameTimers();
+    forfeitBtn.style.display = 'none';
+    gameInstructionsEl.style.display = 'none';
+    stopBackgroundMusic();
+
+    const isWin  = !!prize;
+    const isBest = prize === '免費吃到堡或指定商品';
+    const resultClass = isWin ? (isBest ? 'jackpot' : 'success') : 'lose';
+    const icon   = isWin ? '🎉' : '😥';
+    const title  = isWin ? '恭喜！' : '挑戰結束！';
+
+    const playerInfoHTML = gameState.playerInfo.nameTail
+      ? `<p style="font-size:1.2rem;font-weight:bold;font-family:'Microsoft JhengHei',sans-serif;">
+           玩家 ${gameState.playerInfo.nameTail} (${gameState.playerInfo.numberCode})
+         </p>`
+      : '';
+
+    const prizeHTML = isWin
+      ? `<p style="font-family:'Microsoft JhengHei',sans-serif;">您贏得了</p>
+         <div class="prize-highlight">${prize}</div>
+         <p style="font-size:0.9rem;color:#facc15;font-weight:bold;line-height:1.5;padding:10px;
+            border:1px dashed #facc15;border-radius:8px;margin-top:15px;background:rgba(0,0,0,0.2);">
+           若您已得獎請暫時不要登出，請通知服務員確認。<br>
+           所有操作需由當事人親在現場完成始算生效 (畫面登出就算此次挑戰失敗)。
+         </p>`
+      : '';
+
+    const finalHTML = `
+      <div class="result-container ${resultClass}">
+        <div class="result-icon">${icon}</div>
+        <h2>${title}</h2>
+        ${playerInfoHTML}
+        <p style="font-size:1.1rem;font-family:'Microsoft JhengHei',sans-serif;line-height:1.6;">${remark}</p>
+        ${prizeHTML}
+        <button onclick="logout()" class="logout-btn">確認並登出</button>
+      </div>`;
+
+    gameWrapper.classList.remove('visible');
+    showFullscreenPage(finalHTML, resultClass);
+
+    if (isWin) {
+      playSound(isBest ? 'sound-jackpot' : 'sound-win');
+      if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0 }, angle: 90, startVelocity: 30 });
+    } else {
+      playSound('sound-lose');
+    }
+
+    syncResultWithServer(isWin, prize || '無', remark);
+  }
+
+  // ── 回報結果給後端（同一支 Apps Script） ─────────────
+  async function syncResultWithServer(isWin, prize, remark) {
+    const payload = {
+      action:     'updateStats',
+      type:       'dice',
+      vid:        gameState.vid,
+      mode:       gameState.mode || 'N/A',
+      isWin:      isWin,
+      prize:      prize,
+      remark:     remark,
+      ip:         gameState.ipAddress,
+      timestamp:  new Date().toISOString()
+    };
+    try {
+      await fetch(CHECKIN_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        mode: 'no-cors'
+      });
+    } catch(e) { console.warn('Sync error:', e); }
+  }
+
+  function resetGameStates() {
+    clearAllPendingEndGameTimers();
+    gameState.soloSpins = 0; gameState.soloBestResult = { prize: null, score: 0 };
+    bestSoloResultEl.textContent = '目前最佳成績: 無 (未達獎勵門檻)'; currentSoloSpinEl.textContent = '1';
+    gameState.competitiveRounds = 0; gameState.roundWins = { player: 0, computer: 0 };
+    currentCompetitiveRoundEl.textContent = '1'; competitivePlayerScoreEl.textContent = '0'; competitiveComputerScoreEl.textContent = '0';
+    gameState.vsRounds = 0; gameState.vsWins = { player: 0, computer: 0 };
+    currentVsRoundEl.textContent = '1'; vsPlayerScoreEl.textContent = '0'; vsComputerScoreEl.textContent = '0';
+    gameState.speedTimeLeft = 90; gameState.speedBestResult = { prize: null, score: 0, text: '無' };
+    speedTimerEl.textContent = '90'; bestSpeedResultEl.innerHTML = '目前最佳成績: 無 (未達獎勵門檻)';
+    gameState.riskRounds = 0; gameState.riskTotalScore = 0;
+    currentRiskRoundEl.textContent = '1'; totalRiskScoreEl.textContent = '總分: 0';
+    gameState.eliminationRounds = 0; gameState.eliminationPlayerLife = 15; gameState.eliminationComputerLife = 15;
+    currentEliminationRoundEl.textContent = '1'; eliminationPlayerLifeEl.textContent = '15'; eliminationComputerLifeEl.textContent = '15';
+    gameState.comboChainLevel = 0; gameState.comboLives = 3;
+    comboLivesEl.textContent = '3'; comboTargetTextEl.textContent = gameState.comboTargets[0].text; currentComboPrizeEl.textContent = '目前獎勵: 無';
+    gameState.doubleRollsLeft = 3; gameState.doubleCurrentPrize = { prize: null, score: 0 }; gameState.isGamblePhase = false;
+    doubleRollsLeftEl.textContent = '3'; currentDoublePrizeEl.textContent = '擲骰以獲得初始獎勵';
+    spinBtnDouble.style.display = 'block'; claimBtnDouble.style.display = 'none'; gambleBtnDouble.style.display = 'none';
+    resultsHistoryList.innerHTML = '';
+    document.querySelectorAll('.combo-text').forEach(ct => ct.textContent = '');
+  }
+
+  function showFullscreenPage(innerHTML, typeClass) {
+    mainContainer.style.display = 'none';
+    gameWrapper.classList.remove('visible');
+    gameResultDiv.innerHTML = innerHTML;
+    gameResultDiv.className = 'game-result-display';
+    gameResultDiv.classList.add(typeClass, 'show');
+  }
+
+  function showDailyLockScreen(name) {
+    const messageHTML = `
+      <div class="result-container error">
+        <div class="result-icon">⏳</div>
+        <h2>玩家 ${name}，您今日已挑戰過！</h2>
+        <p>下次開放倒數：</p>
+        <div id="daily-countdown" style="font-size:2rem;margin:10px 0;">--:--:--</div>
+        <button onclick="logout()" class="logout-btn">登出</button>
+      </div>`;
+    showFullscreenPage(messageHTML, 'error');
+    stopBackgroundMusic();
+    if (dailyCountdownTimerId) clearInterval(dailyCountdownTimerId);
+    dailyCountdownTimerId = setInterval(() => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const diff = tomorrow - now;
+      if (diff < 0) { logout(); return; }
+      const el = document.getElementById('daily-countdown');
+      if (!el) return;
+      el.textContent = [
+        String(Math.floor(diff / 36e5)).padStart(2, '0'),
+        String(Math.floor((diff % 36e5) / 6e4)).padStart(2, '0'),
+        String(Math.floor((diff % 6e4) / 1e3)).padStart(2, '0')
+      ].join(':');
+    }, 1000);
+  }
+
+  async function logout() {
+    if (isFullscreen()) await exitFullscreen().catch(() => {});
+    // 回到 index.html（不帶任何參數）
+    window.location.href = 'index.html';
+  }
+
+  async function getIPAddress() {
+    try { const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); gameState.ipAddress = d.ip; }
+    catch(e) { gameState.ipAddress = '無法取得'; }
+  }
+
+  async function enterFullscreen() {
+    const el = document.documentElement;
+    try { if (el.requestFullscreen) await el.requestFullscreen(); else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen(); }
+    catch(e) { console.warn('Fullscreen request failed:', e); }
+  }
+  function exitFullscreen() {
+    if (document.exitFullscreen) return document.exitFullscreen();
+    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    return Promise.resolve();
+  }
+  function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function updateFullscreenUI() {
+    fullscreenPrompt.classList.toggle('visible', isFullscreen());
+    if (isFullscreen()) setTimeout(() => fullscreenPrompt.classList.remove('visible'), 3000);
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  whole_screen：影片背景 + 全螢幕 + 內容保護
+  // ══════════════════════════════════════════════════════
+  (function() {
+    const wsFsOverlay = document.getElementById('ws-fullscreen-overlay');
+    const wsFsBtn     = document.getElementById('ws-fs-btn');
+    const wsViolation = document.getElementById('ws-violation');
+    const wsViolMsg   = document.getElementById('ws-violation-msg');
+    const wsViolOk    = document.getElementById('ws-violation-ok');
+    const wsBgVideo   = document.getElementById('ws-bg-video');
+    const wsMute      = document.getElementById('ws-mute');
+    const wsPause     = document.getElementById('ws-pause');
+
+    function wsShowViolation(msg) { wsViolMsg.textContent = msg; wsViolation.style.display = 'flex'; }
+    function wsHideViolation()    { wsViolation.style.display = 'none'; }
+
+    wsFsBtn && wsFsBtn.addEventListener('click', () => {
+      document.documentElement.requestFullscreen().then(() => {
+        wsFsOverlay.style.display = 'none';
+        document.addEventListener('fullscreenchange', () => {
+          if (!document.fullscreenElement) wsShowViolation('此網頁必須在全螢幕模式下瀏覽，請點擊確定以恢復。');
+        });
+      }).catch(() => { wsFsOverlay.style.display = 'none'; });
+    });
+
+    wsViolOk && wsViolOk.addEventListener('click', () => {
+      document.documentElement.requestFullscreen().then(() => wsHideViolation()).catch(() => wsHideViolation());
+    });
+
+    wsMute && wsMute.addEventListener('click', () => {
+      if (wsBgVideo) {
+        wsBgVideo.muted = !wsBgVideo.muted;
+        wsMute.innerHTML = wsBgVideo.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+      }
+    });
+    wsPause && wsPause.addEventListener('click', () => {
+      if (wsBgVideo) {
+        wsBgVideo.paused ? wsBgVideo.play() : wsBgVideo.pause();
+        wsPause.innerHTML = wsBgVideo.paused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>';
+      }
+    });
+
+    document.addEventListener('contextmenu', e => { e.preventDefault(); wsShowViolation('此操作已被禁止：內容受版權保護。'); });
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault(); wsShowViolation('此網頁內容受保護，無法使用開發者工具。');
+      }
+    });
+    document.body.onselectstart = () => false;
+    document.body.oncopy = () => false;
+    document.addEventListener('dragstart', e => { if (e.target.tagName === 'IMG') { e.preventDefault(); wsShowViolation('圖像拖拽保存已被禁止。'); } });
+  })();
+</script>
+</body>
+</html>

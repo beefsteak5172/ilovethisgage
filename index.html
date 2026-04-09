@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>活動簽到管理系統</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+:root{
+  --green:#22c55e; --red:#ef4444;
+  --yellow:#f59e0b; --blue:#60a5fa;
+  --bg:#0a0a1a; --surface:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.1);
+}
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  font-family:'Noto Sans TC',sans-serif;
+  color:#fff;
+  background:var(--bg);
+}
+
+/* 載入畫面 */
+#loading-overlay {
+  position:fixed; inset:0;
+  background:#000;
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999;
+  transition: opacity .5s ease;
+}
+.spinner-ring {
+  width:56px; height:56px;
+  border:6px solid rgba(255,255,255,.2);
+  border-top-color:var(--yellow);
+  border-radius:50%;
+  animation:spin 1.2s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg) } }
+
+/* 全螢幕提示 */
+#fs-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.92);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:24px; z-index:9998;
+  backdrop-filter:blur(6px);
+}
+#fs-overlay h2{ font-size:22px; color:#ddd; }
+#fs-btn {
+  padding:14px 36px;
+  background:var(--yellow); color:#000;
+  border:none; border-radius:10px;
+  font-size:18px; font-weight:900;
+  font-family:'Noto Sans TC',sans-serif;
+  cursor:pointer;
+  transition:transform .2s;
+}
+#fs-btn:hover{ transform:scale(1.05); }
+
+/* 視頻背景 */
+.video-bg {
+  position:fixed; inset:0; z-index:0; overflow:hidden;
+}
+.video-bg video {
+  position:absolute; top:50%; left:50%;
+  min-width:100%; min-height:100%;
+  transform:translate(-50%,-50%);
+  object-fit:cover;
+}
+.video-bg::after {
+  content:'';
+  position:absolute; inset:0;
+  background:rgba(5,5,20,0.78);
+}
+
+/* 主畫面（電腦端） */
+#page-admin {
+  position:relative; z-index:10;
+  width:100vw; height:100vh;
+  display:none;
+  flex-direction:column;
+}
+#page-admin.active{ display:flex; }
+
+/* 頂部 */
+.top-bar {
+  padding:14px 32px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+  background:rgba(0,0,0,.3);
+  backdrop-filter:blur(10px);
+}
+.top-bar h1{
+  font-size:17px; font-weight:900; letter-spacing:1px;
+  display:flex; align-items:center; gap:10px;
+}
+.live-dot{
+  width:9px; height:9px; border-radius:50%;
+  background:var(--green);
+  animation:blink 2s infinite;
+  display:inline-block;
+}
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.3} }
+.top-right{ font-size:12px; color:rgba(255,255,255,.4); }
+
+/* 中間：兩個大 QR Code */
+.qr-main {
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  overflow:hidden;
+}
+
+.qr-panel {
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:32px;
+  gap:24px;
+  position:relative;
+}
+.qr-panel:first-child{
+  border-right:1px solid var(--border);
+}
+
+.qr-label {
+  display:flex; flex-direction:column;
+  align-items:center; gap:6px;
+}
+.qr-badge {
+  font-size:11px; font-weight:700; letter-spacing:2px;
+  padding:3px 14px; border-radius:100px;
+}
+.chicken-badge{ background:rgba(245,158,11,.2); color:var(--yellow); }
+.dice-badge{ background:rgba(96,165,250,.2); color:var(--blue); }
+
+.qr-title {
+  font-size:clamp(20px,2.5vw,30px);
+  font-weight:900; text-align:center;
+}
+.qr-desc {
+  font-size:clamp(12px,1.2vw,15px);
+  color:rgba(255,255,255,.5);
+  text-align:center; line-height:1.8;
+}
+
+/* QR Code 框 */
+.qr-frame {
+  background:#fff;
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 0 60px rgba(255,255,255,0.08);
+  width:clamp(180px, 28vw, 380px);
+  height:clamp(180px, 28vw, 380px);
+  display:flex; align-items:center; justify-content:center;
+}
+.qr-frame canvas,
+.qr-frame img {
+  width:100% !important;
+  height:100% !important;
+}
+
+/* ── QR 刷新倒數 ── */
+.qr-refresh-hint {
+  font-size:11px; color:rgba(255,255,255,.3);
+  display:flex; align-items:center; gap:5px;
+}
+.qr-refresh-hint span{ color:var(--yellow); font-weight:700; }
+
+/* 底部紀錄條 */
+.bottom-bar {
+  flex-shrink:0;
+  padding:10px 24px;
+  border-top:1px solid var(--border);
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(10px);
+  display:flex; align-items:center; gap:16px;
+  overflow:hidden;
+}
+.b-stat {
+  display:flex; align-items:center; gap:6px;
+  font-size:13px; flex-shrink:0;
+}
+.b-stat .bn{ font-size:18px; font-weight:900; }
+.b-stat.ok  .bn{ color:var(--green); }
+.b-stat.deny .bn{ color:var(--red); }
+.b-stat.tot  .bn{ color:var(--blue); }
+
+.b-divider{ width:1px; height:24px; background:var(--border); flex-shrink:0; }
+
+.b-log-strip {
+  flex:1; overflow:hidden;
+  display:flex; gap:10px; align-items:center;
+}
+.b-chip {
+  flex-shrink:0;
+  font-size:11px; padding:4px 12px; border-radius:100px;
+  border:1px solid;
+  animation:slideChip .3s ease;
+  white-space:nowrap;
+}
+@keyframes slideChip{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.b-chip.ok   { border-color:var(--green); color:var(--green); }
+.b-chip.deny { border-color:var(--red);   color:var(--red); }
+
+/* 彈窗 */
+#overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:500;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(12px);
+}
+#overlay.show{ display:flex; animation:fadeIn .2s ease; }
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+.popup {
+  width:min(420px,88vw);
+  background:rgba(20,20,40,0.98);
+  border:1px solid var(--border);
+  border-radius:28px; padding:48px 36px;
+  text-align:center;
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{ from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+.p-icon{ font-size:72px; margin-bottom:16px; }
+.p-title{ font-size:32px; font-weight:900; margin-bottom:10px; }
+.ok-pop  .p-title{ color:var(--green); }
+.deny-pop .p-title{ color:var(--red); }
+.p-desc{ font-size:15px; color:rgba(255,255,255,.55); line-height:1.8; }
+.p-plan{
+  margin-top:20px; font-size:14px;
+  background:rgba(255,255,255,.06); border-radius:10px; padding:12px;
+  color:rgba(255,255,255,.6);
+}
+.p-plan strong{ color:#fff; }
+.prog-bar{ margin-top:22px; height:4px; background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; }
+.prog-fill{ height:100%; border-radius:2px; }
+.ok-pop   .prog-fill{ background:var(--green); }
+.deny-pop .prog-fill{ background:var(--red); }
+
+/* 手機端 */
+#page-mobile {
+  position:relative; z-index:10;
+  width:100vw; min-height:100vh;
+  display:none;
+  flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:40px 28px; text-align:center; gap:20px;
+}
+#page-mobile.active{ display:flex; }
+.m-icon{ font-size:80px; }
+.m-title{ font-size:28px; font-weight:900; }
+.m-ok   .m-title{ color:var(--green); }
+.m-deny .m-title{ color:var(--red); }
+.m-wait .m-title{ color:rgba(255,255,255,.4); }
+.m-err  .m-title{ color:var(--red); }
+.m-desc{ font-size:15px; color:rgba(255,255,255,.55); line-height:1.9; white-space:pre-line; }
+.m-box{
+  background:rgba(255,255,255,.07);
+  border:1px solid var(--border);
+  border-radius:14px; padding:16px 24px;
+  font-size:15px; width:100%; max-width:320px;
+}
+.m-spin{
+  width:44px; height:44px;
+  border:4px solid rgba(255,255,255,.15);
+  border-top-color:rgba(255,255,255,.6);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+/* 視頻控制 */
+.vid-ctrl {
+  position:fixed; bottom:20px; right:20px; z-index:200;
+  display:flex; gap:8px;
+}
+.vid-ctrl button {
+  width:36px; height:36px;
+  background:rgba(0,0,0,.5); border:none; color:#fff;
+  border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s;
+}
+.vid-ctrl button:hover{ background:rgba(0,0,0,.8); }
+</style>
+</head>
+<body>
+
+<!-- 載入 -->
+<div id="loading-overlay">
+  <div class="spinner-ring"></div>
+</div>
+
+<!-- 全螢幕提示 -->
+<div id="fs-overlay">
+  <h2>請進入全螢幕模式</h2>
+  <button id="fs-btn">⛶ 進入全螢幕</button>
+</div>
+
+<!-- 影片背景 -->
+<div class="video-bg">
+  <video id="bg-video" autoplay muted loop playsinline>
+    <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- 視頻控制 -->
+<div class="vid-ctrl">
+  <button id="mute-btn" title="靜音"><i class="fas fa-volume-mute"></i></button>
+  <button id="pp-btn"   title="暫停"><i class="fas fa-pause"></i></button>
+</div>
+
+<!-- 電腦端 -->
+<div id="page-admin">
+  <div class="top-bar">
+    <h1>
+      <span class="live-dot"></span>
+      活動簽到管理台
+    </h1>
+    <div class="top-right" id="sync-text">等待中...</div>
+  </div>
+
+  <div class="qr-main">
+    <!-- 方案 A：炸雞 -->
+    <div class="qr-panel">
+      <div class="qr-label">
+        <span class="qr-badge chicken-badge">方案 A</span>
+        <div class="qr-title">🍗 炸雞第二份半價</div>
+        <div class="qr-desc">購買第一份炸雞，第二份享 5 折<br>每人每天限一次</div>
+      </div>
+      <div class="qr-frame" id="qr-chicken"></div>
+      <div class="qr-refresh-hint">QR 每小時刷新 · 剩餘 <span id="chicken-refresh-cnt">--</span> 分鐘</div>
+    </div>
+
+    <!-- 方案 B：骰子 -->
+    <div class="qr-panel">
+      <div class="qr-label">
+        <span class="qr-badge dice-badge">方案 B</span>
+        <div class="qr-title">🎲 骰子每日挑戰</div>
+        <div class="qr-desc">掃描進入骰子挑戰遊戲<br>贏得免費吃到堡或其他獎品 · 每人每天限一次</div>
+      </div>
+      <div class="qr-frame" id="qr-dice"></div>
+      <div class="qr-refresh-hint">QR 每小時刷新 · 剩餘 <span id="dice-refresh-cnt">--</span> 分鐘</div>
+    </div>
+  </div>
+
+  <!-- 底部紀錄條 -->
+  <div class="bottom-bar">
+    <div class="b-stat ok">
+      <span class="bn" id="s-ok">0</span>
+      <span>通過</span>
+    </div>
+    <div class="b-divider"></div>
+    <div class="b-stat deny">
+      <span class="bn" id="s-deny">0</span>
+      <span>已參加</span>
+    </div>
+    <div class="b-divider"></div>
+    <div class="b-stat tot">
+      <span class="bn" id="s-total">0</span>
+      <span>今日總計</span>
+    </div>
+    <div class="b-divider"></div>
+    <div class="b-log-strip" id="b-log-strip">
+      <span style="font-size:12px;color:rgba(255,255,255,.3)">等待客人掃描...</span>
+    </div>
+  </div>
+</div>
+
+<!-- 手機端（僅方案A：炸雞會在此顯示；方案B骰子會跳轉至 dice.html） -->
+<div id="page-mobile">
+  <div class="m-icon" id="m-icon">⏳</div>
+  <div class="m-title" id="m-title">確認中...</div>
+  <div class="m-desc"  id="m-desc">正在查詢，請稍候</div>
+  <div class="m-spin"  id="m-spin"></div>
+  <div class="m-box"   id="m-box" style="display:none"></div>
+</div>
+
+<!-- 彈窗 -->
+<div id="overlay">
+  <div class="popup" id="popup">
+    <div class="p-icon"  id="p-icon"></div>
+    <div class="p-title" id="p-title"></div>
+    <div class="p-desc"  id="p-desc"></div>
+    <div class="p-plan"  id="p-plan"></div>
+    <div class="prog-bar"><div class="prog-fill" id="p-fill" style="width:100%"></div></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  設定區（請依實際部署情況修改）
+// ══════════════════════════════════════════════════════
+
+// Google Apps Script 網址（炸雞 checkin 使用）
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW_vv9Y-J9J7YoSLpsPRcKBmeI7LjVjn2dv2dI-Y6X2i03GXrlZjGQrWr4Ra995os/exec';
+
+// dice.html 的路徑（與 index.html 同資料夾時用 'dice.html'）
+const DICE_HTML_PATH = 'dice.html';
+
+const PLAN = {
+  chicken: '🍗 炸雞第二份半價',
+  dice:    '🎲 骰子每日挑戰'
+};
+
+// ══════════════════════════════════════════════════════
+//  判斷模式：手機掃碼 or 電腦管理台
+// ══════════════════════════════════════════════════════
+const params  = new URLSearchParams(location.search);
+const TYPE    = params.get('type');
+const VID     = params.get('vid');
+
+// 骰子方案掃碼 → 直接跳轉至 dice.html（不在 index 處理）
+// 炸雞方案掃碼 → 在 index.html 手機端顯示
+const IS_MOBILE = !!(TYPE && VID && TYPE === 'chicken');
+
+// ══════════════════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const lo = document.getElementById('loading-overlay');
+  lo.style.opacity = '0';
+  setTimeout(() => lo.style.display = 'none', 500);
+
+  if (IS_MOBILE) {
+    // 炸雞方案：手機簽到頁面
+    document.getElementById('fs-overlay').style.display = 'none';
+    document.getElementById('page-mobile').classList.add('active');
+    runMobile(TYPE, VID);
+  } else if (TYPE === 'dice' && VID) {
+    // 骰子方案：重定向至 dice.html（理論上 QR 直接指向 dice.html，此處為保險）
+    location.replace(`${DICE_HTML_PATH}?type=dice&vid=${encodeURIComponent(VID)}`);
+  } else {
+    // 無參數 → 電腦管理台
+    setupFullscreen();
+    setupVideoControls();
+    setupProtection();
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  全螢幕
+// ══════════════════════════════════════════════════════
+function setupFullscreen() {
+  document.getElementById('fs-btn').addEventListener('click', () => {
+    document.documentElement.requestFullscreen().then(() => {
+      document.getElementById('fs-overlay').style.display = 'none';
+      document.getElementById('page-admin').classList.add('active');
+      runAdmin();
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+          document.getElementById('fs-overlay').style.display = 'flex';
+          document.getElementById('page-admin').classList.remove('active');
+        }
+      });
+    }).catch(() => {
+      document.getElementById('fs-overlay').style.display = 'none';
+      document.getElementById('page-admin').classList.add('active');
+      runAdmin();
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  視頻控制
+// ══════════════════════════════════════════════════════
+function setupVideoControls() {
+  const vid = document.getElementById('bg-video');
+  document.getElementById('mute-btn').addEventListener('click', () => {
+    vid.muted = !vid.muted;
+    document.getElementById('mute-btn').innerHTML =
+      vid.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+  });
+  document.getElementById('pp-btn').addEventListener('click', () => {
+    vid.paused ? vid.play() : vid.pause();
+    document.getElementById('pp-btn').innerHTML =
+      vid.paused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>';
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  內容保護
+// ══════════════════════════════════════════════════════
+function setupProtection() {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.keyCode === 123 ||
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) ||
+        (e.ctrlKey && e.keyCode === 85)) {
+      e.preventDefault();
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  電腦端主邏輯
+// ══════════════════════════════════════════════════════
+function runAdmin() {
+  buildQRCodes();
+  startPolling();
+  startRefreshCountdown();
+}
+
+// ── QR Code 刷新倒數 ──────────────────────────────────
+let qrBuiltAt = Date.now();
+function startRefreshCountdown() {
+  setInterval(() => {
+    const elapsed  = Math.floor((Date.now() - qrBuiltAt) / 1000 / 60); // 已過分鐘
+    const remaining = Math.max(0, 60 - elapsed);
+    document.getElementById('chicken-refresh-cnt').textContent = remaining;
+    document.getElementById('dice-refresh-cnt').textContent   = remaining;
+  }, 10000);
+}
+
+// ── 產生 QR Code URL ──────────────────────────────────
+// 每次呼叫都產生獨立的 vid（讓每張 QR 背後有唯一識別碼）
+function makeURL(type) {
+  const vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  if (type === 'dice') {
+    // 骰子方案：直接指向 dice.html
+    const base = location.href.replace(/[^/]*(\?.*)?$/, '');
+    return `${base}${DICE_HTML_PATH}?type=dice&vid=${vid}`;
+  }
+
+  // 炸雞方案：指向 index.html（手機端）
+  const base = location.href.split('?')[0];
+  return `${base}?type=${type}&vid=${vid}`;
+}
+
+// ── 建立 QR Code ──────────────────────────────────────
+let qrInstances = {};
+
+function buildQRCodes() {
+  ['chicken', 'dice'].forEach(type => {
+    const el   = document.getElementById(`qr-${type}`);
+    el.innerHTML = ''; // 清空舊 QR
+
+    const size = el.offsetWidth - 24;
+    const url  = makeURL(type);
+
+    qrInstances[type] = new QRCode(el, {
+      text: url,
+      width: size, height: size,
+      colorDark: '#000', colorLight: '#fff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+
+  qrBuiltAt = Date.now();
+}
+
+// ── 每小時自動重新產生 QR（讓 vid 保持新鮮） ──────────
+setInterval(() => {
+  buildQRCodes();
+}, 3600000); // 1 小時
+
+// ══════════════════════════════════════════════════════
+//  輪詢後端
+// ══════════════════════════════════════════════════════
+let lastKnownCount = 0;
+
+function startPolling() {
+  fetchLog();
+  setInterval(fetchLog, 3000);
+}
+
+async function fetchLog() {
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?action=poll&t=${Date.now()}`);
+    const json = await res.json();
+
+    if (json.status !== 'OK') return;
+
+    const rows = json.rows || [];
+    updateStats(rows);
+
+    if (rows.length > lastKnownCount) {
+      rows.slice(lastKnownCount).forEach(row => {
+        showPopup(row.type, row.result);
+        addChip(row.type, row.result, row.time);
+      });
+      lastKnownCount = rows.length;
+    }
+
+    updateSyncStatus('success');
+  } catch(e) {
+    updateSyncStatus('error');
+  }
+}
+
+function updateSyncStatus(status) {
+  const el  = document.getElementById('sync-text');
+  const now = new Date().toLocaleTimeString('zh-TW');
+  el.innerHTML = status === 'success'
+    ? `最後同步：${now} <span style="color:var(--green)">● 連線正常</span>`
+    : `最後同步：${now} <span style="color:var(--red)">● 連線異常</span>`;
+}
+
+function updateStats(rows) {
+  document.getElementById('s-ok').textContent    = rows.filter(r => r.result === 'ok').length;
+  document.getElementById('s-deny').textContent  = rows.filter(r => r.result === 'deny').length;
+  document.getElementById('s-total').textContent = rows.length;
+}
+
+// ── 底部跑馬燈 ────────────────────────────────────────
+const MAX_CHIPS = 8;
+let chips = [];
+
+function addChip(type, result, time) {
+  const strip = document.getElementById('b-log-strip');
+  const chip  = document.createElement('div');
+  chip.className = `b-chip ${result}`;
+
+  const timeStr = time ? (time.split(' ')[1] || time) : '';
+  const icon    = result === 'ok' ? '✓' : '✗';
+  chip.textContent = `${icon} ${PLAN[type] || type} ${timeStr}`;
+
+  chips.unshift(chip);
+  strip.prepend(chip);
+
+  if (chips.length > MAX_CHIPS) chips.pop().remove();
+
+  const placeholder = strip.querySelector('span');
+  if (placeholder) placeholder.remove();
+}
+
+// ── 彈窗 ──────────────────────────────────────────────
+let popTimer = null;
+
+function showPopup(type, result) {
+  const popup = document.getElementById('popup');
+  popup.className = `popup ${result === 'ok' ? 'ok-pop' : 'deny-pop'}`;
+
+  document.getElementById('p-icon').textContent  = result === 'ok' ? '✅' : '🚫';
+  document.getElementById('p-title').textContent = result === 'ok' ? '可以參加！' : '今天已參加過';
+  document.getElementById('p-desc').textContent  = result === 'ok'
+    ? '這位客人今天尚未參加，請讓他參加！'
+    : '這位客人今天已經參加過此方案，明天再來！';
+  document.getElementById('p-plan').innerHTML = `方案：<strong>${PLAN[type] || type}</strong>`;
+
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('show');
+
+  const fill = document.getElementById('p-fill');
+  fill.style.transition = 'none';
+  fill.style.width      = '100%';
+  setTimeout(() => {
+    fill.style.transition = 'width 5s linear';
+    fill.style.width      = '0%';
+  }, 60);
+
+  if (popTimer) clearTimeout(popTimer);
+  popTimer = setTimeout(() => overlay.classList.remove('show'), 5000);
+}
+
+document.getElementById('overlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.remove('show');
+    clearTimeout(popTimer);
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  手機端：炸雞簽到
+// ══════════════════════════════════════════════════════
+async function runMobile(type, vid) {
+  if (!['chicken'].includes(type)) {
+    setMobile('err', '❌', '連結無效', '請重新掃描 QR Code');
+    return;
+  }
+
+  try {
+    const url  = `${SCRIPT_URL}?action=checkin&type=${encodeURIComponent(type)}&vid=${encodeURIComponent(vid)}&t=${Date.now()}`;
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    document.getElementById('m-spin').style.display = 'none';
+
+    if (json.status === 'OK') {
+      setMobile('ok', '✅', '可以參加！', '歡迎參加活動\n請向店員出示此畫面', PLAN[type]);
+    } else if (json.status === 'DENY') {
+      setMobile('deny', '🚫', '今天已參加過', '您今天已參加過此方案\n明天再來！', PLAN[type]);
+    } else {
+      setMobile('err', '❌', '系統錯誤', json.message || '請稍後再試');
+    }
+  } catch(e) {
+    document.getElementById('m-spin').style.display = 'none';
+    setMobile('err', '❌', '無法連線', '請確認網路後重新掃描');
+  }
+}
+
+function setMobile(cls, icon, title, desc, boxText) {
+  const page = document.getElementById('page-mobile');
+  page.className = `page active m-${cls}`;
+  document.getElementById('m-icon').textContent  = icon;
+  document.getElementById('m-title').textContent = title;
+  document.getElementById('m-desc').textContent  = desc;
+
+  if (boxText) {
+    const box = document.getElementById('m-box');
+    box.style.display = 'block';
+    box.innerHTML = `方案：<strong>${boxText}</strong>`;
+  }
+}
+</script>
+</body>
+</html>
