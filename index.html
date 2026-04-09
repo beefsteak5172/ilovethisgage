@@ -402,7 +402,7 @@ html, body {
 // ══════════════════════════════════════════════════════
 
 // Google Apps Script 網址（炸雞 checkin 使用）
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW_vv9Y-J9J7YoSLpsPRcKBmeI7LjVjn2dv2dI-Y6X2i03GXrlZjGQrWr4Ra995os/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynSW7GWw49LCzujp_WFX_ddjH9CYLpsr8KgvQitZdUO-JHEvmRUqxDz8MYasCisAhrfQ/exec';
 
 // dice.html 的路徑（與 index.html 同資料夾時用 'dice.html'）
 const DICE_HTML_PATH = 'dice.html';
@@ -527,9 +527,9 @@ function makeURL(type) {
   const vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   if (type === 'dice') {
-    // 骰子方案：直接指向 dice.html
-    const base = location.href.replace(/[^/]*(\?.*)?$/, '');
-    return `${base}${DICE_HTML_PATH}?type=dice&vid=${vid}`;
+    // 骰子方案：先到 GAS 做 Google 帳號驗證，再跳轉 dice.html
+    const gasBase = 'https://script.google.com/macros/s/AKfycbynSW7GWw49LCzujp_WFX_ddjH9CYLpsr8KgvQitZdUO-JHEvmRUqxDz8MYasCisAhrfQ/exec';
+    return `${gasBase}?action=dice_entry&type=dice&vid=${vid}`;
   }
 
   // 炸雞方案：指向 index.html（手機端）

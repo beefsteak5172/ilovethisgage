@@ -501,7 +501,7 @@
   // ══════════════════════════════════════════════════════
 
   // 與 index.html 共用同一支 Google Apps Script
-  const CHECKIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW_vv9Y-J9J7YoSLpsPRcKBmeI7LjVjn2dv2dI-Y6X2i03GXrlZjGQrWr4Ra995os/exec';
+  const CHECKIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbynSW7GWw49LCzujp_WFX_ddjH9CYLpsr8KgvQitZdUO-JHEvmRUqxDz8MYasCisAhrfQ/exec';
 
   // ══════════════════════════════════════════════════════
   //  遊戲狀態
@@ -611,7 +611,7 @@
   }
 
   // ══════════════════════════════════════════════════════
-  //  每日限玩（localStorage 快取）
+  //  每日限玩（localStorage 輔助快取）
   // ══════════════════════════════════════════════════════
   function getTodayKey() {
     const d = new Date();
@@ -623,7 +623,6 @@
   function markPlayedToday() {
     try {
       localStorage.setItem(getTodayKey(), '1');
-      // 清理 7 天前的舊 key
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const k = localStorage.key(i);
         if (k && k.startsWith('dice_played_') && k !== getTodayKey()) localStorage.removeItem(k);
@@ -632,10 +631,10 @@
   }
 
   // ══════════════════════════════════════════════════════
-  //  QR Code 驗證入口（整合 index.html 的 checkin API）
+  //  QR Code 驗證入口（新版：信任 GAS 跳轉帶來的 gtoken）
   // ══════════════════════════════════════════════════════
   function checkQRAndEnter() {
-    // 測試按鈕
+    // 測試按鈕（開發用）
     const testBtn = document.getElementById('test-enter-btn');
     if (testBtn) {
       testBtn.addEventListener('click', () => {
@@ -647,58 +646,42 @@
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type'); // 應為 'dice'
-    const vid  = urlParams.get('vid');  // index.html 產生的唯一識別碼
+    const type   = urlParams.get('type');
+    const vid    = urlParams.get('vid');
+    const gtoken = urlParams.get('gtoken'); // 由 GAS 驗證後附帶
 
-    // 沒有合法參數 → 停留在 QR 等待畫面
-    if (!vid || type !== 'dice') {
-      showQRError('');
-      return;
-    }
-
-    gameState.vid = vid;
-    gameState.playerInfo = { nameTail: vid.slice(0, 4).toUpperCase(), numberCode: vid.slice(-4).toUpperCase() };
-
-    // 本地快取：今日已玩
-    if (hasPlayedToday()) {
-      showDailyLockScreen('您');
-      return;
-    }
-
-    // 呼叫與 index.html 相同的後端 checkin API
-    verifyWithCheckin(vid);
-  }
-
-  async function verifyWithCheckin(vid) {
-    // 顯示載入中
-    document.getElementById('qr-waiting-msg').innerHTML = `
-      <div class="ld-spinner"></div>
-      <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">驗證身份中，請稍候…</p>`;
-
-    try {
-      const res  = await fetch(
-        `${CHECKIN_SCRIPT_URL}?action=checkin&type=dice&vid=${encodeURIComponent(vid)}&t=${Date.now()}`
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-
-      if (json.status === 'OK') {
-        // ✅ 首次進入
-        gameState.playerData = { roundCount: 0, hasClaimed: false };
-        loginPlayer();
-      } else if (json.status === 'DENY') {
-        // 🚫 今日已參加
-        markPlayedToday();
-        showDailyLockScreen('您');
-      } else {
-        throw new Error(json.message || '驗證失敗');
-      }
-    } catch(e) {
-      console.warn('Checkin API error:', e.message);
-      // 後端無法連線時，允許進入（不應因網路問題擋住玩家）
+    // 情況一：從 GAS 跳轉過來（有 gtoken）→ 直接信任，進入遊戲
+    if (vid && type === 'dice' && gtoken) {
+      gameState.vid = vid;
+      gameState.playerInfo = {
+        nameTail: vid.slice(0, 4).toUpperCase(),
+        numberCode: vid.slice(-4).toUpperCase()
+      };
       gameState.playerData = { roundCount: 0, hasClaimed: false };
-      loginPlayer();
+      markPlayedToday();
+      document.getElementById('qr-waiting-msg').innerHTML = `
+        <div class="ld-spinner"></div>
+        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">
+          驗證成功，正在載入遊戲…
+        </p>`;
+      setTimeout(() => loginPlayer(), 800);
+      return;
     }
+
+    // 情況二：有 vid 但沒有 gtoken → 引導重新掃碼
+    if (vid && type === 'dice' && !gtoken) {
+      document.getElementById('qr-waiting-msg').innerHTML = `
+        <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#f59e0b; font-size:1.1rem; margin-bottom:12px;">
+          請重新掃描 QR Code
+        </p>
+        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#64748b; font-size:0.85rem; line-height:1.8;">
+          需要透過 QR Code 掃描進入才能驗證身份<br>請向店員索取最新 QR Code
+        </p>`;
+      return;
+    }
+
+    // 情況三：完全沒有參數 → 顯示等待掃碼（保持原有畫面）
   }
 
   function showQRError(msg) {
