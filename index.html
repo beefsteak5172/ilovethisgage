@@ -402,7 +402,7 @@ html, body {
 // ══════════════════════════════════════════════════════
 
 // Google Apps Script 網址（炸雞 checkin 使用）
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmXzF1GflA5kzJ-_c04MUgLyN3PWhQMywczAXyvrDqTjxfPoOoXTrDc6HJkZcQz341Ew/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW_vv9Y-J9J7YoSLpsPRcKBmeI7LjVjn2dv2dI-Y6X2i03GXrlZjGQrWr4Ra995os/exec';
 
 // dice.html 的路徑（與 index.html 同資料夾時用 'dice.html'）
 const DICE_HTML_PATH = 'dice.html';
@@ -527,9 +527,9 @@ function makeURL(type) {
   const vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   if (type === 'dice') {
-    // 骰子方案：先到 GAS 做 Google 帳號驗證，再跳轉 dice.html
-    const gasBase = 'https://script.google.com/macros/s/AKfycbxmXzF1GflA5kzJ-_c04MUgLyN3PWhQMywczAXyvrDqTjxfPoOoXTrDc6HJkZcQz341Ew/exec';
-    return `${gasBase}?action=dice_entry&type=dice&vid=${vid}`;
+    // 骰子方案：直接指向 dice.html
+    const base = location.href.replace(/[^/]*(\?.*)?$/, '');
+    return `${base}${DICE_HTML_PATH}?type=dice&vid=${vid}`;
   }
 
   // 炸雞方案：指向 index.html（手機端）
@@ -671,25 +671,113 @@ document.getElementById('overlay').addEventListener('click', function(e) {
 });
 
 // ══════════════════════════════════════════════════════
-//  手機端：炸雞簽到
+//  Browser Fingerprint（手機裝置識別）
 // ══════════════════════════════════════════════════════
+async function getDeviceFingerprint() {
+  try {
+    const components = [
+      navigator.userAgent,
+      navigator.language,
+      navigator.languages ? navigator.languages.join(',') : '',
+      String(screen.width) + 'x' + String(screen.height),
+      String(screen.colorDepth),
+      String(new Date().getTimezoneOffset()),
+      navigator.hardwareConcurrency || '',
+      navigator.deviceMemory || '',
+      navigator.platform || '',
+      (function() {
+        try {
+          const c = document.createElement('canvas');
+          const ctx = c.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillStyle = '#f60';
+          ctx.fillRect(125, 1, 62, 20);
+          ctx.fillStyle = '#069';
+          ctx.fillText('FP🍗', 2, 15);
+          ctx.fillStyle = 'rgba(102,204,0,0.7)';
+          ctx.fillText('FP🍗', 4, 17);
+          return c.toDataURL().slice(-50);
+        } catch(e) { return 'nocanvas'; }
+      })(),
+      (function() {
+        try {
+          const c = document.createElement('canvas');
+          const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+          if (!gl) return 'nowebgl';
+          const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+          return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'nodbg';
+        } catch(e) { return 'nowebgl'; }
+      })()
+    ];
+    const raw = components.join('|');
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    return 'fp_' + hex.slice(0, 32);
+  } catch(e) {
+    let fallback = '';
+    try { fallback = localStorage.getItem('_fp_fallback') || ''; } catch(_) {}
+    if (!fallback) {
+      fallback = 'fp_fb_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      try { localStorage.setItem('_fp_fallback', fallback); } catch(_) {}
+    }
+    return fallback;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  手機端：炸雞簽到（Fingerprint + localStorage 雙重把關）
+// ══════════════════════════════════════════════════════
+function getLocalTodayKey(type) {
+  const taipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return `checkin_${type}_${taipei.getFullYear()}-${taipei.getMonth()}-${taipei.getDate()}`;
+}
+function hasCheckedInToday(type) {
+  try { return localStorage.getItem(getLocalTodayKey(type)) === '1'; } catch(e) { return false; }
+}
+function markCheckedInToday(type) {
+  try {
+    const key = getLocalTodayKey(type);
+    localStorage.setItem(key, '1');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('checkin_') && k !== key) localStorage.removeItem(k);
+    }
+  } catch(e) {}
+}
+
 async function runMobile(type, vid) {
   if (!['chicken'].includes(type)) {
     setMobile('err', '❌', '連結無效', '請重新掃描 QR Code');
     return;
   }
 
+  // ── 第一道：本機記錄（最快，不需網路）──────────────────
+  if (hasCheckedInToday(type)) {
+    document.getElementById('m-spin').style.display = 'none';
+    setMobile('deny', '🚫', '今天已參加過', '您今天已參加過此方案\n明天再來！', PLAN[type]);
+    return;
+  }
+
+  // ── 第二道：產生 Fingerprint 傳給 GAS ──────────────────
+  const fp = await getDeviceFingerprint();
+
   try {
-    const url  = `${SCRIPT_URL}?action=checkin&type=${encodeURIComponent(type)}&vid=${encodeURIComponent(vid)}&t=${Date.now()}`;
+    const url = `${SCRIPT_URL}?action=checkin&type=${encodeURIComponent(type)}&vid=${encodeURIComponent(vid)}&fp=${encodeURIComponent(fp)}&t=${Date.now()}`;
     const res  = await fetch(url);
     const json = await res.json();
 
     document.getElementById('m-spin').style.display = 'none';
 
     if (json.status === 'OK') {
+      markCheckedInToday(type);
       setMobile('ok', '✅', '可以參加！', '歡迎參加活動\n請向店員出示此畫面', PLAN[type]);
     } else if (json.status === 'DENY') {
-      setMobile('deny', '🚫', '今天已參加過', '您今天已參加過此方案\n明天再來！', PLAN[type]);
+      markCheckedInToday(type);
+      const reason = json.reason === 'device'
+        ? '此裝置今天已參加過\n明天再來！'
+        : '您今天已參加過此方案\n明天再來！';
+      setMobile('deny', '🚫', '今天已參加過', reason, PLAN[type]);
     } else {
       setMobile('err', '❌', '系統錯誤', json.message || '請稍後再試');
     }

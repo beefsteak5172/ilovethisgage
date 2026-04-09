@@ -611,6 +611,67 @@
   }
 
   // ══════════════════════════════════════════════════════
+  //  Browser Fingerprint（手機裝置識別，與 Gmail 無關）
+  // ══════════════════════════════════════════════════════
+  async function getDeviceFingerprint() {
+    try {
+      // 收集裝置特徵
+      const components = [
+        navigator.userAgent,
+        navigator.language,
+        navigator.languages ? navigator.languages.join(',') : '',
+        String(screen.width) + 'x' + String(screen.height),
+        String(screen.colorDepth),
+        String(new Date().getTimezoneOffset()),
+        navigator.hardwareConcurrency || '',
+        navigator.deviceMemory || '',
+        navigator.platform || '',
+        // Canvas Fingerprint（每台手機 GPU 渲染略不同）
+        (function() {
+          try {
+            const c = document.createElement('canvas');
+            const ctx = c.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('FP🎲', 2, 15);
+            ctx.fillStyle = 'rgba(102,204,0,0.7)';
+            ctx.fillText('FP🎲', 4, 17);
+            return c.toDataURL().slice(-50);
+          } catch(e) { return 'nocanvas'; }
+        })(),
+        // WebGL 渲染器資訊
+        (function() {
+          try {
+            const c = document.createElement('canvas');
+            const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+            if (!gl) return 'nowebgl';
+            const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+            return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'nodbg';
+          } catch(e) { return 'nowebgl'; }
+        })()
+      ];
+
+      // 用 SHA-256 雜湊成固定長度的 ID
+      const raw = components.join('|');
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+      return 'fp_' + hex.slice(0, 32); // 取前32碼就夠用
+    } catch(e) {
+      // 萬一瀏覽器不支援，退回隨機ID並存到localStorage
+      let fallback = '';
+      try { fallback = localStorage.getItem('_fp_fallback') || ''; } catch(_) {}
+      if (!fallback) {
+        fallback = 'fp_fb_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        try { localStorage.setItem('_fp_fallback', fallback); } catch(_) {}
+      }
+      return fallback;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
   //  每日限玩（localStorage 輔助快取）
   // ══════════════════════════════════════════════════════
   function getTodayKey() {
@@ -650,7 +711,7 @@
     const vid    = urlParams.get('vid');
     const gtoken = urlParams.get('gtoken'); // 由 GAS 驗證後附帶
 
-    // 情況一：從 GAS 跳轉過來（有 gtoken）→ 直接信任，進入遊戲
+    // 情況一：從 GAS 跳轉過來（有 gtoken）→ 產生 fingerprint 後送 GAS 比對
     if (vid && type === 'dice' && gtoken) {
       gameState.vid = vid;
       gameState.playerInfo = {
@@ -658,13 +719,22 @@
         numberCode: vid.slice(-4).toUpperCase()
       };
       gameState.playerData = { roundCount: 0, hasClaimed: false };
-      markPlayedToday();
+
       document.getElementById('qr-waiting-msg').innerHTML = `
         <div class="ld-spinner"></div>
         <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">
           驗證成功，正在載入遊戲…
         </p>`;
-      setTimeout(() => loginPlayer(), 800);
+
+      // 產生裝置 fingerprint 後傳給 GAS 做裝置層級比對
+      getDeviceFingerprint().then(fp => {
+        gameState.deviceFingerprint = fp;
+        // 回報 fingerprint 給 GAS（非同步，不影響遊戲進入）
+        fetch(CHECKIN_SCRIPT_URL + '?action=register_fp&vid=' + encodeURIComponent(vid)
+          + '&fp=' + encodeURIComponent(fp) + '&type=dice').catch(() => {});
+        markPlayedToday();
+        setTimeout(() => loginPlayer(), 800);
+      });
       return;
     }
 
@@ -1210,16 +1280,18 @@
 
   // ── 回報結果給後端（同一支 Apps Script） ─────────────
   async function syncResultWithServer(isWin, prize, remark) {
+    const fp = gameState.deviceFingerprint || await getDeviceFingerprint();
     const payload = {
-      action:     'updateStats',
-      type:       'dice',
-      vid:        gameState.vid,
-      mode:       gameState.mode || 'N/A',
-      isWin:      isWin,
-      prize:      prize,
-      remark:     remark,
-      ip:         gameState.ipAddress,
-      timestamp:  new Date().toISOString()
+      action:      'updateStats',
+      type:        'dice',
+      vid:         gameState.vid,
+      mode:        gameState.mode || 'N/A',
+      isWin:       isWin,
+      prize:       prize,
+      remark:      remark,
+      ip:          gameState.ipAddress,
+      fingerprint: fp,
+      timestamp:   new Date().toISOString()
     };
     try {
       await fetch(CHECKIN_SCRIPT_URL, {
