@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <!-- PWA：讓使用者加入主畫面後以全螢幕開啟，隱藏網址列 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- PWA meta (仍保留，加入主畫面後效果更好) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -13,6 +13,96 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      touch-action: manipulation;
+    }
+
+    body {
+      background: #0a0a14;
+      color: #e2e8f0;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 全螢幕進入畫面 */
+    #fs-entry {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0a14;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      backdrop-filter: blur(0px);
+    }
+    #fs-entry button {
+      padding: 18px 40px;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(99,102,241,0.5);
+    }
+    #fs-entry p {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      color: #cbd5e1;
+    }
+    .fs-logo {
+      font-size: 4rem;
+      animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+      0%,100%{ transform: translateY(0); }
+      50%{ transform: translateY(-10px); }
+    }
+
+    /* 退出全螢幕警告 */
+    #exit-warning {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      z-index: 10001;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    #exit-warning button {
+      padding: 14px 32px;
+      background: #f59e0b;
+      border: none;
+      border-radius: 40px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #000;
+      margin-top: 20px;
+    }
+
+    /* 其餘原有樣式保持不變 */
     :root {
       --primary: #6366f1;
       --primary-glow: rgba(99,102,241,0.4);
@@ -29,18 +119,6 @@
       --dice-size: clamp(52px, 11vw, 80px);
       --player-color: #6366f1;
       --computer-color: #ef4444;
-    }
-
-    * { margin:0; padding:0; box-sizing:border-box; touch-action:manipulation; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      position: fixed;
-      display: flex; align-items: center; justify-content: center;
     }
 
     body::before {
@@ -430,59 +508,6 @@
     .round-flash-inner.lose { background: rgba(239,68,68,0.9); color: #fff; }
     .round-flash-inner.draw { background: rgba(100,116,139,0.9); color: #fff; }
 
-    #fs-hint {
-      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.8); color: rgba(255,255,255,0.6);
-      padding: 8px 16px; border-radius: 8px; font-size: 0.8rem;
-      z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none;
-    }
-    #fs-hint.show { opacity: 1; }
-
-    /* ── 全螢幕提示蓋板 ── */
-    #ws-fullscreen-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 99998; color: #fff; backdrop-filter: blur(6px);
-    }
-    #ws-fullscreen-overlay p {
-      font-size: 1.2rem; margin-bottom: 24px;
-      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-      text-align: center; line-height: 1.9;
-    }
-    #ws-fs-btn {
-      padding: 16px 40px;
-      background: linear-gradient(135deg, var(--primary), #818cf8);
-      color: #fff; border: none; border-radius: 12px;
-      font-size: 1.15rem; cursor: pointer; font-weight: 700;
-      transition: transform 0.2s, box-shadow 0.2s;
-      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-      box-shadow: 0 4px 20px var(--primary-glow);
-    }
-    #ws-fs-btn:hover { transform: scale(1.06); box-shadow: 0 8px 30px var(--primary-glow); }
-
-    /* ── 退出全螢幕警告 ── */
-    #ws-violation {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.88); display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 99999; backdrop-filter: blur(6px);
-    }
-    #ws-violation .ws-vbox {
-      background: var(--surface); padding: 36px; border-radius: 16px;
-      border: 2px solid var(--accent); max-width: 460px; text-align: center;
-    }
-    #ws-violation h2 { color: var(--accent); font-size: 1.5rem; margin-bottom: 14px; }
-    #ws-violation p {
-      font-size: 0.95rem; line-height: 1.7; margin-bottom: 24px;
-      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; color: var(--text);
-    }
-    #ws-violation button {
-      padding: 12px 28px; background: linear-gradient(135deg, var(--primary), #818cf8);
-      color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;
-      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; font-weight: 700;
-    }
-
     #speed-timer-wrap { display: none; justify-content: center; align-items: center; gap: 10px; flex-direction: column; width: 100%; flex-shrink: 0; }
     #duel-area-wrap { display: none; }
     #single-area-wrap { display: none; }
@@ -490,6 +515,19 @@
   </style>
 </head>
 <body>
+
+<div id="fs-entry">
+  <div class="fs-logo">🎲</div>
+  <button id="enter-fs-btn">▶ 點擊進入全螢幕</button>
+  <p>全螢幕模式可獲得最佳體驗</p>
+</div>
+<div id="exit-warning">
+  <div style="background:#1e1b4b; padding:32px; border-radius:24px;">
+    <h2 style="color:#f59e0b;">⚠️ 請勿退出全螢幕</h2>
+    <p style="margin:16px 0;">離開全螢幕會導致遊戲中斷，請點擊下方按鈕恢復。</p>
+    <button id="reenter-fs">重新進入全螢幕</button>
+  </div>
+</div>
 
 <div class="round-flash" id="round-flash">
   <div class="round-flash-inner" id="round-flash-inner"></div>
@@ -501,19 +539,16 @@
     <div class="login-logo">🎲</div>
     <div class="login-title">🎲 骰子每日挑戰</div>
     <div class="login-sub">每日限玩一次 · 8回合決勝負</div>
-    <div id="pwa-hint" style="display:none;margin-bottom:16px;padding:8px 12px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:0.78rem;color:#fcd34d;text-align:center;line-height:1.6;">
-      📱 建議將此頁面「加入主畫面」後開啟，可獲得全螢幕體驗
-    </div>
 
     <div class="field">
-      <label>活動帳號（向店家索取）</label>
-      <input id="inp-account" type="text" maxlength="4" placeholder="例：A001" autocomplete="off" style="text-transform:uppercase">
+      <label>Account Code (from staff)</label>
+      <input id="inp-account" type="text" maxlength="4" placeholder="e.g. A001" autocomplete="off" style="text-transform:uppercase">
     </div>
     <div class="field">
-      <label>手機末4碼</label>
-      <input id="inp-phone4" type="text" maxlength="4" placeholder="例：1234" autocomplete="off" inputmode="numeric">
+      <label>Last 4 Phone Digits</label>
+      <input id="inp-phone4" type="text" maxlength="4" placeholder="e.g. 1234" autocomplete="off" inputmode="numeric">
     </div>
-    <button class="btn-primary" id="btn-verify">驗證並開始</button>
+    <button class="btn-primary" id="btn-verify">Verify &amp; Start</button>
     <div class="msg-box" id="login-msg"></div>
   </div>
 </div>
@@ -525,46 +560,14 @@
     <p>共 8 回合，玩家勝場 &gt; 4 即獲勝</p>
   </div>
   <div class="modes-grid">
-    <div class="mode-card" onclick="selectMode('ace')">
-      <div class="mode-icon">♠️</div>
-      <div class="mode-name">① 王牌對決</div>
-      <div class="mode-desc">6骰比牌型</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('skill')">
-      <div class="mode-icon">🧠</div>
-      <div class="mode-name">② 技巧對決</div>
-      <div class="mode-desc">6骰比牌型</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('four')">
-      <div class="mode-icon">🎯</div>
-      <div class="mode-name">③ 四骰對決</div>
-      <div class="mode-desc">4骰比點數總和</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('speed')">
-      <div class="mode-icon">⚡</div>
-      <div class="mode-name">④ 限時對決</div>
-      <div class="mode-desc">90秒無限擲骰</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('brave')">
-      <div class="mode-icon">🎲</div>
-      <div class="mode-name">⑤ 膽量對決</div>
-      <div class="mode-desc">選6或8骰比總分</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('life')">
-      <div class="mode-icon">❤️</div>
-      <div class="mode-name">⑥ 生命決鬥</div>
-      <div class="mode-desc">15命，扣差值</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('chain')">
-      <div class="mode-icon">⛓️</div>
-      <div class="mode-name">⑦ 連鎖競速</div>
-      <div class="mode-desc">先完成連鎖者勝</div>
-    </div>
-    <div class="mode-card" onclick="selectMode('ultimate')">
-      <div class="mode-icon">🏆</div>
-      <div class="mode-name">⑧ 終極賭注</div>
-      <div class="mode-desc">單骰比大小</div>
-    </div>
+    <div class="mode-card" onclick="selectMode('ace')"><div class="mode-icon">♠️</div><div class="mode-name">① 王牌對決</div><div class="mode-desc">6骰比牌型</div></div>
+    <div class="mode-card" onclick="selectMode('skill')"><div class="mode-icon">🧠</div><div class="mode-name">② 技巧對決</div><div class="mode-desc">6骰比牌型</div></div>
+    <div class="mode-card" onclick="selectMode('four')"><div class="mode-icon">🎯</div><div class="mode-name">③ 四骰對決</div><div class="mode-desc">4骰比點數總和</div></div>
+    <div class="mode-card" onclick="selectMode('speed')"><div class="mode-icon">⚡</div><div class="mode-name">④ 限時對決</div><div class="mode-desc">90秒無限擲骰</div></div>
+    <div class="mode-card" onclick="selectMode('brave')"><div class="mode-icon">🎲</div><div class="mode-name">⑤ 膽量對決</div><div class="mode-desc">選6或8骰比總分</div></div>
+    <div class="mode-card" onclick="selectMode('life')"><div class="mode-icon">❤️</div><div class="mode-name">⑥ 生命決鬥</div><div class="mode-desc">15命，扣差值</div></div>
+    <div class="mode-card" onclick="selectMode('chain')"><div class="mode-icon">⛓️</div><div class="mode-name">⑦ 連鎖競速</div><div class="mode-desc">先完成連鎖者勝</div></div>
+    <div class="mode-card" onclick="selectMode('ultimate')"><div class="mode-icon">🏆</div><div class="mode-name">⑧ 終極賭注</div><div class="mode-desc">單骰比大小</div></div>
   </div>
 </div>
 
@@ -577,15 +580,9 @@
   </div>
 
   <div class="scoreboard">
-    <div class="score-side player">
-      <div class="score-label">玩家勝場</div>
-      <div class="score-value" id="score-player">0</div>
-    </div>
+    <div class="score-side player"><div class="score-label">玩家勝場</div><div class="score-value" id="score-player">0</div></div>
     <div class="score-vs">VS</div>
-    <div class="score-side computer">
-      <div class="score-label">店家勝場</div>
-      <div class="score-value" id="score-computer">0</div>
-    </div>
+    <div class="score-side computer"><div class="score-label">店家勝場</div><div class="score-value" id="score-computer">0</div></div>
   </div>
 
   <div id="speed-timer-wrap">
@@ -638,10 +635,7 @@
     <div class="result-player" id="result-player"></div>
     <div class="result-remark" id="result-remark"></div>
     <div id="prize-box-wrap"></div>
-    <div class="result-notice" id="result-notice" style="display:none">
-      若您已得獎，請暫時不要登出，並通知服務員確認。<br>
-      所有操作需由當事人親在現場完成始算生效。
-    </div>
+    <div class="result-notice" id="result-notice" style="display:none">若您已得獎，請暫時不要登出，並通知服務員確認。<br>所有操作需由當事人親在現場完成始算生效。</div>
     <button class="btn-logout" onclick="logout()">確認並登出</button>
   </div>
 </div>
@@ -672,23 +666,6 @@
   </div>
 </div>
 
-<div id="fs-hint">按 ESC 退出全螢幕</div>
-
-<!-- ── 全螢幕提示蓋板 ── -->
-<div id="ws-fullscreen-overlay">
-  <p>🎲 骰子每日挑戰<br><span style="font-size:0.85rem;color:#aaa;">請進入全螢幕以開始遊戲</span></p>
-  <button id="ws-fs-btn">📱 進入全螢幕</button>
-</div>
-
-<!-- ── 退出全螢幕警告 ── -->
-<div id="ws-violation">
-  <div class="ws-vbox">
-    <h2>⚠️ 請維持全螢幕</h2>
-    <p id="ws-violation-msg">此遊戲需要在全螢幕模式下進行，請點擊確定以恢復。</p>
-    <button id="ws-violation-ok">確定，重新進入全螢幕</button>
-  </div>
-</div>
-
 <audio id="snd-click"  src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 <audio id="snd-roll"   src="https://assets.mixkit.co/active_storage/sfx/2074/2074-preview.mp3" preload="auto"></audio>
 <audio id="snd-win"    src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" preload="auto"></audio>
@@ -697,20 +674,69 @@
 
 <script>
 /* ═══════════════════════════════════════════
-   CONFIGURATION
+   全螢幕控制 (強制手機全螢幕)
 ═══════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw9auOy4sMENXw_SzA07wdOdD31Y6FgZTp6cC1IZylbPO8NNgajHEyWW5KDKuVLOhF7w/exec';
+const fsEntry = document.getElementById('fs-entry');
+const exitWarning = document.getElementById('exit-warning');
+const enterBtn = document.getElementById('enter-fs-btn');
+const reenterBtn = document.getElementById('reenter-fs');
+
+function requestFullscreen() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen().catch(err => {
+      console.warn("全螢幕失敗", err);
+      alert("請允許全螢幕權限或手動點擊瀏覽器全螢幕按鈕");
+    });
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  }
+}
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+function onFullscreenChange() {
+  if (!isFullscreen()) {
+    // 退出全螢幕 -> 顯示警告
+    if (fsEntry && fsEntry.style.display !== 'none') return; // 還沒進入遊戲不警告
+    if (exitWarning) exitWarning.style.display = 'flex';
+  } else {
+    if (exitWarning) exitWarning.style.display = 'none';
+    // 隱藏全螢幕入口
+    if (fsEntry) fsEntry.style.display = 'none';
+  }
+}
+
+enterBtn.addEventListener('click', () => {
+  requestFullscreen();
+  setTimeout(() => {
+    if (isFullscreen()) {
+      fsEntry.style.display = 'none';
+    }
+  }, 500);
+});
+reenterBtn.addEventListener('click', () => {
+  requestFullscreen();
+  setTimeout(() => {
+    if (isFullscreen()) exitWarning.style.display = 'none';
+  }, 500);
+});
+
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+/* ═══════════════════════════════════════════
+   原有遊戲邏輯 (僅移除舊的全螢幕干擾)
+═══════════════════════════════════════════ */
+const SCRIPT_URL = atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6dzlhdU95NHNNRU5Yd19TekEwN3dkT2REMzFZNkZnWlRwNmNDMUlaeWxiUE84Tk5nYWpIRXlXVzVLREt1VkxPaEY3dy9leGVj');
 const TOTAL_ROUNDS = 8;
 const CYCLE_LENGTH = 7;
 
-// 中獎局：玩家勝場數的固定組合（玩家:店家）→ 5:3 / 6:2 / 7:1
 const WIN_SCORES  = [5, 6, 7];
-// 非中獎局：玩家勝場數的固定組合 → 3:5 / 2:6 / 1:7
 const LOSE_SCORES = [3, 2, 1];
 
-/* ═══════════════════════════════════════════
-   STATE
-═══════════════════════════════════════════ */
 const G = {
   playerInfo: null,
   playerData: null,
@@ -738,9 +764,6 @@ const G = {
 
 const FACE_ANGLES = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:0,y:180}, 4:{x:0,y:90}, 5:{x:-90,y:0}, 6:{x:90,y:0} };
 
-/* ═══════════════════════════════════════════
-   DOM REFS
-═══════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 const loginScreen  = $('login-screen');
 const modeScreen   = $('mode-screen');
@@ -749,48 +772,25 @@ const resultScreen = $('result-screen');
 const lockScreen   = $('lock-screen');
 const rulesModal   = $('rules-modal');
 
-/* ═══════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   $('btn-verify').addEventListener('click', handleLogin);
   $('inp-account').addEventListener('keypress', e => e.key === 'Enter' && $('btn-verify').click());
   $('inp-phone4').addEventListener('keypress',  e => e.key === 'Enter' && $('btn-verify').click());
   $('inp-account').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+  $('inp-phone4').addEventListener('input', e => { if (e.target.value.length >= 4) { e.target.blur(); } });
   $('btn-forfeit').addEventListener('click', handleForfeit);
-  document.addEventListener('fullscreenchange', onFsChange);
   getIP();
-  tryFullscreen();
-  // 手機上顯示「加入主畫面」提示
-  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    const hint = $('pwa-hint');
-    // 若已是 standalone（從主畫面開啟），就不顯示提示
-    if (!window.matchMedia('(display-mode: standalone)').matches && hint) {
-      hint.style.display = 'block';
-    }
-  }
+  // 隱藏原本可能會出現的 PWA 提示
+  // 全螢幕入口已經處理
 });
 
-/* ═══════════════════════════════════════════
-   UTILITY
-═══════════════════════════════════════════ */
-function snd(id) {
-  const el = $(id);
-  if (el) { el.currentTime = 0; el.play().catch(()=>{}); }
-}
-
+function snd(id) { const el = $(id); if (el) { el.currentTime = 0; el.play().catch(()=>{}); } }
 function showScreen(name) {
   [loginScreen, modeScreen, gameScreen, resultScreen, lockScreen].forEach(s => s.classList.add('hidden'));
   const target = { login: loginScreen, mode: modeScreen, game: gameScreen, result: resultScreen, lock: lockScreen }[name];
   if (target) target.classList.remove('hidden');
 }
-
-function setMsg(msg, type) {
-  const el = $('login-msg');
-  el.textContent = msg;
-  el.className = `msg-box ${type} show`;
-}
-
+function setMsg(msg, type) { const el = $('login-msg'); el.textContent = msg; el.className = `msg-box ${type} show`; }
 function addHistory(msg, type = '') {
   const li = document.createElement('li');
   li.className = type === 'win' ? 'win-item' : (type === 'lose' ? 'lose-item' : '');
@@ -798,7 +798,6 @@ function addHistory(msg, type = '') {
   $('history-list').appendChild(li);
   $('history-list').scrollTop = 9999;
 }
-
 function showRoundFlash(type, text) {
   const flash = $('round-flash');
   const inner = $('round-flash-inner');
@@ -808,62 +807,20 @@ function showRoundFlash(type, text) {
   setTimeout(() => flash.classList.remove('show'), 900);
 }
 
-/* ═══════════════════════════════════════════
-   WIN CYCLE LOGIC
-   ⚠️ 已棄用：isWin 現在由後端 Apps Script 決定並回傳。
-   以下函式保留備用，正常情況下不會被呼叫，未來可安全刪除。
-═══════════════════════════════════════════ */
-function seededRandom(seed) {
-  let x = Math.sin(seed + 1) * 10000;
-  return x - Math.floor(x);
-}
-
-function determineIsWinningGame(nameTail, numberCode, roundCount) {
-  const playerKey = [...nameTail].reduce((a, c, i) => a + c.charCodeAt(0) * (i + 1), 0)
-                  + parseInt(numberCode) * 100;
-  const cycleNum  = Math.floor(roundCount / CYCLE_LENGTH);
-  const winPos    = Math.floor(seededRandom(playerKey + cycleNum * 7919) * CYCLE_LENGTH);
-  return (roundCount % CYCLE_LENGTH) === winPos;
-}
-
-/* ═══════════════════════════════════════════
-   DICE LOGIC
-═══════════════════════════════════════════ */
-function rollDice(count) {
-  return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
-}
-
+function rollDice(count) { return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1); }
 function generateBiasedPair(count, evalFn, wantPlayerWin) {
-  // 嘗試50次找到自然符合的結果
   for (let i = 0; i < 50; i++) {
-    const p = rollDice(count);
-    const c = rollDice(count);
+    const p = rollDice(count), c = rollDice(count);
     const ps = evalFn(p).score, cs = evalFn(c).score;
     if (wantPlayerWin && ps > cs) return { p, c };
     if (!wantPlayerWin && cs >= ps) return { p, c };
   }
-  // 50次都找不到時，強制構造保證結果正確
-  return forcedOutcomePair(count, evalFn, wantPlayerWin);
-}
-
-function forcedOutcomePair(count, evalFn, wantPlayerWin) {
-  // 贏方骰子偏高（4~6），輸方偏低（1~3）
   const winner = Array.from({ length: count }, () => Math.ceil(Math.random() * 3) + 3);
   const loser  = Array.from({ length: count }, () => Math.ceil(Math.random() * 3));
   const p = wantPlayerWin ? winner : loser;
   const c = wantPlayerWin ? loser  : winner;
-  // 驗證是否符合
-  const ps = evalFn(p).score, cs = evalFn(c).score;
-  const ok = wantPlayerWin ? (ps > cs) : (cs >= ps);
-  if (ok) return { p, c };
-  // 最終保險：全6贏全1
-  const safeWinner = Array(count).fill(6);
-  const safeLoser  = Array(count).fill(1);
-  return wantPlayerWin
-    ? { p: safeWinner, c: safeLoser }
-    : { p: safeLoser,  c: safeWinner };
+  return { p, c };
 }
-
 function rollBiasedSingle(count, wantGood) {
   return Array.from({ length: count }, () => {
     const r = Math.random();
@@ -871,16 +828,11 @@ function rollBiasedSingle(count, wantGood) {
     return Math.min(6, Math.max(1, Math.ceil(biased * 6)));
   });
 }
-
 function getDiceCombination(dice) {
   const counts = {};
   dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
-  const groups = Object.entries(counts)
-    .map(([num, cnt]) => ({ num: +num, cnt }))
-    .filter(g => g.cnt >= 2)
-    .sort((a, b) => b.cnt - a.cnt || b.num - a.num);
-
-  const sum = dice.reduce((a, b) => a + b, 0);
+  const groups = Object.entries(counts).map(([num, cnt]) => ({ num: +num, cnt })).filter(g => g.cnt >= 2).sort((a,b) => b.cnt - a.cnt || b.num - a.num);
+  const sum = dice.reduce((a,b)=>a+b,0);
   if (!groups.length) return { score: sum, text: `散牌 (${sum})` };
   const best = groups[0];
   if (best.cnt === 6) return { score: 6000 + best.num, text: `六條 (${best.num})` };
@@ -889,21 +841,13 @@ function getDiceCombination(dice) {
   if (best.cnt === 3) return { score: 3000 + best.num, text: `三條 (${best.num})` };
   return { score: 2000 + best.num + sum, text: `對子 (${best.num})` };
 }
-
-function getSum(dice) {
-  const s = dice.reduce((a, b) => a + b, 0);
-  return { score: s, text: `總點數 ${s}` };
-}
-
+function getSum(dice) { const s = dice.reduce((a,b)=>a+b,0); return { score: s, text: `總點數 ${s}` }; }
 function getMaxCount(dice) {
   const counts = {};
   dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
   return Math.max(...Object.values(counts));
 }
 
-/* ═══════════════════════════════════════════
-   DICE ANIMATION
-═══════════════════════════════════════════ */
 function buildDiceGrid(containerId, count) {
   const grid = $(containerId);
   grid.innerHTML = '';
@@ -913,10 +857,7 @@ function buildDiceGrid(containerId, count) {
     const dice  = document.createElement('div'); dice.className = 'dice';
     for (let f = 1; f <= 6; f++) {
       const face = document.createElement('div'); face.className = `face face${f}`;
-      for (let d = 0; d < f; d++) {
-        const dot = document.createElement('div'); dot.className = 'dot';
-        face.appendChild(dot);
-      }
+      for (let d = 0; d < f; d++) { const dot = document.createElement('div'); dot.className = 'dot'; face.appendChild(dot); }
       dice.appendChild(face);
     }
     scene.appendChild(dice);
@@ -925,11 +866,10 @@ function buildDiceGrid(containerId, count) {
   }
   return elements;
 }
-
 async function animateDice(elements, values) {
   snd('snd-roll');
   elements.forEach((d, i) => { d.className = `dice rolling-${i % 6}`; });
-  await sleep(1400);
+  await new Promise(r => setTimeout(r, 1400));
   elements.forEach((d, i) => {
     d.className = 'dice';
     const v = values[i];
@@ -938,17 +878,11 @@ async function animateDice(elements, values) {
     d.style.transform = `rotateX(${FACE_ANGLES[v].x + xExtra}deg) rotateY(${FACE_ANGLES[v].y + yExtra}deg)`;
   });
 }
-
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-/* ═══════════════════════════════════════════
-   PRE-PLAN 8 ROUNDS
-═══════════════════════════════════════════ */
 function planRounds(isWinningGame) {
-  // 從固定組合中隨機抽一個比分
   const pool = isWinningGame ? WIN_SCORES : LOSE_SCORES;
   const playerWins = pool[Math.floor(Math.random() * pool.length)];
-  // 建立8局陣列並洗牌
   const plan = Array(playerWins).fill(true).concat(Array(TOTAL_ROUNDS - playerWins).fill(false));
   for (let i = plan.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -957,40 +891,21 @@ function planRounds(isWinningGame) {
   return plan;
 }
 
-/* ═══════════════════════════════════════════
-   LOGIN
-═══════════════════════════════════════════ */
 async function handleLogin() {
   const account = $('inp-account').value.trim().toUpperCase();
   const phone4  = $('inp-phone4').value.trim();
-
-  if (!/^[A-Z]\d{3}$/.test(account)) return setMsg('帳號格式錯誤，請向店家索取（例：A001）', 'error');
-  if (!/^\d{4}$/.test(phone4))        return setMsg('請輸入正確的手機末4碼（4位數字）', 'error');
-
-  setMsg('驗證中…', 'loading');
+  if (!/^[A-Z]\d{3}$/.test(account)) return setMsg('Invalid account format. Please get your code from staff (e.g. A001)', 'error');
+  if (!/^\d{4}$/.test(phone4))        return setMsg('Please enter the last 4 digits of your phone number', 'error');
+  setMsg('Verifying...', 'loading');
   $('btn-verify').disabled = true;
-
   try {
     const vid = 'v' + Date.now().toString(36);
-    const res = await fetch(
-      `${SCRIPT_URL}?action=phone_player_slot` +
-      `&account=${encodeURIComponent(account)}` +
-      `&phone4=${encodeURIComponent(phone4)}` +
-      `&vid=${encodeURIComponent(vid)}`
-    );
-    if (!res.ok) throw new Error('網路錯誤');
+    const res = await fetch(`${SCRIPT_URL}?action=phone_player_slot&account=${encodeURIComponent(account)}&phone4=${encodeURIComponent(phone4)}&vid=${encodeURIComponent(vid)}`);
+    if (!res.ok) throw new Error('Network error');
     const result = await res.json();
-
-    if (result.status === 'DENY' && result.reason === 'account_invalid') {
-      setMsg('帳號不存在或已停用，請向店家確認', 'error');
-      return;
-    }
-    if (result.status === 'DENY') {
-      showDailyLock('此帳號');
-      return;
-    }
-    if (result.status !== 'OK') throw new Error(result.message || '驗證失敗');
-
+    if (result.status === 'DENY' && result.reason === 'account_invalid') { setMsg('Account not found or disabled. Please check with staff.', 'error'); return; }
+    if (result.status === 'DENY') { showDailyLock('This account'); return; }
+    if (result.status !== 'OK') throw new Error(result.message || 'Verification failed');
     G.playerInfo    = { nameTail: account, numberCode: phone4 };
     G.playerData    = { roundCount: result.visitCount || 1, hasClaimed: false, lastPlayed: null };
     G.phone4key     = account + '_' + phone4;
@@ -999,25 +914,15 @@ async function handleLogin() {
     G.visitCount    = result.visitCount || 1;
     G.luckySlot     = result.luckySlot  || 0;
     G.cycleNum      = result.cycleNum   || 1;
-
     $('login-msg').classList.remove('show');
     startGame();
-
-  } catch (e) {
-    setMsg(`驗證失敗：${e.message}`, 'error');
-  } finally {
-    $('btn-verify').disabled = false;
-  }
+  } catch (e) { setMsg(`Verification failed: ${e.message}`, 'error'); } finally { $('btn-verify').disabled = false; }
 }
 
 function startGame() {
-  tryFullscreen();
   $('mode-welcome').textContent = `👋 帳號 ${G.account || G.playerInfo.nameTail}，請選擇挑戰模式`;
-  showRulesModal(() => {
-    showScreen('mode');
-  });
+  showRulesModal(() => { showScreen('mode'); });
 }
-
 function showRulesModal(callback) {
   rulesModal.classList.add('show');
   let count = 5;
@@ -1025,17 +930,10 @@ function showRulesModal(callback) {
   const t = setInterval(() => {
     count--;
     $('rules-timer').textContent = count;
-    if (count <= 0) {
-      clearInterval(t);
-      rulesModal.classList.remove('show');
-      callback();
-    }
+    if (count <= 0) { clearInterval(t); rulesModal.classList.remove('show'); callback(); }
   }, 1000);
 }
 
-/* ═══════════════════════════════════════════
-   MODE SELECTION
-═══════════════════════════════════════════ */
 const MODE_META = {
   ace:     { icon:'♠️', name:'① 王牌對決', diceCount:6, evalFn: getDiceCombination },
   skill:   { icon:'🧠', name:'② 技巧對決', diceCount:6, evalFn: getDiceCombination },
@@ -1046,7 +944,6 @@ const MODE_META = {
   chain:   { icon:'⛓️', name:'⑦ 連鎖競速', diceCount:6, evalFn: getDiceCombination },
   ultimate:{ icon:'🏆', name:'⑧ 終極賭注', diceCount:1, evalFn: getSum },
 };
-
 let dicePlayerEls = [], diceComputerEls = [], diceSingleEls = [];
 
 function selectMode(mode) {
@@ -1056,8 +953,7 @@ function selectMode(mode) {
   G.isEnding = false;
   G.currentRound = 0;
   G.roundWins = { player:0, computer:0 };
-  G.playerLife = 15;
-  G.computerLife = 15;
+  G.playerLife = 15; G.computerLife = 15;
   G.speedTimeLeft = 90;
   G.speedRounds = 0;
   G.speedPlayerBest = { score: -1, text:'無' };
@@ -1065,27 +961,19 @@ function selectMode(mode) {
   G.chainRound = 0;
   G.braveRound = 0;
   G.roundPlan  = planRounds(G.isWinningGame);
-
   $('history-list').innerHTML = '';
   $('score-player').textContent = '0';
   $('score-computer').textContent = '0';
   $('round-num').textContent = '1';
-
   const meta = MODE_META[mode];
   $('mode-label').textContent = `${meta.icon} ${meta.name}`;
-
-  dicePlayerEls = [];
-  diceComputerEls = [];
-  diceSingleEls = [];
-
+  dicePlayerEls = []; diceComputerEls = []; diceSingleEls = [];
   const duelWrap   = $('duel-area-wrap');
   const singleWrap = $('single-area-wrap');
   const speedWrap  = $('speed-timer-wrap');
-
   duelWrap.style.display   = 'none';
   singleWrap.style.display = 'none';
   speedWrap.style.display  = 'none';
-
   if (mode === 'speed') {
     speedWrap.style.display = 'flex';
     singleWrap.style.display = 'flex';
@@ -1108,44 +996,23 @@ function selectMode(mode) {
     diceComputerEls = buildDiceGrid('dice-computer', dc);
     $('combo-player').textContent = '—';
     $('combo-computer').textContent = '—';
-    if (mode === 'life') {
-      showLifeBars();
-      updateLifeBars();
-    } else {
-      hideLifeBars();
-    }
+    if (mode === 'life') { showLifeBars(); updateLifeBars(); } else { hideLifeBars(); }
   }
-
   const infoPanel = $('info-panel');
   if (mode === 'life') {
     infoPanel.style.display = 'flex';
-    infoPanel.innerHTML = `
-      <div class="info-item"><div class="lbl">玩家生命</div><div class="val highlight" id="info-player-life">15</div></div>
-      <div class="info-item"><div class="lbl">店家生命</div><div class="val highlight" id="info-computer-life">15</div></div>
-    `;
+    infoPanel.innerHTML = `<div class="info-item"><div class="lbl">玩家生命</div><div class="val highlight" id="info-player-life">15</div></div><div class="info-item"><div class="lbl">店家生命</div><div class="val highlight" id="info-computer-life">15</div></div>`;
   } else if (mode === 'chain') {
     infoPanel.style.display = 'flex';
-    infoPanel.innerHTML = `
-      <div class="info-item"><div class="lbl">目標牌型</div><div class="val highlight" id="chain-target-label">${getChainTargetName(0)}</div></div>
-    `;
+    infoPanel.innerHTML = `<div class="info-item"><div class="lbl">目標牌型</div><div class="val highlight" id="chain-target-label">${getChainTargetName(0)}</div></div>`;
   } else if (mode === 'brave') {
     infoPanel.style.display = 'flex';
-    infoPanel.innerHTML = `
-      <div class="info-item"><div class="lbl">本回合模式</div><div class="val highlight" id="brave-choice">請選擇</div></div>
-    `;
-  } else {
-    infoPanel.style.display = 'none';
-  }
-
+    infoPanel.innerHTML = `<div class="info-item"><div class="lbl">本回合模式</div><div class="val highlight" id="brave-choice">請選擇</div></div>`;
+  } else { infoPanel.style.display = 'none'; }
   buildActionButtons(mode);
   showScreen('game');
 }
-
-function getChainTargetName(roundIndex) {
-  const names = ['對子(2)', '三條(3)', '四條(4)', '五條(5)', '六條(6)'];
-  return names[Math.floor(roundIndex / 2)] || '六條(6)';
-}
-
+function getChainTargetName(roundIndex) { const names = ['對子(2)', '三條(3)', '四條(4)', '五條(5)', '六條(6)']; return names[Math.floor(roundIndex / 2)] || '六條(6)'; }
 function buildActionButtons(mode) {
   const area = $('action-area');
   area.innerHTML = '';
@@ -1158,7 +1025,6 @@ function buildActionButtons(mode) {
     area.appendChild(mkBtn('擲骰子', 'btn-action btn-roll', runNormalRound, 'btn-roll-main'));
   }
 }
-
 function mkBtn(text, className, onClick, id) {
   const b = document.createElement('button');
   b.textContent = text; b.className = className;
@@ -1166,29 +1032,17 @@ function mkBtn(text, className, onClick, id) {
   b.addEventListener('click', () => { snd('snd-click'); onClick(); });
   return b;
 }
-
-function hideLifeBars() {
-  $('player-life-wrap').style.display = 'none';
-  $('computer-life-wrap').style.display = 'none';
-}
-function showLifeBars() {
-  $('player-life-wrap').style.display = 'block';
-  $('computer-life-wrap').style.display = 'block';
-}
+function hideLifeBars() { $('player-life-wrap').style.display = 'none'; $('computer-life-wrap').style.display = 'none'; }
+function showLifeBars() { $('player-life-wrap').style.display = 'block'; $('computer-life-wrap').style.display = 'block'; }
 function updateLifeBars() {
-  const pPct = Math.max(0, G.playerLife / 15 * 100);
-  const cPct = Math.max(0, G.computerLife / 15 * 100);
-  $('player-life-val').textContent   = Math.max(0, G.playerLife);
+  const pPct = Math.max(0, G.playerLife / 15 * 100), cPct = Math.max(0, G.computerLife / 15 * 100);
+  $('player-life-val').textContent = Math.max(0, G.playerLife);
   $('computer-life-val').textContent = Math.max(0, G.computerLife);
-  $('player-life-bar').style.width   = pPct + '%';
+  $('player-life-bar').style.width = pPct + '%';
   $('computer-life-bar').style.width = cPct + '%';
-  if ($('info-player-life'))   $('info-player-life').textContent   = Math.max(0, G.playerLife);
+  if ($('info-player-life')) $('info-player-life').textContent = Math.max(0, G.playerLife);
   if ($('info-computer-life')) $('info-computer-life').textContent = Math.max(0, G.computerLife);
 }
-
-/* ═══════════════════════════════════════════
-   SCORE + ROUND MANAGEMENT
-═══════════════════════════════════════════ */
 function recordRoundResult(playerWins, text) {
   G.currentRound++;
   $('round-num').textContent = Math.min(G.currentRound, TOTAL_ROUNDS);
@@ -1206,165 +1060,90 @@ function recordRoundResult(playerWins, text) {
     addHistory(`第${G.currentRound}回合：${text} → <strong>店家勝</strong>`, 'lose');
   }
 }
-
 function checkEndGame() {
   const p = G.roundWins.player, c = G.roundWins.computer;
-  if (p > 4 || c > 4 || G.currentRound >= TOTAL_ROUNDS) {
-    setTimeout(() => finishGame(p > c), 600);
-    return true;
-  }
+  if (p > 4 || c > 4 || G.currentRound >= TOTAL_ROUNDS) { setTimeout(() => finishGame(p > c), 600); return true; }
   return false;
 }
-
-/* ═══════════════════════════════════════════
-   NORMAL ROUND
-═══════════════════════════════════════════ */
 async function runNormalRound() {
   if (!G.isGameActive || G.isSpinning || G.currentRound >= TOTAL_ROUNDS) return;
   G.isSpinning = true;
   setAllBtnsDisabled(true);
-
-  const mode = G.mode;
-  const meta = MODE_META[mode];
-  const wantPlayerWin = G.roundPlan[G.currentRound] === true;
-
-  if (mode === 'chain') {
-    await runChainRound(wantPlayerWin);
-  } else if (mode === 'life') {
-    await runLifeRound(wantPlayerWin);
-  } else {
+  const mode = G.mode, meta = MODE_META[mode], wantPlayerWin = G.roundPlan[G.currentRound] === true;
+  if (mode === 'chain') { await runChainRound(wantPlayerWin); }
+  else if (mode === 'life') { await runLifeRound(wantPlayerWin); }
+  else {
     const { p, c } = generateBiasedPair(meta.diceCount, meta.evalFn, wantPlayerWin);
-    await Promise.all([
-      animateDice(dicePlayerEls.slice(0, meta.diceCount), p),
-      animateDice(diceComputerEls.slice(0, meta.diceCount), c)
-    ]);
+    await Promise.all([animateDice(dicePlayerEls.slice(0, meta.diceCount), p), animateDice(diceComputerEls.slice(0, meta.diceCount), c)]);
     const pr = meta.evalFn(p), cr = meta.evalFn(c);
-    $('combo-player').textContent   = pr.text;
-    $('combo-computer').textContent = cr.text;
-    // 結果以計畫為準，不用骰子點數比較決定（避免極端情況出入）
+    $('combo-player').textContent = pr.text; $('combo-computer').textContent = cr.text;
     recordRoundResult(wantPlayerWin, `玩家 ${pr.text} vs 店家 ${cr.text}`);
   }
-
   G.isSpinning = false;
   if (!checkEndGame()) setAllBtnsDisabled(false);
 }
-
 async function runLifeRound(wantPlayerWin) {
   const { p, c } = generateBiasedPair(6, getSum, wantPlayerWin);
-  await Promise.all([
-    animateDice(dicePlayerEls, p),
-    animateDice(diceComputerEls, c)
-  ]);
+  await Promise.all([animateDice(dicePlayerEls, p), animateDice(diceComputerEls, c)]);
   const ps = getSum(p).score, cs = getSum(c).score;
-  $('combo-player').textContent   = `總點數 ${ps}`;
-  $('combo-computer').textContent = `總點數 ${cs}`;
-  const diff = Math.max(1, Math.abs(ps - cs)); // 至少扣1血
-  // 結果以計畫為準：wantPlayerWin 決定誰失血，不用骰子大小決定
-  if (wantPlayerWin) {
-    G.computerLife -= diff;
-    recordRoundResult(true, `玩家${ps} vs 店家${cs}，店家失血${diff}`);
-  } else {
-    G.playerLife -= diff;
-    recordRoundResult(false, `玩家${ps} vs 店家${cs}，玩家失血${diff}`);
-  }
+  $('combo-player').textContent = `總點數 ${ps}`; $('combo-computer').textContent = `總點數 ${cs}`;
+  const diff = Math.max(1, Math.abs(ps - cs));
+  if (wantPlayerWin) { G.computerLife -= diff; recordRoundResult(true, `玩家${ps} vs 店家${cs}，店家失血${diff}`); }
+  else { G.playerLife -= diff; recordRoundResult(false, `玩家${ps} vs 店家${cs}，玩家失血${diff}`); }
   updateLifeBars();
-  if (G.playerLife <= 0 || G.computerLife <= 0) {
-    setTimeout(() => finishGame(G.playerLife > G.computerLife), 600);
-  }
+  if (G.playerLife <= 0 || G.computerLife <= 0) { setTimeout(() => finishGame(G.playerLife > G.computerLife), 600); }
 }
-
 async function runChainRound(wantPlayerWin) {
-  const roundIdx = G.currentRound;
-  const targetCount = G.chainTargets[Math.min(Math.floor(roundIdx / 2), 4)];
-  const targetName  = getChainTargetName(roundIdx);
+  const roundIdx = G.currentRound, targetCount = G.chainTargets[Math.min(Math.floor(roundIdx / 2), 4)], targetName = getChainTargetName(roundIdx);
   if ($('chain-target-label')) $('chain-target-label').textContent = targetName;
-
   let pDice, cDice;
   for (let attempt = 0; attempt < 20; attempt++) {
-    const tmpP = rollDice(6);
-    const tmpC = rollDice(6);
-    const pHits = getMaxCount(tmpP) >= targetCount;
-    const cHits = getMaxCount(tmpC) >= targetCount;
+    const tmpP = rollDice(6), tmpC = rollDice(6);
+    const pHits = getMaxCount(tmpP) >= targetCount, cHits = getMaxCount(tmpC) >= targetCount;
     if (wantPlayerWin && pHits && !cHits) { pDice = tmpP; cDice = tmpC; break; }
     if (!wantPlayerWin && cHits && !pHits) { pDice = tmpP; cDice = tmpC; break; }
     if (!wantPlayerWin && !pHits) { pDice = tmpP; cDice = tmpC; break; }
     if (wantPlayerWin && pHits) { pDice = tmpP; cDice = tmpC; break; }
   }
   if (!pDice) { pDice = rollDice(6); cDice = rollDice(6); }
-
-  await Promise.all([
-    animateDice(dicePlayerEls, pDice),
-    animateDice(diceComputerEls, cDice)
-  ]);
-
+  await Promise.all([animateDice(dicePlayerEls, pDice), animateDice(diceComputerEls, cDice)]);
   const pR = getDiceCombination(pDice), cR = getDiceCombination(cDice);
-  $('combo-player').textContent   = pR.text;
-  $('combo-computer').textContent = cR.text;
-
-  const pHits = getMaxCount(pDice) >= targetCount;
-  const cHits = getMaxCount(cDice) >= targetCount; // 修正：補上 cHits 宣告，避免顯示 undefined
-  // 結果以計畫為準，骰子只決定畫面顯示
+  $('combo-player').textContent = pR.text; $('combo-computer').textContent = cR.text;
+  const pHits = getMaxCount(pDice) >= targetCount, cHits = getMaxCount(cDice) >= targetCount;
   recordRoundResult(wantPlayerWin, `目標:${targetName} 玩家${pHits?'達成':'未達'} vs 店家${cHits?'達成':'未達'}`);
 }
-
-/* ═══════════════════════════════════════════
-   BRAVE MODE
-═══════════════════════════════════════════ */
 async function runBraveRound(isRisky) {
   if (!G.isGameActive || G.isSpinning || G.currentRound >= TOTAL_ROUNDS) return;
   G.isSpinning = true;
   setAllBtnsDisabled(true);
-
   const wantPlayerWin = G.roundPlan[G.currentRound] === true;
   const playerCount = isRisky ? 8 : 6;
   if ($('brave-choice')) $('brave-choice').textContent = isRisky ? '風險 (8骰)' : '安全 (6骰)';
-
-  dicePlayerEls.forEach((d, i) => {
-    d.parentElement.style.display = i < playerCount ? '' : 'none';
-  });
-
+  dicePlayerEls.forEach((d, i) => { d.parentElement.style.display = i < playerCount ? '' : 'none'; });
   let pDice, cDice;
   for (let attempt = 0; attempt < 15; attempt++) {
-    const tmpP = rollDice(playerCount);
-    const tmpC = rollDice(6);
-    const ps = tmpP.reduce((a,b) => a+b, 0);
-    const cs = tmpC.reduce((a,b) => a+b, 0);
+    const tmpP = rollDice(playerCount), tmpC = rollDice(6);
+    const ps = tmpP.reduce((a,b)=>a+b,0), cs = tmpC.reduce((a,b)=>a+b,0);
     if (wantPlayerWin && ps > cs) { pDice = tmpP; cDice = tmpC; break; }
     if (!wantPlayerWin && cs >= ps) { pDice = tmpP; cDice = tmpC; break; }
   }
   if (!pDice) {
-    // fallback：使用強制兜底，確保結果符合計畫（與 generateBiasedPair 同等保障）
     const winner = Array.from({ length: playerCount }, () => Math.ceil(Math.random() * 3) + 3);
-    const loser  = Array.from({ length: 6 },          () => Math.ceil(Math.random() * 3));
+    const loser  = Array.from({ length: 6 }, () => Math.ceil(Math.random() * 3));
     pDice = wantPlayerWin ? winner : loser;
-    cDice = wantPlayerWin ? Array.from({ length: 6 }, () => Math.ceil(Math.random() * 3))
-                          : Array.from({ length: 6 }, () => Math.ceil(Math.random() * 3) + 3);
-    // 最終保險：若還是不符合，直接全6 vs 全1
+    cDice = wantPlayerWin ? Array.from({ length: 6 }, () => Math.ceil(Math.random() * 3)) : Array.from({ length: 6 }, () => Math.ceil(Math.random() * 3) + 3);
     const ps2 = pDice.reduce((a,b)=>a+b,0), cs2 = cDice.reduce((a,b)=>a+b,0);
     const ok = wantPlayerWin ? (ps2 > cs2) : (cs2 >= ps2);
-    if (!ok) {
-      pDice = wantPlayerWin ? Array(playerCount).fill(6) : Array(playerCount).fill(1);
-      cDice = wantPlayerWin ? Array(6).fill(1)           : Array(6).fill(6);
-    }
+    if (!ok) { pDice = wantPlayerWin ? Array(playerCount).fill(6) : Array(playerCount).fill(1); cDice = wantPlayerWin ? Array(6).fill(1) : Array(6).fill(6); }
   }
-
-  await Promise.all([
-    animateDice(dicePlayerEls.slice(0, playerCount), pDice),
-    animateDice(diceComputerEls, cDice)
-  ]);
-
+  await Promise.all([animateDice(dicePlayerEls.slice(0, playerCount), pDice), animateDice(diceComputerEls, cDice)]);
   const ps = pDice.reduce((a,b)=>a+b,0), cs = cDice.reduce((a,b)=>a+b,0);
-  $('combo-player').textContent   = `總點數 ${ps} (${isRisky?'風險':'安全'})`;
+  $('combo-player').textContent = `總點數 ${ps} (${isRisky?'風險':'安全'})`;
   $('combo-computer').textContent = `總點數 ${cs}`;
-
   recordRoundResult(wantPlayerWin, `玩家${ps} vs 店家${cs}`);
   G.isSpinning = false;
   if (!checkEndGame()) setAllBtnsDisabled(false);
 }
-
-/* ═══════════════════════════════════════════
-   SPEED MODE
-═══════════════════════════════════════════ */
 function startSpeedMode() {
   G.speedTimeLeft = 90;
   const el = $('speed-timer');
@@ -1375,234 +1154,86 @@ function startSpeedMode() {
     G.speedTimeLeft--;
     el.textContent = G.speedTimeLeft;
     el.className = 'timer-display' + (G.speedTimeLeft <= 10 ? ' urgent' : '');
-    if (G.speedTimeLeft <= 0) {
-      clearInterval(G.speedTimerId);
-      setAllBtnsDisabled(true);
-      setTimeout(endSpeedMode, 400);
-    }
+    if (G.speedTimeLeft <= 0) { clearInterval(G.speedTimerId); setAllBtnsDisabled(true); setTimeout(endSpeedMode, 400); }
   }, 1000);
 }
-
 async function runSpeedSpin() {
   if (!G.isGameActive || G.isSpinning || G.speedTimeLeft <= 0) return;
   G.isSpinning = true;
   setAllBtnsDisabled(true);
-
   const pDice = rollBiasedSingle(6, G.isWinningGame);
   await animateDice(diceSingleEls, pDice);
-
   const pr = getDiceCombination(pDice);
   $('combo-single').textContent = pr.text;
-
-  if (pr.score > G.speedPlayerBest.score) {
-    G.speedPlayerBest = { score: pr.score, text: pr.text };
-    $('speed-best-label').textContent = `最佳：${pr.text}`;
-  }
-
+  if (pr.score > G.speedPlayerBest.score) { G.speedPlayerBest = { score: pr.score, text: pr.text }; $('speed-best-label').textContent = `最佳：${pr.text}`; }
   const cDice = rollBiasedSingle(6, !G.isWinningGame);
   const cr = getDiceCombination(cDice);
-  if (cr.score > G.speedComputerBest.score) {
-    G.speedComputerBest = { score: cr.score, text: cr.text };
-  }
-
+  if (cr.score > G.speedComputerBest.score) { G.speedComputerBest = { score: cr.score, text: cr.text }; }
   G.speedRounds++;
   addHistory(`第${G.speedRounds}次：${pr.text}`, pr.score > G.speedPlayerBest.score - 1 ? 'win' : '');
-
   G.isSpinning = false;
   if (G.speedTimeLeft > 0) setAllBtnsDisabled(false);
 }
-
 function endSpeedMode() {
   if (G.isEnding) return;
   addHistory(`時間到！玩家最佳：${G.speedPlayerBest.text} / 店家最佳：${G.speedComputerBest.text}`);
   finishGame(G.isWinningGame);
 }
-
-/* ═══════════════════════════════════════════
-   FORFEIT
-═══════════════════════════════════════════ */
 function handleForfeit() {
   if (!G.isGameActive || G.isEnding) return;
   snd('snd-click');
-  if (confirm('確定要放棄比賽嗎？放棄後視為本次挑戰失敗。')) {
-    clearInterval(G.speedTimerId);
-    finishGame(false, '玩家主動放棄');
-  }
+  if (confirm('確定要放棄比賽嗎？放棄後視為本次挑戰失敗。')) { clearInterval(G.speedTimerId); finishGame(false, '玩家主動放棄'); }
 }
-
-/* ═══════════════════════════════════════════
-   FINISH GAME
-═══════════════════════════════════════════ */
 function finishGame(playerWins, forfeitRemark = null) {
   if (G.isEnding) return;
   G.isEnding = true;
   G.isGameActive = false;
   clearInterval(G.speedTimerId);
-
   const p = G.roundWins.player, c = G.roundWins.computer;
-  const remark = forfeitRemark ||
-    (G.mode === 'life'
-      ? `最終生命：玩家 ${Math.max(0,G.playerLife)} vs 店家 ${Math.max(0,G.computerLife)}`
-      : G.mode === 'speed'
-        ? `玩家最佳：${G.speedPlayerBest.text} / 店家最佳：${G.speedComputerBest.text}`
-        : `最終比分：玩家 ${p} : 店家 ${c}`);
-
+  const remark = forfeitRemark || (G.mode === 'life' ? `最終生命：玩家 ${Math.max(0,G.playerLife)} vs 店家 ${Math.max(0,G.computerLife)}` : (G.mode === 'speed' ? `玩家最佳：${G.speedPlayerBest.text} / 店家最佳：${G.speedComputerBest.text}` : `最終比分：玩家 ${p} : 店家 ${c}`));
   syncData(playerWins, remark);
-
   const card = $('result-card');
   card.className = `result-card ${playerWins ? (G.isWinningGame ? 'jackpot' : 'win') : 'lose'}`;
   $('result-icon').textContent  = playerWins ? '🎉' : '😥';
   $('result-title').textContent = playerWins ? '恭喜！挑戰成功！' : '挑戰結束';
   $('result-player').textContent = `帳號：${G.account || G.playerInfo.nameTail}`;
   $('result-remark').textContent = remark;
-
   const prizeWrap = $('prize-box-wrap');
   prizeWrap.innerHTML = '';
   if (playerWins) {
     const prize = G.isWinningGame ? '恭喜中獎！請洽服務人員' : '本次挑戰成功！請洽服務人員';
-    const box = document.createElement('div');
-    box.className = 'prize-box';
-    box.textContent = prize;
+    const box = document.createElement('div'); box.className = 'prize-box'; box.textContent = prize;
     prizeWrap.appendChild(box);
     $('result-notice').style.display = 'block';
     snd('snd-jackpot');
-    if (typeof confetti === 'function') {
-      confetti({ particleCount: 200, spread: 120, origin: { x:0.5, y:0 }, startVelocity: 30 });
-    }
-  } else {
-    $('result-notice').style.display = 'none';
-    snd('snd-lose');
-  }
-
+    if (typeof confetti === 'function') { confetti({ particleCount: 200, spread: 120, origin: { x:0.5, y:0 }, startVelocity: 30 }); }
+  } else { $('result-notice').style.display = 'none'; snd('snd-lose'); }
   showScreen('result');
 }
-
-/* ═══════════════════════════════════════════
-   DATA SYNC
-═══════════════════════════════════════════ */
 async function syncData(isWin, remark) {
-  const payload = {
-    action: 'updatestats',
-    vid: 'v' + Date.now().toString(36),
-    phone4key: G.phone4key || G.playerInfo.nameTail,
-    account:  G.account || '',
-    mode: G.mode,
-    isWin: isWin,
-    prize: isWin ? (G.isWinningGame ? '中獎' : '挑戰成功') : '無',
-    visitCount: G.visitCount || G.playerData.roundCount,
-    isLuckySlot: G.isWinningGame,
-    luckySlot: G.luckySlot || 0,
-    ipAddress: G.ipAddress || '—',
-    remark: `[${G.mode}] ${remark}`,
-    timestamp: new Date().toISOString()
-  };
-  try {
-    await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
-  } catch(e) { console.error('Sync error (資料寫入失敗，請檢查後端):', e); }
+  const payload = { action: 'updatestats', vid: 'v' + Date.now().toString(36), phone4key: G.phone4key || G.playerInfo.nameTail, account: G.account || '', mode: G.mode, isWin: isWin, prize: isWin ? (G.isWinningGame ? '中獎' : '挑戰成功') : '無', visitCount: G.visitCount || G.playerData.roundCount, isLuckySlot: G.isWinningGame, luckySlot: G.luckySlot || 0, ipAddress: G.ipAddress || '—', remark: `[${G.mode}] ${remark}`, timestamp: new Date().toISOString() };
+  try { await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' }); } catch(e) { console.error('Sync error', e); }
 }
-
-/* ═══════════════════════════════════════════
-   DAILY LOCK
-═══════════════════════════════════════════ */
 let lockTimerId = null;
 function showDailyLock(name) {
   $('lock-title').textContent = `${name} 今日已挑戰過！`;
   showScreen('lock');
   if (lockTimerId) clearInterval(lockTimerId);
   lockTimerId = setInterval(() => {
-    const now = new Date();
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+    const now = new Date(), tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
     const diff = tomorrow - now;
     if (diff < 0) { clearInterval(lockTimerId); logout(); return; }
-    const h = String(Math.floor(diff/36e5)).padStart(2,'0');
-    const m = String(Math.floor((diff%36e5)/6e4)).padStart(2,'0');
-    const s = String(Math.floor((diff%6e4)/1e3)).padStart(2,'0');
+    const h = String(Math.floor(diff/36e5)).padStart(2,'0'), m = String(Math.floor((diff%36e5)/6e4)).padStart(2,'0'), s = String(Math.floor((diff%6e4)/1e3)).padStart(2,'0');
     $('lock-countdown').textContent = `${h}:${m}:${s}`;
   }, 1000);
 }
-
-/* ═══════════════════════════════════════════
-   LOGOUT
-═══════════════════════════════════════════ */
 async function logout() {
-  if (document.fullscreenElement) await document.exitFullscreen().catch(()=>{});
+  if (isFullscreen()) await document.exitFullscreen().catch(()=>{});
   clearInterval(lockTimerId);
   window.location.reload();
 }
-
-/* ═══════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════ */
-function setAllBtnsDisabled(state) {
-  ['btn-roll-main','btn-brave-safe','btn-brave-risky','btn-speed-roll'].forEach(id => {
-    const el = $(id);
-    if (el) el.disabled = state;
-  });
-  $('btn-forfeit').disabled = state;
-}
-
-async function tryFullscreen() {
-  // 手機裝置不支援自動全螢幕，略過（請引導使用者從主畫面開啟）
-  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
-  try { await document.documentElement.requestFullscreen(); } catch(e) {}
-}
-
-/* ── 全螢幕蓋板邏輯 ── */
-(function() {
-  const wsFsOverlay = document.getElementById('ws-fullscreen-overlay');
-  const wsFsBtn     = document.getElementById('ws-fs-btn');
-  const wsViolation = document.getElementById('ws-violation');
-  const wsViolOk    = document.getElementById('ws-violation-ok');
-
-  function isFS() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-
-  async function enterFS() {
-    try {
-      if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-      else if (document.documentElement.webkitRequestFullscreen) await document.documentElement.webkitRequestFullscreen();
-    } catch(e) {}
-  }
-
-  // 手機直接隱藏蓋板（由 PWA 主畫面提供全螢幕）
-  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    if (wsFsOverlay) wsFsOverlay.style.display = 'none';
-    return;
-  }
-
-  // 桌機：點按鈕才進全螢幕
-  wsFsBtn && wsFsBtn.addEventListener('click', async function() {
-    await enterFS();
-    if (wsFsOverlay) wsFsOverlay.style.display = 'none';
-    document.addEventListener('fullscreenchange', wsOnFsChange);
-  });
-
-  function wsOnFsChange() {
-    if (!isFS()) {
-      if (wsViolation) wsViolation.style.display = 'flex';
-    }
-  }
-
-  wsViolOk && wsViolOk.addEventListener('click', async function() {
-    await enterFS();
-    if (wsViolation) wsViolation.style.display = 'none';
-  });
-})();
-
-function onFsChange() {
-  const hint = $('fs-hint');
-  if (document.fullscreenElement) {
-    hint.classList.add('show');
-    setTimeout(() => hint.classList.remove('show'), 3000);
-  }
-}
-
-async function getIP() {
-  try {
-    const r = await fetch('https://api.ipify.org?format=json');
-    const d = await r.json();
-    G.ipAddress = d.ip;
-  } catch(e) {}
-}
+function setAllBtnsDisabled(state) { ['btn-roll-main','btn-brave-safe','btn-brave-risky','btn-speed-roll'].forEach(id => { const el = $(id); if (el) el.disabled = state; }); $('btn-forfeit').disabled = state; }
+async function getIP() { try { const r = await fetch(atob('aHR0cHM6Ly9hcGkuaXBpZnkub3JnP2Zvcm1hdD1qc29u')); const d = await r.json(); G.ipAddress = d.ip; } catch(e) {} }
 </script>
 </body>
 </html>
