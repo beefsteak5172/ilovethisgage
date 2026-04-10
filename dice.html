@@ -44,28 +44,49 @@
       opacity: 0; transform: scale(0.95);
       transition: opacity 0.5s ease-out, transform 0.5s ease-out;
       display: none;
-      flex-direction: row; 
-      align-items: flex-start;
-      justify-content: center;
-      gap: 20px; 
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
       width: 100%; height: 100%;
-      padding: 20px;
-      overflow: auto;
+      padding: 10px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
     #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
 
-    #game-instructions {
-        flex: 0 0 280px; 
-        background: rgba(0,0,0,0.3);
+    /* 桌機保持橫排 */
+    @media (min-width: 768px) {
+      #game-wrapper {
+        flex-direction: row;
+        align-items: flex-start;
         padding: 20px;
-        border-radius: 15px;
+        gap: 20px;
+      }
+    }
+
+    #game-instructions {
+        width: 100%;
+        background: rgba(0,0,0,0.3);
+        padding: 12px 16px;
+        border-radius: 12px;
         border: 1px solid var(--primary);
-        align-self: stretch; 
-        display: none; 
+        display: none;
         flex-direction: column;
         font-family: 'Microsoft JhengHei', sans-serif;
+        overflow: hidden;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      #game-instructions {
+        flex: 0 0 280px;
+        align-self: stretch;
         max-height: 100%;
         overflow-y: auto;
+        padding: 20px;
+      }
     }
     #game-instructions h3 { color: var(--primary); font-family: 'Pixel', sans-serif; margin-bottom: 15px; font-size: 1.2rem; }
     #game-instructions p { font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px; }
@@ -73,9 +94,9 @@
     
     .container {
       width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.05);
-      border-radius: 16px; padding: clamp(15px, 3vw, 25px);
+      border-radius: 16px; padding: clamp(10px, 3vw, 25px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); text-align: center; position: relative;
-      flex-grow: 1; max-height: 100%; overflow-y: auto;
+      flex-grow: 1; overflow-y: auto; box-sizing: border-box;
     }
     
     h1, h2, h3 {
@@ -748,20 +769,15 @@
       return;
     }
 
-    // 情況二：有 vid 但沒有 gtoken → 直接進入（mustWin=false，等 GAS 更新後帶 gtoken）
+    // 情況二：有 vid 但沒有 gtoken → 直接進入（mustWin=false）
     if (vid && type === 'dice' && !gtoken) {
       gameState.vid = vid;
       gameState.mustWin = false;
-      gameState.playerInfo = {
-        nameTail: vid.slice(0, 4).toUpperCase(),
-        numberCode: vid.slice(-4).toUpperCase()
-      };
+      gameState.playerInfo = { nameTail: vid.slice(0,4).toUpperCase(), numberCode: vid.slice(-4).toUpperCase() };
       gameState.playerData = { roundCount: 0, hasClaimed: false };
       document.getElementById('qr-waiting-msg').innerHTML = `
         <div class="ld-spinner"></div>
-        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">
-          驗證成功，正在載入遊戲…
-        </p>`;
+        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">驗證成功，正在載入遊戲…</p>`;
       getDeviceFingerprint().then(fp => {
         gameState.deviceFingerprint = fp;
         fetch(CHECKIN_SCRIPT_URL + '?action=register_fp&vid=' + encodeURIComponent(vid)
