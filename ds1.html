@@ -803,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn-verify').addEventListener('click', handleLogin);
   $('inp-account').addEventListener('keypress', e => e.key === 'Enter' && $('btn-verify').click());
   $('inp-phone4').addEventListener('keypress',  e => e.key === 'Enter' && $('btn-verify').click());
-  $('inp-account').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+  $('inp-account').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); if (e.target.value.length >= 4) { e.target.blur(); $('inp-phone4').focus(); } });
   $('inp-phone4').addEventListener('input', e => { if (e.target.value.length >= 4) { e.target.blur(); } });
   $('btn-forfeit').addEventListener('click', handleForfeit);
   getIP();
