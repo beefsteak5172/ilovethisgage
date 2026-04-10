@@ -484,6 +484,7 @@
       max-height: 85vh; overflow-y: auto; position: relative;
     }
     .rules-content h3 { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin-bottom: 16px; text-align: center; }
+    .rules-section-title { font-size: 0.82rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px; padding-left: 4px; }
     .rules-content ul { list-style: none; padding: 0; }
     .rules-content li { padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; background: var(--surface2); border-left: 3px solid var(--primary); font-size: 0.88rem; line-height: 1.6; }
     .rules-timer {
@@ -657,15 +658,38 @@
 <!-- RULES MODAL -->
 <div id="rules-modal">
   <div class="rules-content">
-    <div class="rules-timer" id="rules-timer">5</div>
-    <h3>🎲 遊戲規則</h3>
+    <div class="rules-timer" id="rules-timer">8</div>
+    <h3>🎲 遊戲規則 &amp; 玩法說明</h3>
+
+    <div class="rules-section-title">📋 基本規則</div>
     <ul>
-      <li>每位玩家每天只能挑戰一次</li>
-      <li>每次遊戲進行 <strong>8 回合</strong>，每回合分出勝負</li>
-      <li>8 回合結束後，玩家勝場 &gt; 店家勝場 → 玩家贏得獎品</li>
-      <li>平手（4:4）視為店家勝</li>
-      <li>選擇最適合的模式，祝您好運！</li>
+      <li>每位玩家每天只能挑戰 <strong>一次</strong></li>
+      <li>每次遊戲共進行 <strong>8 回合</strong>，每回合由玩家與店家各擲骰子</li>
+      <li>8 回合結束後，<strong>玩家勝場 ≥ 5 場</strong> → 玩家獲勝</li>
+      <li>平手（4:4）視為 <strong>店家勝</strong></li>
     </ul>
+
+    <div class="rules-section-title">🏆 如何獲得獎品</div>
+    <ul>
+      <li>挑戰成功後畫面會顯示得獎通知，請 <strong>立即通知現場服務員</strong> 確認</li>
+      <li>⚠️ 所有操作須由本人親自在現場完成，方可生效</li>
+      <li>請勿在服務員確認前登出或關閉遊戲</li>
+    </ul>
+
+    <div class="rules-section-title">🎮 模式說明</div>
+    <ul>
+      <li><strong>♠️ 王牌對決 / 🧠 技巧對決</strong> — 雙方各擲 6 顆骰子，比較牌型大小（六條 &gt; 五條 &gt; 四條 &gt; 三條 &gt; 對子 &gt; 散牌）</li>
+      <li><strong>🎯 四骰對決</strong> — 雙方各擲 4 顆骰子，比較點數總和，總和高者勝</li>
+      <li><strong>⚡ 限時對決</strong> — 90 秒內可無限擲骰，計時結束後比較雙方最佳牌型</li>
+      <li><strong>🎲 膽量對決</strong> — 玩家可選擇「安全（6骰）」或「風險（8骰）」，與店家 6 骰比較總點數</li>
+      <li><strong>❤️ 生命決鬥</strong> — 雙方各有 15 點生命，每回合輸家扣除差值血量，生命歸零者敗</li>
+      <li><strong>⛓️ 連鎖競速</strong> — 每回合有指定連鎖目標（如：出現 2 個相同點數），先達成目標者勝</li>
+      <li><strong>🏆 終極賭注</strong> — 雙方各擲 1 顆骰子，點數大者勝，最刺激的模式！</li>
+    </ul>
+
+    <div style="margin-top:14px; padding:10px 14px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:10px; font-size:0.82rem; color:#fcd34d; text-align:center; line-height:1.6;">
+      💡 第一次玩？請向店家索取您的賬號再登入
+    </div>
   </div>
 </div>
 
@@ -928,7 +952,7 @@ function startGame() {
 }
 function showRulesModal(callback) {
   rulesModal.classList.add('show');
-  let count = 5;
+  let count = 8;
   $('rules-timer').textContent = count;
   const t = setInterval(() => {
     count--;
