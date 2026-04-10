@@ -438,6 +438,51 @@
     }
     #fs-hint.show { opacity: 1; }
 
+    /* ── 全螢幕提示蓋板 ── */
+    #ws-fullscreen-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 99998; color: #fff; backdrop-filter: blur(6px);
+    }
+    #ws-fullscreen-overlay p {
+      font-size: 1.2rem; margin-bottom: 24px;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      text-align: center; line-height: 1.9;
+    }
+    #ws-fs-btn {
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 1.15rem; cursor: pointer; font-weight: 700;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+    #ws-fs-btn:hover { transform: scale(1.06); box-shadow: 0 8px 30px var(--primary-glow); }
+
+    /* ── 退出全螢幕警告 ── */
+    #ws-violation {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.88); display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 99999; backdrop-filter: blur(6px);
+    }
+    #ws-violation .ws-vbox {
+      background: var(--surface); padding: 36px; border-radius: 16px;
+      border: 2px solid var(--accent); max-width: 460px; text-align: center;
+    }
+    #ws-violation h2 { color: var(--accent); font-size: 1.5rem; margin-bottom: 14px; }
+    #ws-violation p {
+      font-size: 0.95rem; line-height: 1.7; margin-bottom: 24px;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; color: var(--text);
+    }
+    #ws-violation button {
+      padding: 12px 28px; background: linear-gradient(135deg, var(--primary), #818cf8);
+      color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; font-weight: 700;
+    }
+
     #speed-timer-wrap { display: none; justify-content: center; align-items: center; gap: 10px; flex-direction: column; width: 100%; flex-shrink: 0; }
     #duel-area-wrap { display: none; }
     #single-area-wrap { display: none; }
@@ -628,6 +673,21 @@
 </div>
 
 <div id="fs-hint">按 ESC 退出全螢幕</div>
+
+<!-- ── 全螢幕提示蓋板 ── -->
+<div id="ws-fullscreen-overlay">
+  <p>🎲 骰子每日挑戰<br><span style="font-size:0.85rem;color:#aaa;">請進入全螢幕以開始遊戲</span></p>
+  <button id="ws-fs-btn">📱 進入全螢幕</button>
+</div>
+
+<!-- ── 退出全螢幕警告 ── -->
+<div id="ws-violation">
+  <div class="ws-vbox">
+    <h2>⚠️ 請維持全螢幕</h2>
+    <p id="ws-violation-msg">此遊戲需要在全螢幕模式下進行，請點擊確定以恢復。</p>
+    <button id="ws-violation-ok">確定，重新進入全螢幕</button>
+  </div>
+</div>
 
 <audio id="snd-click"  src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 <audio id="snd-roll"   src="https://assets.mixkit.co/active_storage/sfx/2074/2074-preview.mp3" preload="auto"></audio>
@@ -1486,6 +1546,47 @@ async function tryFullscreen() {
   if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
   try { await document.documentElement.requestFullscreen(); } catch(e) {}
 }
+
+/* ── 全螢幕蓋板邏輯 ── */
+(function() {
+  const wsFsOverlay = document.getElementById('ws-fullscreen-overlay');
+  const wsFsBtn     = document.getElementById('ws-fs-btn');
+  const wsViolation = document.getElementById('ws-violation');
+  const wsViolOk    = document.getElementById('ws-violation-ok');
+
+  function isFS() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+
+  async function enterFS() {
+    try {
+      if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+      else if (document.documentElement.webkitRequestFullscreen) await document.documentElement.webkitRequestFullscreen();
+    } catch(e) {}
+  }
+
+  // 手機直接隱藏蓋板（由 PWA 主畫面提供全螢幕）
+  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+    if (wsFsOverlay) wsFsOverlay.style.display = 'none';
+    return;
+  }
+
+  // 桌機：點按鈕才進全螢幕
+  wsFsBtn && wsFsBtn.addEventListener('click', async function() {
+    await enterFS();
+    if (wsFsOverlay) wsFsOverlay.style.display = 'none';
+    document.addEventListener('fullscreenchange', wsOnFsChange);
+  });
+
+  function wsOnFsChange() {
+    if (!isFS()) {
+      if (wsViolation) wsViolation.style.display = 'flex';
+    }
+  }
+
+  wsViolOk && wsViolOk.addEventListener('click', async function() {
+    await enterFS();
+    if (wsViolation) wsViolation.style.display = 'none';
+  });
+})();
 
 function onFsChange() {
   const hint = $('fs-hint');
