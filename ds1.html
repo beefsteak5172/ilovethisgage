@@ -541,14 +541,14 @@
     <div class="login-sub">每日限玩一次 · 8回合決勝負</div>
 
     <div class="field">
-      <label>活動帳號（向店家索取）</label>
-      <input id="inp-account" type="text" maxlength="4" placeholder="例：A001" autocomplete="off" style="text-transform:uppercase">
+      <label>Account Code (from staff)</label>
+      <input id="inp-account" type="text" maxlength="4" placeholder="e.g. A001" autocomplete="off" style="text-transform:uppercase">
     </div>
     <div class="field">
-      <label>手機末4碼</label>
-      <input id="inp-phone4" type="text" maxlength="4" placeholder="例：1234" autocomplete="off" inputmode="numeric">
+      <label>Last 4 Phone Digits</label>
+      <input id="inp-phone4" type="text" maxlength="4" placeholder="e.g. 1234" autocomplete="off" inputmode="numeric">
     </div>
-    <button class="btn-primary" id="btn-verify">驗證並開始</button>
+    <button class="btn-primary" id="btn-verify">Verify &amp; Start</button>
     <div class="msg-box" id="login-msg"></div>
   </div>
 </div>
@@ -730,7 +730,7 @@ document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 /* ═══════════════════════════════════════════
    原有遊戲邏輯 (僅移除舊的全螢幕干擾)
 ═══════════════════════════════════════════ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw9auOy4sMENXw_SzA07wdOdD31Y6FgZTp6cC1IZylbPO8NNgajHEyWW5KDKuVLOhF7w/exec';
+const SCRIPT_URL = atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J6dzlhdU95NHNNRU5Yd19TekEwN3dkT2REMzFZNkZnWlRwNmNDMUlaeWxiUE84Tk5nYWpIRXlXVzVLREt1VkxPaEY3dy9leGVj');
 const TOTAL_ROUNDS = 8;
 const CYCLE_LENGTH = 7;
 
@@ -777,6 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('inp-account').addEventListener('keypress', e => e.key === 'Enter' && $('btn-verify').click());
   $('inp-phone4').addEventListener('keypress',  e => e.key === 'Enter' && $('btn-verify').click());
   $('inp-account').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+  $('inp-phone4').addEventListener('input', e => { if (e.target.value.length >= 4) { e.target.blur(); } });
   $('btn-forfeit').addEventListener('click', handleForfeit);
   getIP();
   // 隱藏原本可能會出現的 PWA 提示
@@ -893,18 +894,18 @@ function planRounds(isWinningGame) {
 async function handleLogin() {
   const account = $('inp-account').value.trim().toUpperCase();
   const phone4  = $('inp-phone4').value.trim();
-  if (!/^[A-Z]\d{3}$/.test(account)) return setMsg('帳號格式錯誤，請向店家索取（例：A001）', 'error');
-  if (!/^\d{4}$/.test(phone4))        return setMsg('請輸入正確的手機末4碼（4位數字）', 'error');
-  setMsg('驗證中…', 'loading');
+  if (!/^[A-Z]\d{3}$/.test(account)) return setMsg('Invalid account format. Please get your code from staff (e.g. A001)', 'error');
+  if (!/^\d{4}$/.test(phone4))        return setMsg('Please enter the last 4 digits of your phone number', 'error');
+  setMsg('Verifying...', 'loading');
   $('btn-verify').disabled = true;
   try {
     const vid = 'v' + Date.now().toString(36);
     const res = await fetch(`${SCRIPT_URL}?action=phone_player_slot&account=${encodeURIComponent(account)}&phone4=${encodeURIComponent(phone4)}&vid=${encodeURIComponent(vid)}`);
-    if (!res.ok) throw new Error('網路錯誤');
+    if (!res.ok) throw new Error('Network error');
     const result = await res.json();
-    if (result.status === 'DENY' && result.reason === 'account_invalid') { setMsg('帳號不存在或已停用，請向店家確認', 'error'); return; }
-    if (result.status === 'DENY') { showDailyLock('此帳號'); return; }
-    if (result.status !== 'OK') throw new Error(result.message || '驗證失敗');
+    if (result.status === 'DENY' && result.reason === 'account_invalid') { setMsg('Account not found or disabled. Please check with staff.', 'error'); return; }
+    if (result.status === 'DENY') { showDailyLock('This account'); return; }
+    if (result.status !== 'OK') throw new Error(result.message || 'Verification failed');
     G.playerInfo    = { nameTail: account, numberCode: phone4 };
     G.playerData    = { roundCount: result.visitCount || 1, hasClaimed: false, lastPlayed: null };
     G.phone4key     = account + '_' + phone4;
@@ -915,7 +916,7 @@ async function handleLogin() {
     G.cycleNum      = result.cycleNum   || 1;
     $('login-msg').classList.remove('show');
     startGame();
-  } catch (e) { setMsg(`驗證失敗：${e.message}`, 'error'); } finally { $('btn-verify').disabled = false; }
+  } catch (e) { setMsg(`Verification failed: ${e.message}`, 'error'); } finally { $('btn-verify').disabled = false; }
 }
 
 function startGame() {
@@ -1232,7 +1233,7 @@ async function logout() {
   window.location.reload();
 }
 function setAllBtnsDisabled(state) { ['btn-roll-main','btn-brave-safe','btn-brave-risky','btn-speed-roll'].forEach(id => { const el = $(id); if (el) el.disabled = state; }); $('btn-forfeit').disabled = state; }
-async function getIP() { try { const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); G.ipAddress = d.ip; } catch(e) {} }
+async function getIP() { try { const r = await fetch(atob('aHR0cHM6Ly9hcGkuaXBpZnkub3JnP2Zvcm1hdD1qc29u')); const d = await r.json(); G.ipAddress = d.ip; } catch(e) {} }
 </script>
 </body>
 </html>
