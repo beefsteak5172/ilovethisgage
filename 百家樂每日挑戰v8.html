@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>百家樂每日挑戰</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <style>
+    /* --- 基礎樣式 (整合自 骰子挑戰V7) --- */
+    @font-face { font-family: 'Pixel'; src: url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype'); }
+    :root { 
+      --primary: #4a6cf7; --secondary: #10b981; --success: #00b09b; --jackpot: #ff416c; 
+      --lose-color: #F44336; --bg-color: #1e293b;
+      --card-width: clamp(65px, 15vw, 100px); --card-height: calc(var(--card-width) * 1.4);
+      --banker-color: #c0392b; --player-color: #2980b9; --tie-color: #27ae60;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+    body { background-color: var(--bg-color); color: #f8fafc; font-family: 'Pixel', 'Segoe UI', system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; position: fixed; display: flex; align-items: center; justify-content: center; }
+    #main-container, #game-result-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 10px; transition: opacity 0.4s ease-out; }
+    #main-container { z-index: 10; background-color: transparent; }
+    #game-wrapper { z-index: 20; background: var(--bg-color); opacity: 0; transform: scale(0.95); transition: opacity 0.5s ease-out, transform 0.5s ease-out; display: none; flex-direction: row; align-items: flex-start; justify-content: center; gap: 20px; width: 100%; height: 100%; padding: 20px; overflow: auto; }
+    #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
+    #left-column { flex: 1; min-width: 280px; max-width: 350px; height: 100%; display: flex; flex-direction: column; gap: 20px; }
+    .container { width: 100%; background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: clamp(15px, 3vw, 25px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); text-align: center; position: relative; flex: 3; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+    h1, h2, h3 { margin-bottom: 20px; font-size: clamp(1.5rem, 6vw, 2.5rem); color: #e2e8f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.2; }
+    h2 { font-size: clamp(1.2rem, 5vw, 2rem); }
+    h3 { font-size: clamp(1rem, 4vw, 1.5rem); color: #94a3b8;}
+    .form-section { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; margin-bottom: 25px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.2); }
+    .input-group { margin-bottom: 15px; text-align: left;}
+    label { display: block; margin-bottom: 8px; font-size: clamp(0.8rem, 3vw, 1rem); color: #cbd5e1; }
+    input { width: 100%; font-size: clamp(0.9rem, 4vw, 1.1rem); padding: 12px 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; text-align: center; font-weight: 600; }
+    button, .game-btn, .bet-btn { font-family: 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(1rem, 4vw, 1.2rem); padding: 12px 24px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 8px; cursor: pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); margin: 5px; transition: all 0.3s ease; }
+    button:hover, .game-btn:hover, .bet-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+    button:disabled, .game-btn:disabled, .bet-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none; background: #64748b; }
+    .forfeit-btn { position: absolute; top: 15px; right: 15px; background: #c0392b; min-width: auto; padding: 8px 16px; font-size: 0.9rem; z-index: 100; }
+    #result { padding: 20px; border-radius: 15px; text-align: center; font-weight: 600; font-size: 1.2rem; width: 100%; max-width: 500px; display: none; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid rgba(255,255,255,0.2); color: #f8fafc; }
+    #result.show { display: flex; }
+    #game-result-display { z-index: 50; display: none; background-color: transparent; }
+    #game-result-display.show { display: flex; }
+    #game-result-display .result-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--bg-color); border-radius: 16px; }
+    #game-result-display h2 { text-shadow: 2px 2px 4px #000; font-size: 2.5rem; margin-bottom: 25px; }
+    #game-result-display .logout-btn { margin-top: 20px; padding: 15px 30px; min-width: 250px; background: #475569; }
+    .jackpot { background: linear-gradient(135deg, var(--jackpot), #f43f5e); animation: pulse 1.5s infinite; } 
+    .success { background: linear-gradient(135deg, var(--success), #34d399); } 
+    .error, .lose { background: linear-gradient(135deg, #f97316, #ef4444); } 
+    .loading { background: linear-gradient(135deg, #f59e0b, #facc15); color: #333; } 
+    .result-icon { font-size: 3rem; margin-bottom: 15px; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    #rules-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
+    #rules-modal.visible { opacity: 1; pointer-events: auto; }
+    #rules-content { background: #1e293b; border-radius: 15px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid #4a6cf7; position: relative; padding-bottom: 60px; }
+    #countdown-timer { position: absolute; top: 15px; right: 15px; background: #ef4444; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
+    .prize-highlight { display: inline-block; padding: 12px 24px; margin: 10px 0; background: linear-gradient(45deg, #f59e0b, #ef4444); border-radius: 8px; font-size: 1.8em; font-family: 'Microsoft JhengHei', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); color: #fff; border: 2px solid #fff; }
+    .win-warning { font-size: 0.9rem; color: #facc15; font-weight: bold; line-height: 1.5; padding: 10px; border: 1px dashed #facc15; border-radius: 8px; margin-top: 15px; background: rgba(0,0,0,0.2); }
+    #fullscreen-prompt { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #fullscreen-prompt.visible { opacity: 1; }
+    #results-history-container { width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); flex-grow: 1; display: none; flex-direction: column; }
+    #results-history-list { list-style-type: decimal; list-style-position: inside; padding-left: 5px; height: 100%; overflow-y: auto; text-align: left; font-family: 'Microsoft JhengHei', sans-serif; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
+    .potential-prize-display { font-family: 'Microsoft JhengHei', sans-serif; color: #34d399; border: 1px solid #34d399; background: rgba(52, 211, 153, 0.1); padding: 10px; border-radius: 8px; margin: 15px 0; font-size: 1.1rem; line-height: 1.5; }
+    .potential-prize-display span { font-weight: bold; color: #f0fdf4; }
+    #virtual-keyboard { position: fixed; bottom: 0; left: 0; width: 100%; background: #0f172a; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 1001; transform: translateY(100%); transition: transform 0.3s ease-out; user-select: none; }
+    #virtual-keyboard.visible { transform: translateY(0); }
+    .keyboard-row { display: flex; justify-content: center; margin-bottom: 8px; }
+    .keyboard-key { height: 50px; margin: 0 4px; padding: 0; border: 1px solid var(--primary); border-radius: 8px; background: #1e293b; color: #f8fafc; font-size: 1.5rem; font-family: 'Segoe UI', system-ui, sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-grow: 1; transition: background-color 0.2s; }
+    .keyboard-key:active { background-color: var(--primary); }
+    .key-special { flex-grow: 2; background-color: #475569; }
+    .numeric-keypad .keyboard-key { width: 80px; flex-grow: 0; }
+    .qwerty-layout { display: none; }
+
+    /* --- 百家樂遊戲專用樣式 --- */
+    #baccarat-game-content { display: none; flex-direction: column; align-items: center; width: 100%; gap: 15px; flex-grow: 1;}
+    .betting-area { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .bet-btn { min-width: 120px; }
+    .bet-btn.player { background: var(--player-color); }
+    .bet-btn.banker { background: var(--banker-color); }
+    .bet-btn.tie { background: var(--tie-color); }
+    .bet-btn.selected { transform: scale(1.1); box-shadow: 0 0 15px #fff; border: 2px solid #fff; }
+    .game-area { display: flex; justify-content: space-around; width: 100%; gap: 20px; flex-grow: 1;}
+    .hand-area { flex: 1; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; display: flex; flex-direction: column; align-items: center; border: 2px solid transparent; transition: all 0.3s; }
+    .hand-area.winner { border-color: #f59e0b; box-shadow: 0 0 20px #f59e0b; }
+    .hand-area h3 { margin-bottom: 10px; }
+    .hand-area .score { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
+    #player-score { color: var(--player-color); }
+    #banker-score { color: var(--banker-color); }
+    .card-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: var(--card-height); }
+    .card { width: var(--card-width); height: var(--card-height); background-color: transparent; border: 1px solid #333; border-radius: 6px; position: relative; font-size: calc(var(--card-width) / 2.5); font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); transition: transform 0.5s ease-in-out, opacity 0.5s; transform-style: preserve-3d; }
+    .card .front, .card .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .card .front { background-color: #fff; transform: rotateY(180deg); }
+    .card .back { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .card.flipped { transform: rotateY(180deg); }
+    .card.suit-s, .card.suit-c { color: #2c3e50; }
+    .card.suit-h, .card.suit-d { color: #c0392b; }
+    .card::before, .card::after { position: absolute; font-size: calc(var(--card-width) / 4); line-height: 1; }
+    .card::before { top: 5px; left: 5px; }
+    .card::after { bottom: 5px; right: 5px; transform: rotate(180deg); }
+    .card.suit-s::before, .card.suit-s::after { content: '♠'; } .card.suit-c::before, .card.suit-c::after { content: '♣'; }
+    .card.suit-h::before, .card.suit-h::after { content: '♥'; } .card.suit-d::before, .card.suit-d::after { content: '♦'; }
+    #round-result-display { font-size: 1.5rem; font-weight: bold; margin-top: 15px; padding: 10px; border-radius: 8px; min-height: 50px; display: flex; align-items: center; justify-content: center; }
+    #round-result-display.win { color: #34d399; }
+    #round-result-display.lose { color: #ef4444; }
+    #round-timer { font-family: 'Pixel', sans-serif; font-size: 1.5rem; color: #f87171; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #f87171; display: none; }
+    
+    @media (max-width: 768px) { #game-wrapper { flex-direction: column; } #left-column { width: 100%; max-width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; } .container { width: 100%; } .game-area { flex-direction: column; } .keyboard-key { height: 45px; font-size: 1.2rem; } }
+  </style>
+</head>
+<body>
+
+<div id="fullscreen-prompt">按 ESC 鍵可退出全螢幕模式 (建議由店員操作)</div>
+
+<div id="main-container">
+  <div class="container" style="max-width: 500px;">
+    <h1 style="font-family:'Pixel', sans-serif;">百家樂每日挑戰</h1>
+    <div class="form-section" id="formSection">
+      <div class="input-group">
+        <label for="nameTail">Account Code（向店家索取）</label>
+        <input id="nameTail" type="password" maxlength="4" placeholder="例如：A001" autocomplete="off">
+        <div style="margin-top:5px;font-size:0.78rem;color:#f59e0b;display:flex;align-items:center;gap:5px;"><span>💡</span><span>第一次玩？請向店家索取您的賬號</span></div>
+      </div>
+      <div class="input-group">
+        <label for="numberCode">手機末 4 碼</label>
+        <input id="numberCode" type="password" maxlength="4" placeholder="例如：5678" autocomplete="off" inputmode="numeric">
+      </div>
+      <button id="verifyBtn">註冊/登入</button>
+    </div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<div id="main-instructions-template" style="display:none;">
+    <h3 style="text-align:center;margin-bottom:15px; font-family: 'Pixel', sans-serif;">遊戲規則</h3>
+    <p style="font-family: 'Microsoft JhengHei', sans-serif; text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+        <strong>目標：</strong>共 8 回合，投注「閒家」、「莊家」或「和局」，猜中結果次數越多，獎勵越高！
+    </p>
+    <ul style="list-style-type:none;padding-left:0; font-family: 'Microsoft JhengHei', sans-serif; text-align: left;">
+        <li style="margin-bottom: 15px;"><i class="fas fa-calculator"></i> <strong>計分方式</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li>A 計為 1 點。</li><li>2 至 9 計為牌面點數。</li><li>10, J, Q, K 計為 0 點。</li><li>將牌面點數相加，只取個位數為最終點數 (例：8+7=15，計為 5 點)。</li><li>最接近 9 點的一方獲勝。</li></ul></li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-clone"></i> <strong>補牌規則 (自動進行)</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li>任何一方前兩張牌總和為 8 或 9 點 (天牌)，雙方即停牌。</li><li>閒家總點數 0-5 點則補牌，6-7 點則停牌。</li><li>莊家是否補牌，規則較為複雜，遊戲會自動處理。</li></ul></li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-trophy"></i> <strong>獎勵層級</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li><strong>猜中 8 回合：</strong>免費</li><li><strong>猜中 7 回合：</strong>買一送一</li><li><strong>猜中 6 回合：</strong>第二件半價</li><li><strong>猜中 5 回合：</strong>買五送一</li></ul></li>
+        <li style="margin-bottom: 15px; border-top: 1px solid #4a6cf7; padding-top: 15px;"><i class="fas fa-shield-alt"></i> <strong>保底機制</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li>連續6次挑戰未獲得任何獎項，第7次登入時必中「免費」。</li><li>每次挑戰間隔不能超過3天，超過者前面累積次數全部歸零。</li></ul></li>
+    </ul>
+</div>
+
+<div id="game-wrapper">
+  <div id="left-column">
+    <div id="results-history-container">
+      <h3>戰況紀錄</h3>
+      <ol id="results-history-list"></ol>
+    </div>
+  </div>
+  <div class="container">
+    <button id="forfeit-btn" class="forfeit-btn">放棄比賽</button>
+    <div id="baccarat-game-content" class="baccarat-table">
+        <h2>第 <span id="current-round">1</span> / 8 回合</h2>
+        <div id="round-timer">20</div>
+        <h3 class="potential-prize-display">目前可獲得獎項: <span id="potential-prize">-</span></h3>
+        <div id="round-result-display">請在20秒內選擇您要投注的一方</div>
+        <div class="betting-area" id="betting-area">
+            <button class="bet-btn player" data-bet="player">閒家</button>
+            <button class="bet-btn tie" data-bet="tie">和局</button>
+            <button class="bet-btn banker" data-bet="banker">莊家</button>
+        </div>
+        <div class="game-area">
+            <div class="hand-area" id="banker-hand-area">
+                <h3>莊家</h3>
+                <div class="card-hand" id="banker-cards"></div>
+                <div class="score" id="banker-score">0</div>
+            </div>
+            <div class="hand-area" id="player-hand-area">
+                <h3>閒家</h3>
+                <div class="card-hand" id="player-cards"></div>
+                <div class="score" id="player-score">0</div>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button id="deal-btn" class="game-btn" disabled>發牌</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div id="game-result-display"></div>
+<div id="rules-modal"><div id="rules-content"><div id="countdown-timer">8</div>
+    <h3 style="text-align:center;margin-bottom:12px;font-family:'Pixel',sans-serif;color:#f59e0b;">🎮 百家樂投注 — 規則說明</h3>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;font-family:'Microsoft JhengHei',sans-serif;font-size:0.85rem;line-height:1.7;color:#e2e8f0;">
+      <strong style="color:#818cf8;">📋 基本規則：</strong>每日限玩一次，共 <strong>8 回合</strong>，玩家勝場 ≥ 5 場即獲勝，平手（4:4）視為店家勝。
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(16,185,129,0.08);border-left:3px solid #10b981;border-radius:0 8px 8px 0;font-family:'Microsoft JhengHei',sans-serif;font-size:0.85rem;line-height:1.7;color:#e2e8f0;">
+      <strong style="color:#34d399;">🎯 遊戲玩法：</strong>每回合在20秒內投注「閒家」、「莊家」或「和局」，猜中結果即得一勝，共 8 回合。
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:8px;font-family:'Microsoft JhengHei',sans-serif;font-size:0.82rem;color:#cbd5e1;">
+      <strong style="color:#94a3b8;display:block;margin-bottom:5px;">📌 重要規則：</strong>
+      <ul style="list-style:none;padding:0;margin:0;line-height:1.8;"><li>• A=1分，2-9=牌面，10/J/Q/K=0分</li><li>• 最接近9點者勝</li><li>• 天牌（8或9點）直接亮牌</li></ul>
+    </div>
+    <div style="margin-top:8px;padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;font-size:0.78rem;color:#fca5a5;font-family:'Microsoft JhengHei',sans-serif;text-align:center;line-height:1.6;">
+      ⚠️ 得獎後請勿登出，立即通知服務員確認。所有操作須本人親自在現場完成方可生效。
+    </div>
+    <div style="margin-top:6px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.78rem;color:#fcd34d;font-family:'Microsoft JhengHei',sans-serif;text-align:center;">
+      💡 第一次玩？請向店家索取您的賬號再登入
+    </div></div></div>
+
+<audio id="sound-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3" preload="auto"></audio>
+<audio id="sound-roll" src="https://assets.mixkit.co/sfx/preview/mixkit-playing-cards-shuffle-2012.mp3" preload="auto"></audio>
+<audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" preload="auto"></audio>
+<audio id="sound-lose" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto"></audio>
+<audio id="sound-jackpot" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3" preload="auto"></audio>
+<audio id="music-main" src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
+<audio id="music-competitive" src="https://assets.mixkit.co/music/preview/mixkit-epic-battle-cinematic-trailer-689.mp3" loop preload="auto"></audio>
+
+<div id="virtual-keyboard">
+    <div id="qwerty-layout" class="qwerty-layout">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="q">q</button> <button class="keyboard-key" data-key="w">w</button> <button class="keyboard-key" data-key="e">e</button> <button class="keyboard-key" data-key="r">r</button> <button class="keyboard-key" data-key="t">t</button> <button class="keyboard-key" data-key="y">y</button> <button class="keyboard-key" data-key="u">u</button> <button class="keyboard-key" data-key="i">i</button> <button class="keyboard-key" data-key="o">o</button> <button class="keyboard-key" data-key="p">p</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="a">a</button> <button class="keyboard-key" data-key="s">s</button> <button class="keyboard-key" data-key="d">d</button> <button class="keyboard-key" data-key="f">f</button> <button class="keyboard-key" data-key="g">g</button> <button class="keyboard-key" data-key="h">h</button> <button class="keyboard-key" data-key="j">j</button> <button class="keyboard-key" data-key="k">k</button> <button class="keyboard-key" data-key="l">l</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="z">z</button> <button class="keyboard-key" data-key="x">x</button> <button class="keyboard-key" data-key="c">c</button> <button class="keyboard-key" data-key="v">v</button> <button class="keyboard-key" data-key="b">b</button> <button class="keyboard-key" data-key="n">n</button> <button class="keyboard-key" data-key="m">m</button> </div>
+    </div>
+    <div id="numeric-layout" class="numeric-keypad">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="1">1</button> <button class="keyboard-key" data-key="2">2</button> <button class="keyboard-key" data-key="3">3</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="4">4</button> <button class="keyboard-key" data-key="5">5</button> <button class="keyboard-key" data-key="6">6</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="7">7</button> <button class="keyboard-key" data-key="8">8</button> <button class="keyboard-key" data-key="9">9</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key key-special" data-key="clear">清除</button> <button class="keyboard-key" data-key="0">0</button> <button class="keyboard-key key-special" data-key="backspace"><i class="fas fa-backspace"></i></button> </div>
+    </div>
+     <div class="keyboard-row">
+        <button class="keyboard-key key-special" data-key="switch" style="width: 264px;">切換鍵盤</button>
+    </div>
+</div>
+
+<script>
+  // --- Game State & Constants ---
+  const gameState = { isGameActive: false, isSpinning: false, isEnding: false, playerInfo: {}, playerData: {}, ipAddress: '載入中...', scriptURL: 'https://script.google.com/macros/s/AKfycbxz3eLRDmWqxsLS2bwWLmtf82p45n_CF2mcM9-BBPKWTU22LM1eD8BUdhVJjc2E7CJeZA/exec', currentMusic: null, deck: [], currentRound: 0, totalRounds: 8, wins: 0, currentBet: null, predeterminedWins: 0, isWinningGame: false, luckySlot: 0, visitCount: 0, cycleNum: 1, duelScript: [], roundTimerId: null, pointer: null, assignedScript: null };
+  const SUITS = { h: '♥', d: '♦', c: '♣', s: '♠' }; const RANKS = { 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: 'T', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
+  
+  // --- DOM Element References ---
+  const virtualKeyboard = document.getElementById('virtual-keyboard'), qwertyLayout = document.getElementById('qwerty-layout'), numericLayout = document.getElementById('numeric-layout');
+  let currentFocusedInput = null;
+  const mainContainer = document.getElementById('main-container'), gameWrapper = document.getElementById('game-wrapper'), verifyBtn = document.getElementById('verifyBtn'), nameTailInput = document.getElementById('nameTail'), numberCodeInput = document.getElementById('numberCode'), resultDiv = document.getElementById('result'), rulesModal = document.getElementById('rules-modal'), rulesContent = document.getElementById('rules-content'), countdownTimer = document.getElementById('countdown-timer'), mainInstructionsTemplate = document.getElementById('main-instructions-template'), forfeitBtn = document.getElementById('forfeit-btn');
+  const resultsHistoryContainer = document.getElementById('results-history-container'), resultsHistoryList = document.getElementById('results-history-list'), gameResultDiv = document.getElementById('game-result-display'), fullscreenPrompt = document.getElementById('fullscreen-prompt');
+  const dealBtn = document.getElementById('deal-btn'), bettingArea = document.getElementById('betting-area'), playerCardsContainer = document.getElementById('player-cards'), bankerCardsContainer = document.getElementById('banker-cards'), playerScoreEl = document.getElementById('player-score'), bankerScoreEl = document.getElementById('banker-score');
+  const currentRoundEl = document.getElementById('current-round'), potentialPrizeEl = document.getElementById('potential-prize'), roundResultDisplayEl = document.getElementById('round-result-display'), playerHandArea = document.getElementById('player-hand-area'), bankerHandArea = document.getElementById('banker-hand-area'), roundTimerEl = document.getElementById('round-timer');
+  let dailyCountdownTimerId;
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+  
+  // --- Initialization ---
+  document.addEventListener('DOMContentLoaded', init);
+  function init() {
+    verifyBtn.addEventListener('click', () => { playSound('sound-click'); handleLoginAttempt(); });
+    [nameTailInput, numberCodeInput].forEach(el => el.addEventListener('keypress', e => e.key === 'Enter' && verifyBtn.click()));
+    bettingArea.addEventListener('click', handleBetSelection);
+    dealBtn.addEventListener('click', runBaccaratRound);
+    forfeitBtn.addEventListener('click', handleForfeit);
+    document.addEventListener('fullscreenchange', updateFullscreenUI);
+    const rulesClone = mainInstructionsTemplate.cloneNode(true);
+    rulesClone.style.display = 'block';
+    rulesContent.appendChild(rulesClone);
+    getIPAddress();
+    nameTailInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'qwerty'));
+    numberCodeInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'numeric'));
+    virtualKeyboard.addEventListener('click', handleKeyboardPress);
+    document.addEventListener('click', (e) => { if (!virtualKeyboard.contains(e.target) && e.target !== nameTailInput && e.target !== numberCodeInput) { hideKeyboard(); } });
+  }
+
+  // --- Framework & Audio Functions ---
+  function handleInputFocus(inputElement, layout) { currentFocusedInput = inputElement; if (layout === 'qwerty') { qwertyLayout.style.display = 'block'; numericLayout.style.display = 'none'; } else { qwertyLayout.style.display = 'none'; numericLayout.style.display = 'block'; } virtualKeyboard.classList.add('visible'); }
+  function hideKeyboard() { virtualKeyboard.classList.remove('visible'); currentFocusedInput = null; }
+  function handleKeyboardPress(event) { const keyElement = event.target.closest('.keyboard-key'); if (!keyElement || !currentFocusedInput) return; playSound('sound-click'); const keyValue = keyElement.dataset.key; switch(keyValue) { case 'backspace': currentFocusedInput.value = currentFocusedInput.value.slice(0, -1); break; case 'clear': currentFocusedInput.value = ''; break; case 'switch': const isQwertyVisible = qwertyLayout.style.display === 'block'; qwertyLayout.style.display = isQwertyVisible ? 'none' : 'block'; numericLayout.style.display = isQwertyVisible ? 'block' : 'none'; break; default: if (currentFocusedInput.value.length < currentFocusedInput.maxLength) { currentFocusedInput.value += keyValue.toUpperCase(); if (currentFocusedInput.value.length >= currentFocusedInput.maxLength) { if (currentFocusedInput.id === 'nameTail') { hideKeyboard(); setTimeout(() => { numberCodeInput.focus(); }, 100); } else { hideKeyboard(); } } } break; } }
+  function playSound(id) { const sound = document.getElementById(id); if (sound) { sound.currentTime = 0; sound.play().catch(e=>{}); } }
+  function playBackgroundMusic(trackId) { stopBackgroundMusic(); const music = document.getElementById(trackId); if (music) { music.currentTime = 0; music.play().catch(e=>{}); gameState.currentMusic = music; } }
+  function stopBackgroundMusic() { if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; } }
+
+  // --- Login and Game Setup ---
+  async function handleLoginAttempt() {
+    const nameTail = nameTailInput.value.trim().toUpperCase(); 
+    const numberCode = numberCodeInput.value.trim(); 
+    if (!nameTail || nameTail.length !== 4 || !/^[A-Z]\d{3}$/.test(nameTail)) return showResult(`帳號格式錯誤（例：A001），請向店家索取`, "error"); 
+    if (!numberCode || numberCode.length !== 4 || !/^\d{4}$/.test(numberCode)) return showResult(`請輸入手機末4碼數字`, "error"); 
+    showResult(`正在驗證...`, "loading"); verifyBtn.disabled = true;
+    try {
+        const res = await fetch(`${gameState.scriptURL}?action=phone_player_slot&account=${encodeURIComponent(nameTail)}&phone4=${encodeURIComponent(numberCode)}&vid=v${Date.now().toString(36)}`, { method: 'GET', redirect: 'follow', cache: 'no-cache' });
+        if (!res.ok) throw new Error(`網路或伺服器錯誤 (狀態碼: ${res.status})`);
+        const result = await res.json();
+        switch (result.status) {
+            case 'OK':
+                gameState.playerData = { roundCount: result.visitCount || 0 };
+                gameState.isWinningGame = result.isWin === true;
+                gameState.visitCount = result.visitCount || 0;
+                gameState.luckySlot  = result.luckySlot  || 0;
+                gameState.cycleNum   = result.cycleNum   || 1;
+                const _wPool = [5,6,7,8], _lPool = [1,2,3,4];
+                const _pool  = gameState.isWinningGame ? _wPool : _lPool;
+                const _pWins = _pool[Math.floor(Math.random()*_pool.length)];
+                gameState.predeterminedWins = _pWins;
+                const _ds = [];
+                for(let _i=0;_i<_pWins;_i++) _ds.push('player');
+                for(let _i=_pWins;_i<8;_i++) _ds.push('computer');
+                for(let _i=_ds.length-1;_i>0;_i--){const _j=Math.floor(Math.random()*(_i+1));[_ds[_i],_ds[_j]]=[_ds[_j],_ds[_i]];}
+                gameState.duelScript = _ds;
+                case 'PLAYED_TODAY': showDailyLockScreen(nameTail.toUpperCase()); break;
+            case 'DENY': if(result.reason==='daily_limit'){showDailyLockScreen(nameTail.toUpperCase());}else{showResult(result.message||'帳號驗證失敗，請確認後重試','error');} break;
+            case 'NOT_IN_LIST': showResult(`您不在遊戲名單中`, "error"); break;
+            default: showResult(`驗證錯誤: ${result.message || '未知伺服器回應'}`, "error"); break;
+        }
+    } catch (error) { showResult(`伺服器連線失敗，請稍後再試。<br><button onclick="window.parent.postMessage('goHome','*')" style="margin-top:12px;padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">↩ 返回主選單</button>`, "error"); } finally { verifyBtn.disabled = false; }
+  }
+  
+  function loginPlayer() {
+    hideKeyboard(); enterFullscreen(); 
+    mainContainer.style.display = 'none'; 
+    gameWrapper.classList.add('visible');
+    showRulesAndStart();
+  }
+
+  function showRulesAndStart() {
+    rulesModal.classList.add('visible');
+    let countdown = 8; countdownTimer.textContent = countdown;
+    const timer = setInterval(() => {
+      countdown--; countdownTimer.textContent = countdown;
+      if (countdown <= 0) { clearInterval(timer); rulesModal.classList.remove('visible'); startGame(); }
+    }, 1000);
+  }
+
+  // --- Core Game Logic ---
+  function startGame() {
+      createDuelScript();
+      gameState.isGameActive = true; gameState.isEnding = false; gameState.currentRound = 0; gameState.wins = 0;
+      resultsHistoryList.innerHTML = ''; resultsHistoryContainer.style.display = 'flex';
+      forfeitBtn.style.display = 'block'; playBackgroundMusic('music-main');
+      document.getElementById('baccarat-game-content').style.display = 'flex';
+      prepareNextRound();
+  }
+  
+  function createDuelScript() {
+      const wins = gameState.predeterminedWins; const losses = gameState.totalRounds - wins; const script = [];
+      for (let i=0; i<wins; i++) script.push('win');
+      for (let i=0; i<losses; i++) script.push('lose');
+      for (let i=script.length-1; i>0; i--) { const j=Math.floor(Math.random() * (i + 1)); [script[i], script[j]] = [script[j], script[i]]; }
+      gameState.duelScript = script;
+      console.log('本場比賽猜中劇本:', gameState.duelScript.join(', '));
+  }
+  
+  function handleForfeit() { if (!gameState.isGameActive || gameState.isEnding) return; playSound('sound-click'); if (confirm('您確定要放棄比賽嗎？放棄後將無法獲得任何獎勵。')) { endGame({ finalWins: gameState.wins, forfeited: true }); } }
+  
+  function handleBetSelection(e) {
+      if (!e.target.classList.contains('bet-btn') || gameState.isSpinning) return;
+      playSound('sound-click');
+      gameState.currentBet = e.target.dataset.bet;
+      document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('selected'));
+      e.target.classList.add('selected');
+      dealBtn.disabled = false;
+      roundResultDisplayEl.textContent = `已投注「${e.target.textContent}」`;
+      roundResultDisplayEl.className = 'round-result-display';
+  }
+
+  function prepareNextRound() {
+      if (gameState.currentRound >= gameState.totalRounds) {
+          endGame({ finalWins: gameState.wins });
+          return;
+      }
+      gameState.currentRound++;
+      currentRoundEl.textContent = gameState.currentRound;
+      gameState.currentBet = null; gameState.isSpinning = false;
+      dealBtn.disabled = true; bettingArea.style.pointerEvents = 'auto';
+      document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('selected'));
+      playerScoreEl.textContent = '0'; bankerScoreEl.textContent = '0';
+      roundResultDisplayEl.textContent = '請在20秒內選擇您要投注的一方';
+      roundResultDisplayEl.className = 'round-result-display';
+      playerHandArea.classList.remove('winner'); bankerHandArea.classList.remove('winner');
+      generateCardHTML(playerCardsContainer, 3); generateCardHTML(bankerCardsContainer, 3);
+      updatePotentialPrizeDisplay();
+      startRoundTimer();
+  }
+  
+  function getPredeterminedHands() {
+      const playerShouldWinBet = gameState.duelScript[gameState.currentRound - 1] === 'win';
+      let desiredWinner;
+      
+      if (playerShouldWinBet) { desiredWinner = gameState.currentBet; } 
+      else {
+          if (gameState.currentBet === 'player') desiredWinner = 'banker';
+          else if (gameState.currentBet === 'banker') desiredWinner = 'player';
+          else desiredWinner = Math.random() < 0.5 ? 'player' : 'banker';
+      }
+      
+      let attempts = 0;
+      while (attempts < 200) {
+          if (!gameState.deck || gameState.deck.length < 10) { gameState.deck = createDeck(); shuffleDeck(gameState.deck); }
+          let tempDeck = [...gameState.deck];
+          let playerHand = [tempDeck.pop(), tempDeck.pop()], bankerHand = [tempDeck.pop(), tempDeck.pop()];
+          let playerScore = calculateBaccaratScore(playerHand), bankerScore = calculateBaccaratScore(bankerHand);
+          const isNatural = playerScore >= 8 || bankerScore >= 8;
+          let playerThirdCard = null;
+          if (!isNatural) {
+              if (playerScore <= 5) { playerThirdCard = tempDeck.pop(); playerHand.push(playerThirdCard); playerScore = calculateBaccaratScore(playerHand); }
+              const playerThirdCardValue = playerThirdCard ? getCardBaccaratValue(playerThirdCard) : null;
+              if (shouldBankerDraw(bankerScore, playerThirdCardValue)) { bankerHand.push(tempDeck.pop()); bankerScore = calculateBaccaratScore(bankerHand); }
+          }
+          let actualWinner = playerScore > bankerScore ? 'player' : (bankerScore > playerScore ? 'banker' : 'tie');
+          if (actualWinner === desiredWinner) {
+              // Re-draw the cards from the main deck to ensure they are consumed
+              gameState.deck.splice(0, playerHand.length + bankerHand.length);
+              return { playerHand, bankerHand };
+          }
+          attempts++;
+      }
+      console.warn("無法生成預定結果，隨機發牌");
+      let pHand = [gameState.deck.pop(), gameState.deck.pop()], bHand = [gameState.deck.pop(), gameState.deck.pop()];
+      return { playerHand: pHand, bankerHand: bHand };
+  }
+
+  async function runBaccaratRound() {
+      if (gameState.isSpinning || !gameState.currentBet) return;
+      stopRoundTimer();
+      gameState.isSpinning = true; dealBtn.disabled = true; bettingArea.style.pointerEvents = 'none';
+      roundResultDisplayEl.textContent = '發牌中...'; playSound('sound-roll');
+      
+      const { playerHand, bankerHand } = getPredeterminedHands();
+      
+      await dealInitialCards(playerHand, bankerHand);
+      let playerScore = calculateBaccaratScore(playerHand), bankerScore = calculateBaccaratScore(bankerHand);
+      playerScoreEl.textContent = playerScore; bankerScoreEl.textContent = bankerScore;
+      
+      let finalPlayerHand = [...playerHand], finalBankerHand = [...bankerHand];
+      const isNatural = playerScore >= 8 || bankerScore >= 8;
+      
+      if (!isNatural) {
+          let playerThirdCard = null;
+          if (playerScore <= 5) {
+              playerThirdCard = gameState.deck.pop(); finalPlayerHand.push(playerThirdCard);
+              await dealThirdCard(playerCardsContainer, playerThirdCard, 2);
+              playerScore = calculateBaccaratScore(finalPlayerHand); playerScoreEl.textContent = playerScore;
+          }
+          const playerThirdCardValue = playerThirdCard ? getCardBaccaratValue(playerThirdCard) : null;
+          if (shouldBankerDraw(bankerScore, playerThirdCardValue)) {
+              const bankerThirdCard = gameState.deck.pop(); finalBankerHand.push(bankerThirdCard);
+              await dealThirdCard(bankerCardsContainer, bankerThirdCard, 2);
+              bankerScore = calculateBaccaratScore(finalBankerHand); bankerScoreEl.textContent = bankerScore;
+          }
+      }
+      
+      let winner = playerScore > bankerScore ? 'player' : (bankerScore > playerScore ? 'banker' : 'tie');
+      
+      if (winner === 'player') playerHandArea.classList.add('winner');
+      else if (winner === 'banker') bankerHandArea.classList.add('winner');
+      else { playerHandArea.classList.add('winner'); bankerHandArea.classList.add('winner'); }
+
+      const playerWonBet = gameState.currentBet === winner;
+      if (playerWonBet) {
+          gameState.wins++; playSound('sound-win');
+          roundResultDisplayEl.textContent = '恭喜！您猜中了！'; roundResultDisplayEl.className = 'round-result-display win';
+      } else {
+          playSound('sound-lose');
+          roundResultDisplayEl.textContent = '可惜！下次再來！'; roundResultDisplayEl.className = 'round-result-display lose';
+      }
+      
+      const winnerText = {'player': '閒家勝', 'banker': '莊家勝', 'tie': '和局'}[winner];
+      addResultToHistory(`第 ${gameState.currentRound} 回合: <strong>${winnerText}</strong> (${playerScore} vs ${bankerScore})。您投注 ${gameState.currentBet} - ${playerWonBet ? '猜中' : '猜錯'}`);
+
+      await delay(3000);
+      prepareNextRound();
+  }
+
+  function shouldBankerDraw(bS,pTCV){if(pTCV===null)return bS<=5;if(bS<=2)return true;if(bS===3)return pTCV!==8;if(bS===4)return pTCV>=2&&pTCV<=7;if(bS===5)return pTCV>=4&&pTCV<=7;if(bS===6)return pTCV===6||pTCV===7;return false;}
+
+  // --- Timer & UI ---
+  function startRoundTimer(){stopRoundTimer();let t=20;roundTimerEl.textContent=t;roundTimerEl.style.display='block';gameState.roundTimerId=setInterval(()=>{t--;roundTimerEl.textContent=t;if(t<=0){stopRoundTimer();handleTimeout();}},1000);}
+  function stopRoundTimer(){if(gameState.roundTimerId){clearInterval(gameState.roundTimerId);gameState.roundTimerId=null;}roundTimerEl.style.display='none';}
+  async function handleTimeout(){if(gameState.isSpinning)return;gameState.isSpinning=true;bettingArea.style.pointerEvents='none';roundResultDisplayEl.textContent='逾時！本回合判負。';roundResultDisplayEl.className='round-result-display lose';playSound('sound-lose');addResultToHistory(`第 ${gameState.currentRound} 回合: <strong>逾時</strong>，未投注。`);await delay(2000);prepareNextRound();}
+  
+  // --- Card Logic ---
+  function createDeck(){const d=[];for(let i=0;i<6;i++)for(const s of Object.keys(SUITS))for(const r of Object.keys(RANKS))d.push({rank:parseInt(r),suit:s});return d;}
+  function shuffleDeck(d){for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}}
+  function getCardBaccaratValue(c){if(c.rank===14)return 1;if(c.rank>=10&&c.rank<14)return 0;return c.rank;}
+  function calculateBaccaratScore(c){return c.reduce((s,cd)=>s+getCardBaccaratValue(cd),0)%10;}
+  
+  // --- UI, Display, and End Game ---
+  function getPrizeByWins(w){return w>=5?"指定商品":null;}
+  function generateCardHTML(cont,c){cont.innerHTML='';for(let i=0;i<c;i++){const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="back"></div><div class="front"></div>`;if(i>=2)card.style.opacity='0';cont.appendChild(card);}}
+  function updateCardFace(cEl,cD){const f=cEl.querySelector('.front'),r=RANKS[cD.rank],s=SUITS[cD.suit];cEl.className=`card suit-${cD.suit} rank-${cD.rank}`;f.textContent=r;cEl.dataset.rank=r;cEl.dataset.suit=s;}
+  async function dealInitialCards(pH,bH){const pCE=playerCardsContainer.children,bCE=bankerCardsContainer.children;await delay(200);updateCardFace(bCE[0],bH[0]);bCE[0].classList.add('flipped');await delay(400);updateCardFace(pCE[0],pH[0]);pCE[0].classList.add('flipped');await delay(400);updateCardFace(bCE[1],bH[1]);bCE[1].classList.add('flipped');await delay(400);updateCardFace(pCE[1],pH[1]);pCE[1].classList.add('flipped');await delay(500);}
+  async function dealThirdCard(cont,cD,idx){roundResultDisplayEl.textContent='補牌中...';await delay(500);const cEl=cont.children[idx];cEl.style.opacity='1';await delay(100);updateCardFace(cEl,cD);cEl.classList.add('flipped');playSound('sound-roll');await delay(1000);}
+  function addResultToHistory(m){const li=document.createElement('li');li.innerHTML=m;resultsHistoryList.appendChild(li);resultsHistoryList.scrollTop=resultsHistoryList.scrollHeight;}
+  function resetGameStates(){gameState.currentRound=0;gameState.wins=0;resultsHistoryList.innerHTML='';}
+  function updatePotentialPrizeDisplay(){const cP=getPrizeByWins(gameState.wins);let nPT=[5,6,7,8].find(w=>w>gameState.wins),pH=cP?`已達成: <strong>${cP}</strong>`:`無 (需猜中5回合)`;if(nPT)pH+=`<br><span style="font-size:0.9em;color:#a5b4fc;">下一級:${getPrizeByWins(nPT)}(需猜中${nPT}回合)</span>`;potentialPrizeEl.innerHTML=pH;}
+  function endGame({finalWins,remark=null,isPityWin=false,forfeited=false}){if(gameState.isEnding)return;gameState.isEnding=true;gameState.isGameActive=false;stopBackgroundMusic();forfeitBtn.style.display='none';const prize=forfeited?null:getPrizeByWins(finalWins),isWin=!!prize;let fR=remark;if(!fR){if(isPityWin){fR="恭喜您！觸發保底機制，本次直接贈與您最大獎！";}else if(forfeited){fR="您已放棄本次挑戰。"}else{fR=`8回合結束，您總共猜中了 ${finalWins} 次。`+(prize?`贏得獎勵【${prize}】！`:'本次未獲得獎品。');}}const rC=isWin?(finalWins>=8?'jackpot':'success'):'lose',i=isWin?'🎉':'😥',t=forfeited?"挑戰放棄":(isWin?'恭喜！':'挑戰結束！'),pIH=gameState.playerInfo.nameTail?`<p style="font-size:1.2rem;font-weight:bold;font-family:'Microsoft JhengHei',sans-serif;">玩家 ${gameState.playerInfo.nameTail.toUpperCase()} (${gameState.playerInfo.numberCode})</p>`:'',rTH=`<p style="font-size:1.1rem;font-family:'Microsoft JhengHei',sans-serif;line-height:1.6;">${fR}</p>`,pTH=isWin?`<p style="font-family:'Microsoft JhengHei',sans-serif;">您贏得了</p><div class="prize-highlight">${prize}</div><div class="win-warning">若您已得獎請暫時不要登出，請通知服務員確認。<br>所有操作需由當事人親在現場完成始算生效 (畫面登出就算此次挑戰失敗)。</div>`:'',fH=`<div class="result-container ${rC}"><div class="result-icon">${i}</div><h2>${t}</h2>${pIH}${rTH}${pTH}<button onclick="logout(this)" class="logout-btn">確認並登出</button></div>`;gameWrapper.classList.remove('visible');showFullscreenPage(fH,rC);if(isWin){playSound(rC==='jackpot'?'sound-jackpot':'sound-win');if(typeof confetti==='function')confetti({particleCount:200,spread:120,origin:{x:0.5,y:0.1}});}else{playSound('sound-lose');}syncDataWithServer(isWin,prize||'無',fR,finalWins);}
+  async function syncDataWithServer(isWin, prize, remark, finalWins) {
+    const account   = gameState.playerInfo.nameTail  || '';
+    const phone4    = gameState.playerInfo.numberCode || '';
+    const phone4key = account + '_' + phone4;
+    const payload = {
+        action:       'updatestats',
+        account:      account,
+        phone4key:    phone4key,
+        vid:          'v' + Date.now().toString(36),
+        mode:         '[百家樂]',
+        isWin:        isWin,
+        prize:        prize || '無',
+        visitCount:   gameState.visitCount  || 0,
+        luckySlot:    gameState.luckySlot   || 0,
+        isLuckySlot:  gameState.isWinningGame || false,
+        remark:       '[百家樂] ' + remark,
+        timestamp:    new Date().toISOString(),
+        ipAddress:    gameState.ipAddress   || '',
+        finalWins:    finalWins || 0,
+    };
+    try {
+        await fetch(gameState.scriptURL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+            mode:    'no-cors',
+        });
+    } catch(e) { console.error('syncDataWithServer error:', e); }
+}`,timestamp:new Date().toISOString(),lastWinDate:isWin?new Date().toISOString():gameState.playerData.lastWinDate,winStreak:nWS,finalWins:finalWins,pointer:gameState.pointer,assignedScript:gameState.assignedScript};try{await fetch(`${gameState.scriptURL}?${new URLSearchParams(p)}`);}catch(e){}}
+  
+  // --- Utility & Display Functions ---
+  function showResult(m, t) { resultDiv.innerHTML=`<div class="result-icon">${t==='loading'?'<i class="fas fa-spinner fa-spin"></i>':'❌'}</div>${m}`; resultDiv.className=`result ${t} show`; }
+  function showFullscreenPage(h, c) { mainContainer.style.display='none'; gameWrapper.classList.remove('visible'); gameResultDiv.innerHTML=h; gameResultDiv.className='game-result-display show'; if(c)gameResultDiv.classList.add(c); }
+  function showDailyLockScreen(n, m="您今日已挑戰過！") { const h=`<div class="result-container error"><div class="result-icon">⏳</div><h2>玩家 ${n}，${m}</h2><p>下次開放倒數：</p><div id="daily-countdown" style="font-size:2rem;margin:10px 0;">--:--:--</div><button onclick="logout(this)" class="logout-btn">登出</button></div>`; showFullscreenPage(h,'error'); const el=document.getElementById('daily-countdown'); if(!el)return; if(dailyCountdownTimerId)clearInterval(dailyCountdownTimerId); dailyCountdownTimerId=setInterval(()=>{const now=new Date(),tmr=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),diff=tmr-now;if(diff<0){logout(null);return;}const[h,m,s]=[String(Math.floor(diff/36e5)).padStart(2,'0'),String(Math.floor((diff%36e5)/6e4)).padStart(2,'0'),String(Math.floor((diff%6e4)/1e3)).padStart(2,'0')];el.textContent=`${h}:${m}:${s}`;},1000); }
+  function logout(buttonElement) { if(buttonElement){buttonElement.disabled=true;buttonElement.textContent='資料儲存中...';} exitFullscreen().then(()=>{setTimeout(()=>{window.parent.postMessage('goHome','*');},500);}).catch(()=>{setTimeout(()=>{window.parent.postMessage('goHome','*');},500);}); }
+  async function getIPAddress() { try{const r=await fetch('https://api.ipify.org?format=json');gameState.ipAddress=(await r.json()).ip;}catch(e){gameState.ipAddress='無法取得';} }
+  function enterFullscreen() { const el=document.documentElement; (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el).catch(()=>{}); }
+  function exitFullscreen() { if(document.exitFullscreen){return document.exitFullscreen();} return Promise.resolve(); }
+  function isFullscreen() { return !!document.fullscreenElement; }
+  function updateFullscreenUI() { fullscreenPrompt.classList.toggle('visible', isFullscreen()); }
+</script>
+
+<script>
+  // --- 安全防护脚本 ---
+  const ADMIN_PASSWORD = "123"; const ADMIN_HOTKEY = 'q';
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function(event) { if (event.key==='F12'||(event.ctrlKey&&event.shiftKey&&event.key==='I')||(event.ctrlKey&&event.key==='s')||(event.ctrlKey&&event.key==='u')){event.preventDefault();} if(event.ctrlKey&&event.altKey&&(event.key.toLowerCase()===ADMIN_HOTKEY)){event.preventDefault();if(isFullscreen()){const p=prompt("请输入管理员密码以退出全荧幕：");if(p!==null){if(p===ADMIN_PASSWORD){exitFullscreen();}else{alert("密码错误！");}}}else{enterFullscreen();}} });
+</script>
+
+<script>
+  // --- 闲置超时脚本 ---
+  (function() { let idleTimer = null; const idleTimeout = 300000; function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(function() { if (!gameState.isGameActive) { window.parent.postMessage('goHome','*'); } }, idleTimeout); } window.addEventListener('mousemove', resetIdleTimer, false); window.addEventListener('mousedown', resetIdleTimer, false); window.addEventListener('keypress', resetIdleTimer, false); window.addEventListener('touchmove', resetIdleTimer, false); resetIdleTimer(); })();
+</script>
+</body>
+</html>

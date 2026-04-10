@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Let It Ride 每日挑戰</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <style>
+    /* --- 基礎樣式 (整合自 骰子挑戰V7) --- */
+    @font-face { font-family: 'Pixel'; src: url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype'); }
+    :root { 
+      --primary: #4a6cf7; --secondary: #10b981; --success: #00b09b; --jackpot: #ff416c; 
+      --lose-color: #F44336; --bg-color: #1e293b;
+      --card-width: clamp(65px, 13vw, 90px); --card-height: calc(var(--card-width) * 1.4);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+    body { background-color: var(--bg-color); color: #f8fafc; font-family: 'Pixel', 'Segoe UI', system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; position: fixed; display: flex; align-items: center; justify-content: center; }
+    #main-container, #game-result-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 10px; transition: opacity 0.4s ease-out; }
+    #main-container { z-index: 10; background-color: transparent; }
+    #game-wrapper { z-index: 20; background: var(--bg-color); opacity: 0; transform: scale(0.95); transition: opacity 0.5s ease-out, transform 0.5s ease-out; display: none; flex-direction: row; align-items: flex-start; justify-content: center; gap: 20px; width: 100%; height: 100%; padding: 20px; overflow: auto; }
+    #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
+    #left-column { flex: 1; min-width: 280px; max-width: 350px; height: 100%; display: flex; flex-direction: column; gap: 20px; }
+    #game-instructions { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; border: 1px solid var(--primary); display: none; flex-direction: column; font-family: 'Microsoft JhengHei', sans-serif; overflow-y: auto; flex-shrink: 0; }
+    #game-instructions h3 { color: var(--primary); font-family: 'Pixel', sans-serif; margin-bottom: 15px; font-size: 1.2rem; }
+    #game-instructions p, #game-instructions li { font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px; }
+    #game-instructions ul { list-style-position: inside; padding-left: 5px; }
+    #game-instructions .step { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 3px solid var(--secondary); }
+    .container { width: 100%; background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: clamp(15px, 3vw, 25px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); text-align: center; position: relative; flex: 3; max-height: 100%; display: flex; flex-direction: column; }
+    h1, h2, h3 { margin-bottom: 20px; font-size: clamp(1.5rem, 6vw, 2.5rem); color: #e2e8f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.2; }
+    h2 { font-size: clamp(1.2rem, 5vw, 2rem); }
+    h3 { font-size: clamp(1rem, 4vw, 1.5rem); color: #94a3b8;}
+    .form-section { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; margin-bottom: 25px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.2); }
+    .input-group { margin-bottom: 15px; text-align: left;}
+    label { display: block; margin-bottom: 8px; font-size: clamp(0.8rem, 3vw, 1rem); color: #cbd5e1; }
+    input { width: 100%; font-size: clamp(0.9rem, 4vw, 1.1rem); padding: 12px 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; text-align: center; font-weight: 600; }
+    button, .game-btn { font-family: 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(1rem, 4vw, 1.2rem); padding: 12px 24px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 8px; cursor: pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); margin: 10px; min-width: 220px; transition: all 0.3s ease; }
+    button:hover, .game-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+    button:disabled, .game-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none; background: #64748b; }
+    .forfeit-btn { position: absolute; top: 15px; right: 15px; background: #c0392b; min-width: auto; padding: 8px 16px; font-size: 0.9rem; z-index: 100; }
+    #result { padding: 20px; border-radius: 15px; text-align: center; font-weight: 600; font-size: 1.2rem; width: 100%; max-width: 500px; display: none; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid rgba(255,255,255,0.2); color: #f8fafc; }
+    #result.show { display: flex; }
+    #game-result-display { z-index: 50; display: none; background-color: transparent; }
+    #game-result-display.show { display: flex; }
+    #game-result-display .result-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--bg-color); border-radius: 16px; }
+    #game-result-display h2 { text-shadow: 2px 2px 4px #000; font-size: 2.5rem; margin-bottom: 25px; }
+    #game-result-display .logout-btn { margin-top: 20px; padding: 15px 30px; min-width: 250px; background: #475569; }
+    .jackpot { background: linear-gradient(135deg, var(--jackpot), #f43f5e); animation: pulse 1.5s infinite; } 
+    .success { background: linear-gradient(135deg, var(--success), #34d399); } 
+    .error, .lose { background: linear-gradient(135deg, #f97316, #ef4444); } 
+    .loading { background: linear-gradient(135deg, #f59e0b, #facc15); color: #333; } 
+    .result-icon { font-size: 3rem; margin-bottom: 15px; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    #rules-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
+    #rules-modal.visible { opacity: 1; pointer-events: auto; }
+    #rules-content { background: #1e293b; border-radius: 15px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid #4a6cf7; position: relative; padding-bottom: 60px; }
+    #countdown-timer { position: absolute; top: 15px; right: 15px; background: #ef4444; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; }
+    .prize-highlight { display: inline-block; padding: 12px 24px; margin: 10px 0; background: linear-gradient(45deg, #f59e0b, #ef4444); border-radius: 8px; font-size: 1.8em; font-family: 'Microsoft JhengHei', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); color: #fff; border: 2px solid #fff; }
+    #fullscreen-prompt { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #fullscreen-prompt.visible { opacity: 1; }
+    #results-history-container { width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); flex-grow: 1; display: none; flex-direction: column; }
+    #results-history-list { list-style-type: decimal; list-style-position: inside; padding-left: 5px; height: 100%; overflow-y: auto; text-align: left; font-family: 'Microsoft JhengHei', sans-serif; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
+    .potential-prize-display { font-family: 'Microsoft JhengHei', sans-serif; color: #34d399; border: 1px solid #34d399; background: rgba(52, 211, 153, 0.1); padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; line-height: 1.5; }
+    .potential-prize-display span { font-weight: bold; color: #f0fdf4; }
+    .win-warning { font-size: 0.9rem; color: #facc15; font-weight: bold; line-height: 1.5; padding: 10px; border: 1px dashed #facc15; border-radius: 8px; margin-top: 15px; background: rgba(0,0,0,0.2); }
+    #virtual-keyboard { position: fixed; bottom: 0; left: 0; width: 100%; background: #0f172a; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 1001; transform: translateY(100%); transition: transform 0.3s ease-out; user-select: none; }
+    #virtual-keyboard.visible { transform: translateY(0); }
+    .keyboard-row { display: flex; justify-content: center; margin-bottom: 8px; }
+    .keyboard-key { height: 50px; margin: 0 4px; padding: 0; border: 1px solid var(--primary); border-radius: 8px; background: #1e293b; color: #f8fafc; font-size: 1.5rem; font-family: 'Segoe UI', system-ui, sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-grow: 1; transition: background-color 0.2s; }
+    .keyboard-key:active { background-color: var(--primary); }
+    .key-special { flex-grow: 2; background-color: #475569; }
+    .numeric-keypad .keyboard-key { width: 80px; flex-grow: 0; }
+    .qwerty-layout { display: none; }
+
+    /* --- Let It Ride 遊戲專用樣式 --- */
+    #let-it-ride-content { display: none; flex-direction: column; align-items: center; width: 100%; }
+    .duel-area { display: flex; flex-direction: row; justify-content: space-around; align-items: flex-start; width: 100%; gap: 15px; flex-wrap: wrap; flex-grow: 1; }
+    .competitor-zone, .community-zone { flex: 1; min-width: 250px; display: flex; flex-direction: column; align-items: center; }
+    .score-board { font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+    .score-board span { display: inline-block; padding: 5px 10px; border-radius: 5px; }
+    .score-board .player-score { background-color: var(--primary); }
+    .score-board .computer-score { background-color: var(--lose-color); }
+    .card-area { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 15px; width: 100%; margin-bottom: 15px; }
+    .card-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 10px; min-height: var(--card-height); }
+    .card { width: var(--card-width); height: var(--card-height); background-color: transparent; border-radius: 6px; position: relative; font-size: calc(var(--card-width) / 2.5); font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); transition: transform 0.5s ease-in-out; transform-style: preserve-3d; }
+    .card .front, .card .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .card .front { background-color: #fff; transform: rotateY(180deg); }
+    .card .back { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .card.flipped { transform: rotateY(180deg); }
+    .card.suit-s, .card.suit-c { color: #2c3e50; }
+    .card.suit-h, .card.suit-d { color: #c0392b; }
+    .card::before, .card::after { position: absolute; font-size: calc(var(--card-width) / 4); line-height: 1; }
+    .card::before { top: 5px; left: 5px; }
+    .card::after { bottom: 5px; right: 5px; transform: rotate(180deg); }
+    .card.suit-s::before, .card.suit-s::after { content: '♠'; } .card.suit-c::before, .card.suit-c::after { content: '♣'; }
+    .card.suit-h::before, .card.suit-h::after { content: '♥'; } .card.suit-d::before, .card.suit-d::after { content: '♦'; }
+    .score-text { font-family: 'Microsoft JhengHei', sans-serif; font-weight: bold; font-size: 1.2rem; color: #f59e0b; min-height: 30px; margin: 10px 0; }
+    
+    @media (max-width: 768px) { #game-wrapper { flex-direction: column; } #left-column { width: 100%; max-width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; } .container { width: 100%; } .duel-area { flex-direction: column; } .keyboard-key { height: 45px; font-size: 1.2rem; } }
+  </style>
+</head>
+<body>
+
+<div id="fullscreen-prompt">按 ESC 鍵可退出全螢幕模式 (建議由店員操作)</div>
+
+<div id="main-container">
+  <div class="container" style="max-width: 500px;">
+    <h1 style="font-family:'Pixel', sans-serif;">Let It Ride 每日挑戰</h1>
+    <div class="form-section" id="formSection">
+      <div class="input-group">
+        <label for="nameTail">Account Code（向店家索取）</label>
+        <input id="nameTail" type="password" maxlength="4" placeholder="例如：A001" autocomplete="off">
+        <div style="margin-top:5px;font-size:0.78rem;color:#f59e0b;display:flex;align-items:center;gap:5px;"><span>💡</span><span>第一次玩？請向店家索取您的賬號</span></div>
+      </div>
+      <div class="input-group">
+        <label for="numberCode">手機末 4 碼</label>
+        <input id="numberCode" type="password" maxlength="4" placeholder="例如：5678" autocomplete="off" inputmode="numeric">
+      </div>
+      <button id="verifyBtn">註冊/登入</button>
+    </div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<div id="main-instructions-template" style="display:none;">
+    <h3 style="text-align:center;margin-bottom:15px; font-family: 'Pixel', sans-serif;">遊戲規則</h3>
+    <p style="font-family: 'Microsoft JhengHei', sans-serif; text-align: center; margin-bottom: 20px; font-size: 0.9rem;"><strong>玩法：</strong>您和莊家各發3張牌，桌上另有2張公共牌。您的目標是用自己的3張牌和2張公共牌組成最強的5張撲克牌組，並與莊家比大小。</p>
+    <ul style="list-style-type:none;padding-left:0; font-family: 'Microsoft JhengHei', sans-serif; text-align: left;">
+        <li style="margin-bottom: 15px;"><i class="fas fa-gamepad"></i> <strong>遊戲流程</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li>遊戲共 <strong>8</strong> 回合。</li><li>每回合您只需按下「發牌」按鈕，系統會自動開牌並比對結果。</li><li>8回合結束後，將根據您的總勝場數決定最終獎勵。</li></ul></li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-trophy"></i> <strong>勝利條件與獎勵</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: circle; padding-left: 0;"><li><strong>贏得8回合：</strong>免費吃到堡或指定商品</li><li><strong>贏得7回合：</strong>買一送一</li><li><strong>贏得6回合：</strong>第二件半價</li><li><strong>贏得5回合：</strong>買五送一卷(可寄放)</li></ul></li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-crown"></i> <strong>牌型大小 (由大到小)</strong><ol style="margin-left:20px;margin-top:5px; list-style-type: decimal; padding-left: 15px; font-size: 0.85rem;"><li>同花大順</li><li>同花順</li><li>四條</li><li>葫蘆</li><li>同花</li><li>順子</li><li>三條</li><li>兩對</li><li>一對</li><li>高牌</li></ol></li>
+        <li style="margin-bottom: 15px; border-top: 1px solid #4a6cf7; padding-top: 15px;"><i class="fas fa-shield-alt"></i> <strong>保底機制</strong><ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;"><li>連續6次挑戰未獲得任何獎項，第7次登入時必中「免費吃到堡或指定商品」。</li><li>每次挑戰間隔不能超過3天，超過者前面累積次數全部歸零。</li></ul></li>
+    </ul>
+</div>
+
+<div id="game-wrapper">
+  <div id="left-column">
+    <div id="game-instructions"></div>
+    <div id="results-history-container">
+      <h3>即時戰況紀錄</h3>
+      <ol id="results-history-list"></ol>
+    </div>
+  </div>
+  <div class="container">
+    <button id="forfeit-btn" class="forfeit-btn">放棄比賽</button>
+    <div id="let-it-ride-content" class="game-content">
+        <h2>Let It Ride 挑戰</h2>
+        <div class="progress-display">第 <span id="current-round">1</span> / 8 回合</div>
+        <h3 class="potential-prize-display">目前可獲得獎項: <span id="potential-prize">-</span></h3>
+        <div class="score-board">比分: <span class="player-score" id="player-score">0</span> - <span class="computer-score" id="computer-score">0</span></div>
+        <div class="duel-area">
+          <div class="competitor-zone">
+            <h3>電腦 (莊家)</h3>
+            <div class="card-area"><div id="card-hand-computer" class="card-hand"></div></div>
+            <div id="score-text-computer" class="score-text"></div>
+          </div>
+          <div class="community-zone">
+            <h3>公共牌</h3>
+            <div class="card-area"><div id="card-hand-community" class="card-hand"></div></div>
+          </div>
+          <div class="competitor-zone">
+            <h3>玩家</h3>
+            <div class="card-area"><div id="card-hand-player" class="card-hand"></div></div>
+            <div id="score-text-player" class="score-text"></div>
+          </div>
+        </div>
+        <button id="deal-btn" class="game-btn">發牌</button>
+    </div>
+  </div>
+</div>
+
+<div id="game-result-display"></div>
+<div id="rules-modal"><div id="rules-content"><div id="countdown-timer">8</div>
+    <h3 style="text-align:center;margin-bottom:12px;font-family:'Pixel',sans-serif;color:#f59e0b;">🎮 Let It Ride — 規則說明</h3>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:0 8px 8px 0;font-family:'Microsoft JhengHei',sans-serif;font-size:0.85rem;line-height:1.7;color:#e2e8f0;">
+      <strong style="color:#818cf8;">📋 基本規則：</strong>每日限玩一次，共 <strong>8 回合</strong>，玩家勝場 ≥ 5 場即獲勝，平手（4:4）視為店家勝。
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(16,185,129,0.08);border-left:3px solid #10b981;border-radius:0 8px 8px 0;font-family:'Microsoft JhengHei',sans-serif;font-size:0.85rem;line-height:1.7;color:#e2e8f0;">
+      <strong style="color:#34d399;">🎯 遊戲玩法：</strong>每回合玩家與莊家各發 3 張牌，加上 2 張公共牌，組最強 5 張牌型比大小，共 8 回合。
+    </div>
+    <div style="margin-bottom:10px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:8px;font-family:'Microsoft JhengHei',sans-serif;font-size:0.82rem;color:#cbd5e1;">
+      <strong style="color:#94a3b8;display:block;margin-bottom:5px;">📌 重要規則：</strong>
+      <ul style="list-style:none;padding:0;margin:0;line-height:1.8;"><li>• 公共牌雙方共用</li><li>• 牌型同德州撲克排名</li></ul>
+    </div>
+    <div style="margin-top:8px;padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;font-size:0.78rem;color:#fca5a5;font-family:'Microsoft JhengHei',sans-serif;text-align:center;line-height:1.6;">
+      ⚠️ 得獎後請勿登出，立即通知服務員確認。所有操作須本人親自在現場完成方可生效。
+    </div>
+    <div style="margin-top:6px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:0.78rem;color:#fcd34d;font-family:'Microsoft JhengHei',sans-serif;text-align:center;">
+      💡 第一次玩？請向店家索取您的賬號再登入
+    </div></div></div>
+
+<audio id="sound-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3" preload="auto"></audio>
+<audio id="sound-roll" src="https://assets.mixkit.co/sfx/preview/mixkit-playing-cards-shuffle-2012.mp3" preload="auto"></audio>
+<audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" preload="auto"></audio>
+<audio id="sound-lose" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto"></audio>
+<audio id="sound-jackpot" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3" preload="auto"></audio>
+<audio id="music-main" src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
+<audio id="music-competitive" src="https://assets.mixkit.co/music/preview/mixkit-epic-battle-cinematic-trailer-689.mp3" loop preload="auto"></audio>
+
+<div id="virtual-keyboard">
+    <div id="qwerty-layout" class="qwerty-layout">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="q">q</button> <button class="keyboard-key" data-key="w">w</button> <button class="keyboard-key" data-key="e">e</button> <button class="keyboard-key" data-key="r">r</button> <button class="keyboard-key" data-key="t">t</button> <button class="keyboard-key" data-key="y">y</button> <button class="keyboard-key" data-key="u">u</button> <button class="keyboard-key" data-key="i">i</button> <button class="keyboard-key" data-key="o">o</button> <button class="keyboard-key" data-key="p">p</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="a">a</button> <button class="keyboard-key" data-key="s">s</button> <button class="keyboard-key" data-key="d">d</button> <button class="keyboard-key" data-key="f">f</button> <button class="keyboard-key" data-key="g">g</button> <button class="keyboard-key" data-key="h">h</button> <button class="keyboard-key" data-key="j">j</button> <button class="keyboard-key" data-key="k">k</button> <button class="keyboard-key" data-key="l">l</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="z">z</button> <button class="keyboard-key" data-key="x">x</button> <button class="keyboard-key" data-key="c">c</button> <button class="keyboard-key" data-key="v">v</button> <button class="keyboard-key" data-key="b">b</button> <button class="keyboard-key" data-key="n">n</button> <button class="keyboard-key" data-key="m">m</button> </div>
+    </div>
+    <div id="numeric-layout" class="numeric-keypad">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="1">1</button> <button class="keyboard-key" data-key="2">2</button> <button class="keyboard-key" data-key="3">3</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="4">4</button> <button class="keyboard-key" data-key="5">5</button> <button class="keyboard-key" data-key="6">6</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="7">7</button> <button class="keyboard-key" data-key="8">8</button> <button class="keyboard-key" data-key="9">9</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key key-special" data-key="clear">清除</button> <button class="keyboard-key" data-key="0">0</button> <button class="keyboard-key key-special" data-key="backspace"><i class="fas fa-backspace"></i></button> </div>
+    </div>
+     <div class="keyboard-row">
+        <button class="keyboard-key key-special" data-key="switch" style="width: 264px;">切換鍵盤</button>
+    </div>
+</div>
+
+<script>
+  // --- Game State & Constants ---
+  const gameState = { isGameActive: false, isSpinning: false, isEnding: false, playerInfo: {}, playerData: {}, ipAddress: '載入中...', scriptURL: 'https://script.google.com/macros/s/AKfycbxz3eLRDmWqxsLS2bwWLmtf82p45n_CF2mcM9-BBPKWTU22LM1eD8BUdhVJjc2E7CJeZA/exec', currentMusic: null, rounds: 0, wins: { player: 0, computer: 0 }, totalRounds: 8, duelScript: [], pointer: null, assignedScript: null };
+  const SUITS = { h: '♥', d: '♦', c: '♣', s: '♠' }; const RANKS = { 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: 'T', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }; const HAND_NAMES = ["高牌", "一對", "兩對", "三條", "順子", "同花", "葫蘆", "四條", "同花順", "同花大順"];
+  
+  // --- DOM Element References ---
+  const virtualKeyboard = document.getElementById('virtual-keyboard'), qwertyLayout = document.getElementById('qwerty-layout'), numericLayout = document.getElementById('numeric-layout');
+  let currentFocusedInput = null;
+  const mainContainer = document.getElementById('main-container'), gameWrapper = document.getElementById('game-wrapper'), verifyBtn = document.getElementById('verifyBtn'), nameTailInput = document.getElementById('nameTail'), numberCodeInput = document.getElementById('numberCode'), resultDiv = document.getElementById('result'), rulesModal = document.getElementById('rules-modal'), rulesContent = document.getElementById('rules-content'), countdownTimer = document.getElementById('countdown-timer'), mainInstructionsTemplate = document.getElementById('main-instructions-template');
+  const fullscreenPrompt = document.getElementById('fullscreen-prompt'), forfeitBtn = document.getElementById('forfeit-btn'), gameInstructionsEl = document.getElementById('game-instructions'), resultsHistoryContainer = document.getElementById('results-history-container'), resultsHistoryList = document.getElementById('results-history-list'), gameResultDiv = document.getElementById('game-result-display');
+  const gameContentEl = document.getElementById('let-it-ride-content'), currentRoundEl = document.getElementById('current-round'), potentialPrizeEl = document.getElementById('potential-prize'), playerScoreEl = document.getElementById('player-score'), computerScoreEl = document.getElementById('computer-score');
+  const playerHandContainer = document.getElementById('card-hand-player'), computerHandContainer = document.getElementById('card-hand-computer'), communityHandContainer = document.getElementById('card-hand-community');
+  const scoreTextPlayer = document.getElementById('score-text-player'), scoreTextComputer = document.getElementById('score-text-computer'), dealBtn = document.getElementById('deal-btn');
+  let dailyCountdownTimerId;
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+
+  // --- Initialization ---
+  document.addEventListener('DOMContentLoaded', init);
+  function init() {
+    verifyBtn.addEventListener('click', () => { playSound('sound-click'); handleLoginAttempt(); });
+    [nameTailInput, numberCodeInput].forEach(el => el.addEventListener('keypress', e => e.key === 'Enter' && verifyBtn.click()));
+    dealBtn.addEventListener('click', runLetItRideRound);
+    forfeitBtn.addEventListener('click', handleForfeit);
+    document.addEventListener('fullscreenchange', updateFullscreenUI);
+    const rulesClone = mainInstructionsTemplate.cloneNode(true);
+    rulesClone.style.display = 'block';
+    rulesContent.appendChild(rulesClone);
+    getIPAddress();
+    nameTailInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'qwerty'));
+    numberCodeInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'numeric'));
+    virtualKeyboard.addEventListener('click', handleKeyboardPress);
+    document.addEventListener('click', (e) => { if (!virtualKeyboard.contains(e.target) && e.target !== nameTailInput && e.target !== numberCodeInput) { hideKeyboard(); } });
+  }
+
+  // --- Framework & Audio Functions ---
+  function handleInputFocus(inputElement, layout) { currentFocusedInput = inputElement; if (layout === 'qwerty') { qwertyLayout.style.display = 'block'; numericLayout.style.display = 'none'; } else { qwertyLayout.style.display = 'none'; numericLayout.style.display = 'block'; } virtualKeyboard.classList.add('visible'); }
+  function hideKeyboard() { virtualKeyboard.classList.remove('visible'); currentFocusedInput = null; }
+  function handleKeyboardPress(event) { const keyElement = event.target.closest('.keyboard-key'); if (!keyElement || !currentFocusedInput) return; playSound('sound-click'); const keyValue = keyElement.dataset.key; switch(keyValue) { case 'backspace': currentFocusedInput.value = currentFocusedInput.value.slice(0, -1); break; case 'clear': currentFocusedInput.value = ''; break; case 'switch': const isQwertyVisible = qwertyLayout.style.display === 'block'; qwertyLayout.style.display = isQwertyVisible ? 'none' : 'block'; numericLayout.style.display = isQwertyVisible ? 'block' : 'none'; break; default: if (currentFocusedInput.value.length < currentFocusedInput.maxLength) { currentFocusedInput.value += keyValue.toUpperCase(); if (currentFocusedInput.value.length >= currentFocusedInput.maxLength) { if (currentFocusedInput.id === 'nameTail') { hideKeyboard(); setTimeout(() => { numberCodeInput.focus(); }, 100); } else { hideKeyboard(); } } } break; } }
+  function playSound(id) { const sound = document.getElementById(id); if (sound) { sound.currentTime = 0; sound.play().catch(e=>{}); } }
+  function playBackgroundMusic(trackId) { stopBackgroundMusic(); const music = document.getElementById(trackId); if (music) { music.currentTime = 0; music.play().catch(e=>{}); gameState.currentMusic = music; } }
+  function stopBackgroundMusic() { if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; } }
+
+  // --- Login and Game Setup ---
+  async function handleLoginAttempt() {
+    const nameTail = nameTailInput.value.trim().toUpperCase(); 
+    const numberCode = numberCodeInput.value.trim(); 
+    if (!nameTail || nameTail.length !== 4 || !/^[A-Z]\d{3}$/.test(nameTail)) return showResult(`帳號格式錯誤（例：A001），請向店家索取`, "error"); 
+    if (!numberCode || numberCode.length !== 4 || !/^\d{4}$/.test(numberCode)) return showResult(`請輸入手機末4碼數字`, "error"); 
+    showResult(`正在驗證...`, "loading"); verifyBtn.disabled = true;
+    try {
+        const res = await fetch(`${gameState.scriptURL}?action=phone_player_slot&account=${encodeURIComponent(nameTail)}&phone4=${encodeURIComponent(numberCode)}&vid=v${Date.now().toString(36)}`, { method: 'GET', redirect: 'follow', cache: 'no-cache' });
+        if (!res.ok) throw new Error(`網路或伺服器錯誤 (狀態碼: ${res.status})`);
+        const result = await res.json();
+        switch (result.status) {
+            case 'OK':
+                gameState.playerData = { roundCount: result.visitCount || 0 };
+                gameState.isWinningGame = result.isWin === true;
+                gameState.visitCount = result.visitCount || 0;
+                gameState.luckySlot  = result.luckySlot  || 0;
+                gameState.cycleNum   = result.cycleNum   || 1;
+                const _wPool = [5,6,7,8], _lPool = [1,2,3,4];
+                const _pool  = gameState.isWinningGame ? _wPool : _lPool;
+                const _pWins = _pool[Math.floor(Math.random()*_pool.length)];
+                gameState.predeterminedWins = _pWins;
+                const _ds = [];
+                for(let _i=0;_i<_pWins;_i++) _ds.push('player');
+                for(let _i=_pWins;_i<8;_i++) _ds.push('computer');
+                for(let _i=_ds.length-1;_i>0;_i--){const _j=Math.floor(Math.random()*(_i+1));[_ds[_i],_ds[_j]]=[_ds[_j],_ds[_i]];}
+                gameState.duelScript = _ds;
+                case 'PLAYED_TODAY': showDailyLockScreen(nameTail.toUpperCase()); break;
+            case 'DENY': if(result.reason==='daily_limit'){showDailyLockScreen(nameTail.toUpperCase());}else{showResult(result.message||'帳號驗證失敗，請確認後重試','error');} break;
+            case 'NOT_IN_LIST': showResult(`您不在遊戲名單中`, "error"); break;
+            default: showResult(`驗證錯誤: ${result.message || '未知伺服器回應'}`, "error"); break;
+        }
+    } catch (error) { showResult(`伺服器連線失敗，請稍後再試。<br><button onclick="window.parent.postMessage('goHome','*')" style="margin-top:12px;padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">↩ 返回主選單</button>`, "error"); } finally { verifyBtn.disabled = false; }
+  }
+
+  function loginPlayer() {
+    hideKeyboard(); enterFullscreen(); 
+    mainContainer.style.opacity = 0;
+    setTimeout(() => { mainContainer.style.display = 'none'; gameWrapper.classList.add('visible'); showRulesAndStart(); }, 400);
+  }
+
+  function showRulesAndStart() {
+    rulesModal.classList.add('visible');
+    let countdown = 8; countdownTimer.textContent = countdown;
+    const timer = setInterval(() => {
+      countdown--; countdownTimer.textContent = countdown;
+      if (countdown <= 0) { clearInterval(timer); rulesModal.classList.remove('visible'); startGame(); }
+    }, 1000);
+  }
+  
+  // --- Core Game Logic ---
+  function startGame() {
+      gameState.isGameActive = true; gameState.isEnding = false;
+      resetGameStates();
+      forfeitBtn.style.display = 'block'; resultsHistoryContainer.style.display = 'flex'; gameInstructionsEl.style.display = 'flex'; gameContentEl.style.display = 'flex';
+      generateCardHTML(playerHandContainer, 3); generateCardHTML(computerHandContainer, 3); generateCardHTML(communityHandContainer, 2);
+      playBackgroundMusic('music-competitive');
+      updateGameInstructions(); updatePotentialPrizeDisplay();
+  }
+  
+  function handleForfeit() { if (!gameState.isGameActive || gameState.isEnding) return; playSound('sound-click'); if (confirm('您確定要放棄比賽嗎？放棄後將無法獲得任何獎勵。')) { endGame({ finalWins: gameState.wins.player, forfeited: true }); } }
+
+  async function runLetItRideRound() {
+      if (gameState.isSpinning) return;
+      gameState.isSpinning = true; dealBtn.disabled = true;
+      scoreTextPlayer.textContent = '...'; scoreTextComputer.textContent = '...';
+      gameState.rounds++; currentRoundEl.textContent = gameState.rounds;
+      
+      const allCardElements = [...playerHandContainer.children, ...computerHandContainer.children, ...communityHandContainer.children];
+      allCardElements.forEach(el => el.classList.remove('flipped'));
+      await delay(500);
+      
+      const requiredOutcome = gameState.duelScript[gameState.rounds - 1] || 'computer';
+      let deck, playerCards, computerCards, communityCards, playerResult, computerResult, winner;
+      let attempts = 0;
+
+      while (attempts < 200) {
+          deck = createDeck(); shuffleDeck(deck);
+          playerCards = deck.slice(0, 3);
+          computerCards = deck.slice(3, 6);
+          communityCards = deck.slice(6, 8);
+          playerResult = evaluateHand([...playerCards, ...communityCards]);
+          computerResult = evaluateHand([...computerCards, ...communityCards]);
+          winner = compareHands(playerResult, computerResult);
+          
+          if ((requiredOutcome === 'player' && winner === 1) || (requiredOutcome === 'computer' && winner === -1)) {
+              break;
+          }
+          attempts++;
+      }
+      if(attempts >= 200) console.warn("無法生成預定結果，隨機發牌");
+
+      await animateCards(playerHandContainer.children, playerCards);
+      await delay(500);
+      await animateCards(communityHandContainer.children, communityCards);
+      await delay(500);
+      
+      scoreTextPlayer.textContent = playerResult.name;
+      await delay(1000);
+      
+      await animateCards(computerHandContainer.children, computerCards);
+      scoreTextComputer.textContent = computerResult.name;
+      await delay(500);
+
+      let roundWinner = '平手';
+      if (winner === 1) { gameState.wins.player++; roundWinner = '玩家'; playSound('sound-win'); } 
+      else if (winner === -1) { gameState.wins.computer++; roundWinner = '電腦'; playSound('sound-lose'); }
+      
+      addResultToHistory(`第 ${gameState.rounds} 回合: 玩家[${playerResult.name}] vs 電腦[${computerResult.name}] - <strong>${roundWinner}勝！</strong>`);
+      playerScoreEl.textContent = gameState.wins.player; computerScoreEl.textContent = gameState.wins.computer;
+      updatePotentialPrizeDisplay();
+
+      if (gameState.rounds >= gameState.totalRounds) {
+          endGame({ finalWins: gameState.wins.player });
+      } else { 
+          gameState.isSpinning = false; dealBtn.disabled = false;
+      }
+  }
+
+  // --- Poker Hand Evaluation Logic ---
+  function createDeck(){const d=[];for(const s of Object.keys(SUITS))for(const r of Object.keys(RANKS))d.push({rank:parseInt(r),suit:s.charAt(0)});return d;}
+  function shuffleDeck(d){for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}}
+  function evaluateHand(c){const h=[...c].sort((a,b)=>b.rank-a.rank),r=h.map(c=>c.rank),s=h.map(c=>c.suit),rC=r.reduce((a,v)=>{a[v]=(a[v]||0)+1;return a;},{}),cnts=Object.values(rC).sort((a,b)=>b-a),sUR=Object.keys(rC).map(Number).sort((a,b)=>b-a);const iF=new Set(s).size===1;let iS=false,hC=0;if(sUR.length>=5){for(let i=0;i<=sUR.length-5;i++){const sl=sUR.slice(i,i+5);if(sl[0]-sl[4]===4){iS=true;hC=sl[0];break;}}}const iASL=JSON.stringify(sUR.slice(0,5))===JSON.stringify([14,5,4,3,2]);if(iASL){iS=true;hC=5;}let hR=0,hV=sUR.slice(0,5);if(iS&&iF){hR=(hC===14&&!iASL)?9:8;}else if(cnts[0]===4)hR=7;else if(cnts[0]===3&&cnts[1]>=2)hR=6;else if(iF)hR=5;else if(iS)hR=4;else if(cnts[0]===3)hR=3;else if(cnts[0]===2&&cnts[1]===2)hR=2;else if(cnts[0]===2)hR=1;return{rank:hR,name:HAND_NAMES[hR],values:hV};}
+  function compareHands(p,c){if(p.rank>c.rank)return 1;if(p.rank<c.rank)return -1;for(let i=0;i<p.values.length;i++){if(p.values[i]>c.values[i])return 1;if(p.values[i]<c.values[i])return -1;}return 0;}
+
+  // --- UI, Display, and End Game ---
+  function getPrizeByWins(w){return w>=5?"指定商品":null;}
+  function generateCardHTML(cont,c){cont.innerHTML='';for(let i=0;i<c;i++){const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="back"></div><div class="front"></div>`;cont.appendChild(card);}}
+  function updateCardFace(cEl,cD){const f=cEl.querySelector('.front'),r=RANKS[cD.rank],s=SUITS[cD.suit];cEl.className=`card suit-${cD.suit}`;f.textContent=r;cEl.dataset.rank=r;cEl.dataset.suit=s;}
+  async function animateCards(els,cD){playSound('sound-roll');const eA=Array.from(els);eA.forEach((el,i)=>{if(cD[i]){setTimeout(()=>{updateCardFace(el,cD[i]);el.classList.add('flipped');},i*100);}});await delay(eA.length*100+500);}
+  function addResultToHistory(m){const li=document.createElement('li');li.innerHTML=m;resultsHistoryList.appendChild(li);resultsHistoryList.scrollTop=resultsHistoryList.scrollHeight;}
+  function resetGameStates(){gameState.rounds=0;gameState.wins={player:0,computer:0};currentRoundEl.textContent='1';playerScoreEl.textContent='0';computerScoreEl.textContent='0';resultsHistoryList.innerHTML='';document.querySelectorAll('.score-text').forEach(ct=>ct.textContent='');}
+  function updateGameInstructions(){gameInstructionsEl.innerHTML=`<h3>遊戲即時說明</h3><div class="step"><strong>目標：</strong>在 8 回合中，您的5張組合牌型大於莊家即可獲勝。贏得越多回合，獎勵越好！</div>`;}
+  function updatePotentialPrizeDisplay(){const wins=gameState.wins.player,currentPrize=getPrizeByWins(wins);let nextPrizeTarget=[5,6,7,8].find(w=>w>wins),prizeHTML=currentPrize?`已達成: <span>${currentPrize}</span>`:`無 (需勝5回合)`;if(nextPrizeTarget)prizeHTML+=`<br><span style="font-size:0.9em;color:#a5b4fc;">下一級:${getPrizeByWins(nextPrizeTarget)}(需勝${nextPrizeTarget}回合)</span>`;potentialPrizeEl.innerHTML=prizeHTML;}
+  function endGame({finalWins,remark=null,isPityWin=false,forfeited=false}){if(gameState.isEnding)return;gameState.isEnding=true;gameState.isGameActive=false;stopBackgroundMusic();forfeitBtn.style.display='none';const prize=forfeited?null:getPrizeByWins(finalWins),isWin=!!prize;let fR=remark;if(!fR){if(isPityWin){fR="恭喜您！觸發保底機制，本次直接贈與您最大獎！";}else if(forfeited){fR="您已放棄本次挑戰。"}else{fR=`8回合結束，最終比分為 ${gameState.wins.player}:${gameState.wins.computer}。`+(prize?`贏得獎勵【${prize}】！`:'本次未獲得獎品。');}}const rC=isWin?(finalWins>=8?'jackpot':'success'):'lose',i=isWin?'🎉':'😥',t=forfeited?"挑戰放棄":(isWin?'恭喜！':'挑戰結束！'),pIH=gameState.playerInfo.nameTail?`<p style="font-size:1.2rem;font-weight:bold;font-family:'Microsoft JhengHei',sans-serif;">玩家 ${gameState.playerInfo.nameTail.toUpperCase()} (${gameState.playerInfo.numberCode})</p>`:'',rTH=`<p style="font-size:1.1rem;font-family:'Microsoft JhengHei',sans-serif;line-height:1.6;">${fR}</p>`,pTH=isWin?`<p style="font-family:'Microsoft JhengHei',sans-serif;">您贏得了</p><div class="prize-highlight">${prize}</div><div class="win-warning">若您已得獎請暫時不要登出，請通知服務員確認。<br>所有操作需由當事人親在現場完成始算生效 (畫面登出就算此次挑戰失敗)。</div>`:'',fH=`<div class="result-container ${rC}"><div class="result-icon">${i}</div><h2>${t}</h2>${pIH}${rTH}${pTH}<button onclick="logout(this)" class="logout-btn">確認並登出</button></div>`;gameWrapper.classList.remove('visible');showFullscreenPage(fH,rC);if(isWin){playSound(rC==='jackpot'?'sound-jackpot':'sound-win');if(typeof confetti==='function')confetti({particleCount:200,spread:120,origin:{x:0.5,y:0.1}});}else{playSound('sound-lose');}syncDataWithServer(isWin,prize||'無',fR,finalWins);}
+  async function syncDataWithServer(isWin, prize, remark, finalWins) {
+    const account   = gameState.playerInfo.nameTail  || '';
+    const phone4    = gameState.playerInfo.numberCode || '';
+    const phone4key = account + '_' + phone4;
+    const payload = {
+        action:       'updatestats',
+        account:      account,
+        phone4key:    phone4key,
+        vid:          'v' + Date.now().toString(36),
+        mode:         '[Let It Ride]',
+        isWin:        isWin,
+        prize:        prize || '無',
+        visitCount:   gameState.visitCount  || 0,
+        luckySlot:    gameState.luckySlot   || 0,
+        isLuckySlot:  gameState.isWinningGame || false,
+        remark:       '[Let It Ride] ' + remark,
+        timestamp:    new Date().toISOString(),
+        ipAddress:    gameState.ipAddress   || '',
+        finalWins:    finalWins || 0,
+    };
+    try {
+        await fetch(gameState.scriptURL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+            mode:    'no-cors',
+        });
+    } catch(e) { console.error('syncDataWithServer error:', e); }
+}`,timestamp:new Date().toISOString(),lastWinDate:isWin?new Date().toISOString():gameState.playerData.lastWinDate,winStreak:nWS,finalWins:finalWins,pointer:gameState.pointer,assignedScript:gameState.assignedScript};try{await fetch(`${gameState.scriptURL}?${new URLSearchParams(p)}`);}catch(e){}}
+  
+  // --- Utility & Display Functions ---
+  function showResult(m, t) { resultDiv.innerHTML=`<div class="result-icon">${t==='loading'?'<i class="fas fa-spinner fa-spin"></i>':'❌'}</div>${m}`; resultDiv.className=`result ${t} show`; }
+  function showFullscreenPage(h, c) { mainContainer.style.display='none'; gameWrapper.classList.remove('visible'); gameResultDiv.innerHTML=h; gameResultDiv.className='game-result-display show'; if(c)gameResultDiv.classList.add(c); }
+  function showDailyLockScreen(n, m="您今日已挑戰過！") { const h=`<div class="result-container error"><div class="result-icon">⏳</div><h2>玩家 ${n}，${m}</h2><p>下次開放倒數：</p><div id="daily-countdown" style="font-size:2rem;margin:10px 0;">--:--:--</div><button onclick="logout(this)" class="logout-btn">登出</button></div>`; showFullscreenPage(h,'error'); const el=document.getElementById('daily-countdown'); if(!el)return; if(dailyCountdownTimerId)clearInterval(dailyCountdownTimerId); dailyCountdownTimerId=setInterval(()=>{const now=new Date(),tmr=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1),diff=tmr-now;if(diff<0){logout(null);return;}const[h,m,s]=[String(Math.floor(diff/36e5)).padStart(2,'0'),String(Math.floor((diff%36e5)/6e4)).padStart(2,'0'),String(Math.floor((diff%6e4)/1e3)).padStart(2,'0')];el.textContent=`${h}:${m}:${s}`;},1000); }
+  function logout(buttonElement) { if(buttonElement){buttonElement.disabled=true;buttonElement.textContent='資料儲存中...';} exitFullscreen().then(()=>{setTimeout(()=>{window.parent.postMessage('goHome','*');},500);}).catch(()=>{setTimeout(()=>{window.parent.postMessage('goHome','*');},500);}); }
+  async function getIPAddress() { try{const r=await fetch('https://api.ipify.org?format=json');gameState.ipAddress=(await r.json()).ip;}catch(e){gameState.ipAddress='無法取得';} }
+  function enterFullscreen() { const el=document.documentElement; (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el).catch(()=>{}); }
+  function exitFullscreen() { if(document.exitFullscreen){return document.exitFullscreen();} return Promise.resolve(); }
+  function isFullscreen() { return !!document.fullscreenElement; }
+  function updateFullscreenUI() { fullscreenPrompt.classList.toggle('visible', isFullscreen()); }
+</script>
+
+<script>
+  // --- 安全防护脚本 ---
+  const ADMIN_PASSWORD = "123"; const ADMIN_HOTKEY = 'q';
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function(event) { if (event.key==='F12'||(event.ctrlKey&&event.shiftKey&&event.key==='I')||(event.ctrlKey&&event.key==='s')||(event.ctrlKey&&event.key==='u')){event.preventDefault();} if(event.ctrlKey&&event.altKey&&(event.key.toLowerCase()===ADMIN_HOTKEY)){event.preventDefault();if(isFullscreen()){const p=prompt("请输入管理员密码以退出全荧幕：");if(p!==null){if(p===ADMIN_PASSWORD){exitFullscreen();}else{alert("密码错误！");}}}else{enterFullscreen();}} });
+</script>
+
+<script>
+  // --- 闲置超时脚本 ---
+  (function() { let idleTimer = null; const idleTimeout = 300000; function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(function() { if (!gameState.isGameActive) { window.parent.postMessage('goHome','*'); } }, idleTimeout); } window.addEventListener('mousemove', resetIdleTimer, false); window.addEventListener('mousedown', resetIdleTimer, false); window.addEventListener('keypress', resetIdleTimer, false); window.addEventListener('touchmove', resetIdleTimer, false); resetIdleTimer(); })();
+</script>
+</body>
+</html>

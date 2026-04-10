@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>3D撲克主題遊戲平台 - 完整整合版</title>
+<title>3D撲克主題遊戲平台 - 完整後端整合</title>
 <style>
     * {
         margin: 0;
@@ -57,7 +57,7 @@
         left: 0;
         height: 100%;
         width: 70px;
-        background: rgba(10, 10, 25, 0.9);
+        background: rgba(10, 10, 25, 0.95);
         backdrop-filter: blur(12px);
         border-right: 1px solid rgba(255, 255, 255, 0.1);
         transition: width 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
@@ -104,6 +104,7 @@
         font-size: 1rem;
         transition: all 0.2s;
         border-left: 3px solid transparent;
+        cursor: pointer;
     }
     .sidebar a:hover {
         background: rgba(255, 255, 255, 0.08);
@@ -288,105 +289,99 @@
         background: #0a0a14;
     }
 
-    /* 響應式調整 */
-    @media (max-width: 760px) {
-        .sidebar {
-            width: 55px;
-        }
-        .sidebar:hover {
-            width: 200px;
-        }
-        .main-content {
-            margin-left: 55px;
-        }
-        .game-card {
-            width: 180px;
-            height: 260px;
-            margin-left: -90px;
-            margin-top: -130px;
-        }
-        .game-icon {
-            font-size: 2.5rem;
-        }
-        .game-title {
-            font-size: 1rem;
-        }
-        h1 {
-            font-size: 1.5rem;
-        }
+    /* 登入狀態欄 */
+    .user-status {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        padding: 8px 16px;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        z-index: 99;
+        border: 1px solid rgba(255,170,100,0.3);
+        pointer-events: none;
+        font-family: monospace;
+    }
+    .user-status span {
+        color: #ffaa66;
+        font-weight: bold;
     }
 
-    /* 滾動條美化 */
-    ::-webkit-scrollbar {
-        width: 4px;
+    @media (max-width: 760px) {
+        .sidebar { width: 55px; }
+        .sidebar:hover { width: 200px; }
+        .main-content { margin-left: 55px; }
+        .game-card { width: 180px; height: 260px; margin-left: -90px; margin-top: -130px; }
+        .game-icon { font-size: 2.5rem; }
+        .game-title { font-size: 1rem; }
+        h1 { font-size: 1.5rem; }
     }
-    ::-webkit-scrollbar-track {
-        background: #111;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #ffaa66;
-        border-radius: 10px;
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #ffaa66; border-radius: 10px; }
 </style>
 </head>
 <body>
 <div class="stars"></div>
+<div class="user-status" id="userStatus">🔐 尚未登入 | <span>請至遊戲內登入</span></div>
 
-<!-- 自動伸縮選單 (整合所有遊戲入口) -->
+<!-- 自動伸縮選單 -->
 <div class="sidebar" id="sidebar">
     <div class="logo-area">
         <span class="logo-icon">♠️🎲</span>
         <span class="logo-text">牌藝殿堂</span>
     </div>
-    <a href="#" class="nav-home" data-game="home">
+    <a class="nav-home" data-game="home">
         <span class="menu-icon">🏠</span>
         <span class="nav-text">首頁</span>
     </a>
-    <a href="#" data-game="bigtwo">
+    <a data-game="bigtwo">
         <span class="menu-icon">🃏</span>
         <span class="nav-text">大老二</span>
     </a>
-    <a href="#" data-game="blackjack">
+    <a data-game="blackjack">
         <span class="menu-icon">🎰</span>
         <span class="nav-text">21點</span>
     </a>
-    <a href="#" data-game="dice">
+    <a data-game="dice">
         <span class="menu-icon">🎲</span>
         <span class="nav-text">骰子挑戰</span>
     </a>
-    <a href="#" data-game="pickred">
+    <a data-game="pickred">
         <span class="menu-icon">♥️</span>
         <span class="nav-text">撿紅點</span>
     </a>
-    <a href="#" data-game="texas">
+    <a data-game="texas">
         <span class="menu-icon">♠️</span>
         <span class="nav-text">德州撲克</span>
     </a>
-    <a href="#" data-game="thirteen">
+    <a data-game="thirteen">
         <span class="menu-icon">🂡</span>
         <span class="nav-text">十三支</span>
     </a>
-    <a href="#" data-game="threecard">
+    <a data-game="threecard">
         <span class="menu-icon">🎴</span>
         <span class="nav-text">三公</span>
     </a>
-    <a href="#" data-game="baccarat">
+    <a data-game="baccarat">
         <span class="menu-icon">🎭</span>
         <span class="nav-text">百家樂</span>
     </a>
-    <a href="#" data-game="paigow">
+    <a data-game="paigow">
         <span class="menu-icon">🎴</span>
         <span class="nav-text">牌九撲克</span>
     </a>
-    <a href="#" data-game="caribbean">
+    <a data-game="caribbean">
         <span class="menu-icon">⚓</span>
         <span class="nav-text">加勒比梭哈</span>
     </a>
-    <a href="#" data-game="letitride">
+    <a data-game="letitride">
         <span class="menu-icon">🏇</span>
         <span class="nav-text">Let It Ride</span>
     </a>
-    <div class="version">版本 2.0 · 全系列整合</div>
+    <div class="version">版本 3.0 · 後端整合</div>
 </div>
 
 <div class="main-content" id="mainContent">
@@ -394,7 +389,7 @@
     <div class="carousel-3d" id="carousel3d">
         <div class="carousel-track" id="carouselTrack"></div>
     </div>
-    <div class="info-footer">🖱️ 滑鼠懸停輪盤暫停旋轉 | 點擊卡片或左側選單開啟遊戲</div>
+    <div class="info-footer">🖱️ 滑鼠懸停輪盤暫停 | 點擊卡片或左側選單開始遊戲 | 所有遊戲共用同一後端驗證</div>
 </div>
 
 <!-- 全螢幕遊戲彈窗 -->
@@ -406,12 +401,10 @@
 </div>
 
 <script>
-    // --------------------------------------------------------------
-    // 遊戲定義清單 (對應原始檔案名稱)
-    // 因為原始檔案獨立為各遊戲的完整HTML，我們直接引用檔案名稱
-    // 請確保所有檔案與此平台頁面放在同一目錄下 (名稱根據您提供的列表)
-    // 若檔案名稱不同，可在此處調整
-    // --------------------------------------------------------------
+    // ======================= 全域後端連結 (共用 Google Apps Script) =======================
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxz3eLRDmWqxsLS2bwWLmtf82p45n_CF2mcM9-BBPKWTU22LM1eD8BUdhVJjc2E7CJeZA/exec";
+    
+    // 遊戲列表 (檔案名稱必須與實際檔案一致)
     const GAMES_LIST = [
         { id: "bigtwo",       title: "大老二",         desc: "經典撲克比大小，誰先出完誰贏",        icon: "🃏",   file: "大老二每日挑戰v8.html" },
         { id: "blackjack",    title: "21點",           desc: "對抗莊家，逼近21點極限",            icon: "🎰",   file: "21點每日挑戰v8.html" },
@@ -426,11 +419,8 @@
         { id: "letitride",    title: "Let It Ride",   desc: "3張手牌+2公牌，組最強5張組合",        icon: "🏇",   file: "Let_It_Ride_每日挑戰v8.html" }
     ];
 
-    // 輪盤半徑與角度計算
     let track = document.getElementById('carouselTrack');
-    let currentCards = [];
-    let rotationAngle = 0;
-    const RADIUS = 380;       // 3D環繞半徑
+    const RADIUS = 380;
     const CARD_COUNT = GAMES_LIST.length;
 
     // 建立3D輪盤卡片
@@ -442,14 +432,12 @@
             const card = document.createElement('div');
             card.className = 'game-card';
             card.setAttribute('data-game-id', game.id);
-            // 內容結構
             card.innerHTML = `
                 <div class="game-icon">${game.icon}</div>
                 <div class="game-title">${game.title}</div>
                 <div class="game-desc">${game.desc}</div>
                 <div class="badge">🎮 點擊開始</div>
             `;
-            // 計算位置 (圓周)
             const x = Math.sin(angle) * RADIUS;
             const z = Math.cos(angle) * RADIUS;
             const yRotate = angle * (180 / Math.PI);
@@ -459,24 +447,41 @@
                 openGame(game.file);
             });
             track.appendChild(card);
-            currentCards.push(card);
         });
     }
 
-    // 開放遊戲 (全螢幕模式)
+    // 開啟遊戲並注入後端連結 (透過URL參數傳遞給子遊戲，確保所有遊戲能使用相同後端)
     function openGame(fileName) {
         const modal = document.getElementById('fullscreenModal');
         const iframe = document.getElementById('gameFrame');
         if (!iframe) return;
-        // 設定來源為對應遊戲檔案
-        iframe.src = fileName;
+        
+        // 重要：將後端連結以參數方式附加到遊戲檔案，子遊戲可以透過解析URL取得共用後端
+        // 同時支援子遊戲原本內建的scriptURL，但為了保險，我們傳遞參數 backend_url
+        let url = fileName;
+        const connector = url.includes('?') ? '&' : '?';
+        url = `${url}${connector}backend_url=${encodeURIComponent(BACKEND_URL)}&platform=3d_hub`;
+        
+        iframe.src = url;
         modal.style.display = 'block';
-        // 嘗試將modal全螢幕
+        
+        // 全螢幕請求
         const elem = modal;
         if (elem.requestFullscreen) {
             elem.requestFullscreen().catch(err => console.warn("全螢幕請求失敗", err));
         } else if (elem.webkitRequestFullscreen) {
             elem.webkitRequestFullscreen();
+        }
+        
+        // 更新狀態提示
+        const statusDiv = document.getElementById('userStatus');
+        if (statusDiv) {
+            statusDiv.innerHTML = `🎮 遊戲啟動中 | <span>${fileName.split('.')[0]}</span>`;
+            setTimeout(() => {
+                if (document.getElementById('userStatus') && !document.fullscreenElement) {
+                    statusDiv.innerHTML = `🔐 遊戲進行中 | <span>請在遊戲內登入</span>`;
+                }
+            }, 2000);
         }
     }
 
@@ -490,9 +495,18 @@
         }
         if (iframe) iframe.src = '';
         modal.style.display = 'none';
+        const statusDiv = document.getElementById('userStatus');
+        if (statusDiv) {
+            statusDiv.innerHTML = `🔐 已返回大廳 | <span>可繼續選擇遊戲</span>`;
+            setTimeout(() => {
+                if (statusDiv.innerHTML.includes('已返回')) {
+                    statusDiv.innerHTML = `🎲 歡迎回來 | <span>點擊遊戲開始挑戰</span>`;
+                }
+            }, 3000);
+        }
     }
 
-    // 側邊欄選單點擊事件
+    // 側邊欄選單事件
     function bindSidebarMenu() {
         const links = document.querySelectorAll('.sidebar a');
         links.forEach(link => {
@@ -507,17 +521,16 @@
                         console.warn("找不到對應遊戲", gameAttr);
                     }
                 });
-            } else if (link.classList.contains('nav-home')) {
+            } else if (link.classList.contains('nav-home') || gameAttr === 'home') {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    // 回首頁效果：如果有打開遊戲則關閉全螢幕
                     closeFullscreenGame();
                 });
             }
         });
     }
 
-    // 監聽全螢幕變化，當全螢幕關閉時清理iframe
+    // 全螢幕變化監聽
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             const modal = document.getElementById('fullscreenModal');
@@ -539,7 +552,7 @@
         }
     });
 
-    // 輪盤動畫優化: 根據滑鼠懸停與否控制動畫
+    // 輪盤懸停控制
     const carouselContainer = document.getElementById('carousel3d');
     if (carouselContainer) {
         carouselContainer.addEventListener('mouseenter', () => {
@@ -550,22 +563,7 @@
         });
     }
 
-    // 為了確保所有遊戲能夠正常運行，必須將所有獨立html檔案放在同一個目錄下
-    // 若部分檔案名稱有特殊字元，請手動對應上面的 file 欄位
-    // 如果某些檔案缺失，控制台會顯示404但不影響其他遊戲
-    
-    // 初始化3D輪盤與事件
-    buildCarousel();
-    bindSidebarMenu();
-    
-    // 監聽子遊戲的 goHome 訊息 (遊戲內點「回首頁」時觸發)
-    window.addEventListener('message', (e) => {
-        if (e.data === 'goHome') {
-            closeFullscreenGame();
-        }
-    });
-
-    // 簡單的鍵盤ESC關閉輔助
+    // ESC 關閉
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('fullscreenModal');
@@ -574,14 +572,63 @@
             }
         }
     });
+
+    // 測試後端連線 (僅顯示連線狀態)
+    function testBackendConnection() {
+        fetch(`${BACKEND_URL}?action=ping&t=${Date.now()}`)
+            .then(res => res.text())
+            .then(() => {
+                console.log("✅ 後端連線正常:", BACKEND_URL);
+                const statusDiv = document.getElementById('userStatus');
+                if (statusDiv && !statusDiv.innerHTML.includes('遊戲啟動')) {
+                    statusDiv.innerHTML = `🌐 後端已連線 | <span>選擇遊戲登入</span>`;
+                }
+            })
+            .catch(err => {
+                console.warn("後端連線測試失敗", err);
+                const statusDiv = document.getElementById('userStatus');
+                if (statusDiv) statusDiv.innerHTML = `⚠️ 後端連線異常 | <span>請檢查網路</span>`;
+            });
+    }
     
-    // 增加背景動態調整旋轉速度的小彩蛋: 隨機改變速度? 不需要但保持視覺
-    // 讓輪盤起始角度有一點偏移更好看
+    // 初始化
+    buildCarousel();
+    bindSidebarMenu();
+    testBackendConnection();
+    
+    // 添加隨機起始角度
     const randomOffset = Math.random() * 30;
     track.style.transform = `rotateY(${randomOffset}deg)`;
     
-    // 控制台友好提示
-    console.log("3D撲克主題平台已啟動，包含所有遊戲:", GAMES_LIST.map(g=>g.title).join(", "));
+    // 提供全域函數給子遊戲iframe調用 (跨域通訊支援，讓子遊戲可以回傳登入狀態)
+    window.addEventListener('message', (event) => {
+        // 安全起見可驗證origin，但這裡簡單接收
+        if (event.data && event.data.type === 'USER_LOGIN') {
+            const { account } = event.data;
+            const statusDiv = document.getElementById('userStatus');
+            if (statusDiv && account) {
+                statusDiv.innerHTML = `✅ 已登入: ${account} | <span>盡情挑戰！</span>`;
+                setTimeout(() => {
+                    if (statusDiv.innerHTML.includes(account)) {
+                        statusDiv.innerHTML = `🎲 玩家 ${account} | <span>祝好運</span>`;
+                    }
+                }, 5000);
+            }
+        } else if (event.data && event.data.type === 'GAME_OVER') {
+            const statusDiv = document.getElementById('userStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = `🏆 遊戲結束 | <span>可再選新遊戲</span>`;
+                setTimeout(() => {
+                    if (statusDiv.innerHTML.includes('遊戲結束')) {
+                        statusDiv.innerHTML = `🎲 歡迎回來 | <span>點擊遊戲開始挑戰</span>`;
+                    }
+                }, 4000);
+            }
+        }
+    });
+    
+    console.log("3D撲克主題平台已啟動，後端連結:", BACKEND_URL);
+    console.log("遊戲清單:", GAMES_LIST.map(g=>g.title).join(", "));
 </script>
 </body>
 </html>

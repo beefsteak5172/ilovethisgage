@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>十三支每日挑戰</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <style>
+    /* --- 基礎樣式 (整合自 骰子挑戰V7) --- */
+    @font-face { font-family: 'Pixel'; src: url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype'); }
+    :root { 
+        --primary: #4a6cf7; --secondary: #10b981; --success: #00b09b; --jackpot: #ff416c; 
+        --lose-color: #F44336; --bg-color: #1e293b; 
+        --card-width: clamp(50px, 8vw, 70px); --card-height: calc(var(--card-width) * 1.4); 
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+    body { background-color: var(--bg-color); color: #f8fafc; font-family: 'Pixel', 'Segoe UI', system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; position: fixed; display: flex; align-items: center; justify-content: center; }
+    #main-container, #game-result-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 10px; transition: opacity 0.4s ease-out; }
+    #main-container { z-index: 10; background-color: transparent; }
+    #game-wrapper { z-index: 20; background: var(--bg-color); opacity: 0; transform: scale(0.95); transition: opacity 0.5s ease-out, transform 0.5s ease-out; display: none; flex-direction: row; align-items: flex-start; justify-content: center; gap: 20px; width: 100%; height: 100%; padding: 20px; overflow: auto; }
+    #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
+    #left-column { flex: 1; min-width: 280px; max-width: 350px; height: 100%; display: flex; flex-direction: column; gap: 20px; }
+    #game-instructions { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; border: 1px solid var(--primary); display: none; flex-direction: column; font-family: 'Microsoft JhengHei', sans-serif; overflow-y: auto; flex-shrink: 0; }
+    #game-instructions h3 { color: var(--primary); font-family: 'Pixel', sans-serif; margin-bottom: 15px; font-size: 1.2rem; }
+    .container { width: 100%; background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: clamp(15px, 3vw, 25px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); text-align: center; position: relative; flex: 3; max-height: 100%; overflow-y: auto; }
+    h1, h2, h3 { margin-bottom: 20px; font-size: clamp(1.5rem, 6vw, 2.5rem); color: #e2e8f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); line-height: 1.2; }
+    h2 { font-size: clamp(1.2rem, 5vw, 2rem); }
+    h3 { font-size: clamp(1rem, 4vw, 1.5rem); color: #94a3b8;}
+    .form-section { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; margin-bottom: 25px; width: 100%; max-width: 500px; border: 1px solid rgba(255,255,255,0.2); }
+    .input-group { margin-bottom: 15px; text-align: left;}
+    label { display: block; margin-bottom: 8px; font-size: clamp(0.8rem, 3vw, 1rem); color: #cbd5e1; }
+    input { width: 100%; font-size: clamp(0.9rem, 4vw, 1.1rem); padding: 12px 15px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; text-align: center; font-weight: 600; }
+    button, .mode-btn, .game-btn { font-family: 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(1rem, 4vw, 1.2rem); padding: 12px 24px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 8px; cursor: pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); margin: 10px; min-width: 220px; transition: all 0.3s ease; }
+    button:hover, .mode-btn:hover, .game-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+    button:disabled, .mode-btn:disabled, .game-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none; background: #64748b; }
+    .forfeit-btn { position: absolute; top: 15px; right: 15px; background: #c0392b; min-width: auto; padding: 8px 16px; font-size: 0.9rem; z-index: 100; }
+    #mode-selection, .game-content { display: none; flex-direction: column; align-items: center; width: 100%; }
+    #result { padding: 20px; border-radius: 15px; text-align: center; font-weight: 600; font-size: 1.2rem; width: 100%; max-width: 500px; display: none; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-family: 'Segoe UI', system-ui, sans-serif; border: 1px solid rgba(255,255,255,0.2); color: #f8fafc; }
+    #result.show { display: flex; }
+    #game-result-display { z-index: 50; display: none; background-color: transparent; }
+    #game-result-display.show { display: flex; }
+    #game-result-display .result-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: var(--bg-color); border-radius: 16px; }
+    #game-result-display h2 { text-shadow: 2px 2px 4px #000; font-size: 2.5rem; margin-bottom: 25px; }
+    #game-result-display .logout-btn { margin-top: 20px; padding: 15px 30px; min-width: 250px; background: #475569; }
+    .jackpot { background: linear-gradient(135deg, var(--jackpot), #f43f5e); animation: pulse 1.5s infinite; } 
+    .success { background: linear-gradient(135deg, var(--success), #34d399); } 
+    .error, .lose { background: linear-gradient(135deg, #f97316, #ef4444); } 
+    .loading { background: linear-gradient(135deg, #f59e0b, #facc15); color: #333; } 
+    .result-icon { font-size: 3rem; margin-bottom: 15px; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .prize-highlight { display: inline-block; padding: 12px 24px; margin: 10px 0; background: linear-gradient(45deg, #f59e0b, #ef4444); border-radius: 8px; font-size: 1.8em; font-family: 'Microsoft JhengHei', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); color: #fff; border: 2px solid #fff; }
+    #fullscreen-prompt { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    #fullscreen-prompt.visible { opacity: 1; }
+    #results-history-container { width: 100%; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); flex-grow: 1; display: none; flex-direction: column; }
+    #results-history-list { list-style-type: decimal; list-style-position: inside; padding-left: 5px; height: 100%; overflow-y: auto; text-align: left; font-family: 'Microsoft JhengHei', sans-serif; font-size: clamp(0.8rem, 2.5vw, 0.9rem); }
+    .potential-prize-display { font-family: 'Microsoft JhengHei', sans-serif; color: #34d399; border: 1px solid #34d399; background: rgba(52, 211, 153, 0.1); padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; line-height: 1.5; }
+    .potential-prize-display span { font-weight: bold; color: #f0fdf4; }
+    #virtual-keyboard { position: fixed; bottom: 0; left: 0; width: 100%; background: #0f172a; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); z-index: 1001; transform: translateY(100%); transition: transform 0.3s ease-out; user-select: none; }
+    #virtual-keyboard.visible { transform: translateY(0); }
+    .keyboard-row { display: flex; justify-content: center; margin-bottom: 8px; }
+    .keyboard-key { height: 50px; margin: 0 4px; padding: 0; border: 1px solid #4a6cf7; border-radius: 8px; background: #1e293b; color: #f8fafc; font-size: 1.5rem; font-family: 'Segoe UI', system-ui, sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-grow: 1; transition: background-color 0.2s; }
+    .keyboard-key:active { background-color: var(--primary); }
+    .key-special { flex-grow: 2; background-color: #475569; }
+    .numeric-keypad .keyboard-key { width: 80px; flex-grow: 0; }
+    .qwerty-layout { display: none; }
+    
+    /* --- 十三支遊戲專用樣式 --- */
+    .duel-area { display: flex; justify-content: space-around; width: 100%; align-items: flex-start; flex-wrap: wrap; gap: 20px;}
+    .competitor-zone { flex: 1; min-width: 280px; display: flex; flex-direction: column; align-items: center; }
+    .score-board { font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+    .score-board span { display: inline-block; padding: 5px 10px; border-radius: 5px; }
+    .score-board .player-score { background-color: var(--primary); }
+    .score-board .computer-score { background-color: var(--lose-color); }
+    .card-area { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 10px; width: 100%; margin-bottom: 10px; background: rgba(0,0,0,0.2); }
+    .hand-container { display: flex; flex-direction: column; align-items: center; margin: 5px 0; }
+    .hand-title { font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px; }
+    .card-hand { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 5px 0; min-height: calc(var(--card-height) + 10px); }
+    .hand-strength { font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.9rem; color: #f59e0b; font-weight: bold; min-height: 20px; margin-top: 5px;}
+    .card { width: var(--card-width); height: var(--card-height); background: white; border-radius: 5px; display: flex; flex-direction: column; justify-content: space-between; padding: 4px; box-shadow: 1px 1px 4px rgba(0,0,0,0.5); position: relative; font-family: 'Segoe UI', sans-serif; user-select: none; }
+    .card.red { color: #d00; } .card.black { color: #000; }
+    .card-value { font-size: 1.1em; font-weight: bold; align-self: flex-start; }
+    .card-suit { font-size: 1.3em; align-self: center; }
+    .card.is-back { background: linear-gradient(135deg, #4a6cf7, #10b981); }
+
+    @media (max-width: 768px) { #game-wrapper { flex-direction: column; } #left-column { width: 100%; max-width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; } .container { width: 100%; } .duel-area { flex-direction: column; } .competitor-zone { width: 100%; } .keyboard-key { height: 45px; font-size: 1.2rem; } }
+  </style>
+</head>
+<body>
+
+<div id="fullscreen-prompt">按 ESC 鍵可退出全螢幕模式 (建議由店員操作)</div>
+
+<div id="main-container">
+    <div class="container" style="max-width: 500px;">
+        <h1 style="font-family:'Pixel', sans-serif;">十三支每日挑戰</h1>
+        <div class="form-section" id="formSection">
+            <div class="input-group">
+                <label for="nameTail">Account Code（向店家索取）</label>
+                <input id="nameTail" type="password" maxlength="4" placeholder="例如：A001" autocomplete="off">
+        <div style="margin-top:5px;font-size:0.78rem;color:#f59e0b;display:flex;align-items:center;gap:5px;"><span>💡</span><span>第一次玩？請向店家索取您的賬號</span></div>
+            </div>
+            <div class="input-group">
+                <label for="numberCode">手機末 4 碼</label>
+                <input id="numberCode" type="password" maxlength="4" placeholder="例如：5678" autocomplete="off" inputmode="numeric">
+            </div>
+            <button id="verifyBtn">註冊/登入</button>
+        </div>
+        <div id="result"></div>
+    </div>
+</div>
+
+<div id="main-instructions-template" style="display:none;">
+    <h3 style="text-align:center;margin-bottom:15px; font-family: 'Pixel', sans-serif;">遊戲規則</h3>
+    <ul style="list-style-type:none;padding-left:0; font-family: 'Microsoft JhengHei', sans-serif; text-align: left;">
+        <li style="margin-bottom: 15px;"><i class="fas fa-gamepad"></i> <strong>遊戲模式：十三支對決</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;">
+                <li>共 8 回合，與電腦進行「十三支」對決。</li>
+                <li>每回合各發 13 張牌，系統將自動為您理牌。</li>
+                <li>牌分為「前墩」(3張)、「中墩」(5張)、「後墩」(5張)。後墩牌型需 ≥ 中墩 ≥ 前墩。</li>
+                <li>每回合比較三墩牌型，贏得較多墩者(至少兩墩)獲勝。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px; border-top: 1px solid #4a6cf7; padding-top: 15px;"><i class="fas fa-trophy"></i> <strong>勝利條件與獎勵</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;">
+                <li><strong>對決類獎勵：</strong>勝5場=買五送一卷 / 勝6場=買一第二件半價 / 勝7場=買一送一 / 勝8場=免費。</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 15px;"><i class="fas fa-shield-alt"></i> <strong>通用規則與保底機制</strong>
+            <ul style="margin-left:20px;margin-top:5px; list-style-type: disc; padding-left: 0;">
+                <li><strong>保底：</strong>連續6次挑戰未獲得任何獎項，第7次登入時必中「免費吃到堡或指定商品」。</li>
+                <li>每次挑戰間隔不能超過3天，超過者前面累積次數全部歸零。</li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div id="game-wrapper">
+    <div id="left-column">
+        <div id="game-instructions"></div>
+        <div id="results-history-container">
+            <h3>即時戰況紀錄</h3>
+            <ol id="results-history-list"></ol>
+        </div>
+    </div>
+    <div class="container">
+        <button id="forfeit-btn" class="forfeit-btn">放棄比賽</button>
+        <div id="mode-selection" style="display:flex;">
+            <h2>挑戰即將開始</h2>
+            <button id="duel-mode-btn" class="mode-btn">開始十三支對決</button>
+        </div>
+        <div id="duel-challenge-content" class="game-content">
+            <h2>十三支對決</h2>
+            <div class="progress-display" style="margin-bottom: 10px;">第 <span id="current-duel-round">1</span> / 8 回合</div>
+            <h3 class="potential-prize-display">目前勝場獎勵: <span id="potential-prize-duel">-</span></h3>
+            <div class="score-board">比分: <span class="player-score" id="duel-player-score">0</span> - <span class="computer-score" id="duel-computer-score">0</span></div>
+            <div class="duel-area">
+                <div class="competitor-zone">
+                    <h3>玩家</h3>
+                    <div class="card-area">
+                        <div class="hand-container"><div class="hand-title">前墩 (3張)</div><div id="front-hand-player" class="card-hand"></div><div id="front-strength-player" class="hand-strength"></div></div>
+                        <div class="hand-container"><div class="hand-title">中墩 (5張)</div><div id="middle-hand-player" class="card-hand"></div><div id="middle-strength-player" class="hand-strength"></div></div>
+                        <div class="hand-container"><div class="hand-title">後墩 (5張)</div><div id="back-hand-player" class="card-hand"></div><div id="back-strength-player" class="hand-strength"></div></div>
+                    </div>
+                </div>
+                <div class="competitor-zone">
+                    <h3>電腦</h3>
+                    <div class="card-area">
+                        <div class="hand-container"><div class="hand-title">前墩 (3張)</div><div id="front-hand-computer" class="card-hand"></div><div id="front-strength-computer" class="hand-strength"></div></div>
+                        <div class="hand-container"><div class="hand-title">中墩 (5張)</div><div id="middle-hand-computer" class="card-hand"></div><div id="middle-strength-computer" class="hand-strength"></div></div>
+                        <div class="hand-container"><div class="hand-title">後墩 (5張)</div><div id="back-hand-computer" class="card-hand"></div><div id="back-strength-computer" class="hand-strength"></div></div>
+                    </div>
+                </div>
+            </div>
+            <button id="deal-btn-duel" class="game-btn">開始本回合</button>
+        </div>
+    </div>
+</div>
+
+<div id="game-result-display"></div>
+
+<audio id="sound-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3" preload="auto"></audio>
+<audio id="sound-deal" src="https://assets.mixkit.co/sfx/preview/mixkit-card-dealing-1924.mp3" preload="auto"></audio>
+<audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" preload="auto"></audio>
+<audio id="sound-lose" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto"></audio>
+<audio id="sound-jackpot" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3" preload="auto"></audio>
+<audio id="music-main" src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
+<audio id="music-competitive" src="https://assets.mixkit.co/music/preview/mixkit-epic-battle-cinematic-trailer-689.mp3" loop preload="auto"></audio>
+
+<div id="virtual-keyboard">
+    <div id="qwerty-layout" class="qwerty-layout">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="q">q</button> <button class="keyboard-key" data-key="w">w</button> <button class="keyboard-key" data-key="e">e</button> <button class="keyboard-key" data-key="r">r</button> <button class="keyboard-key" data-key="t">t</button> <button class="keyboard-key" data-key="y">y</button> <button class="keyboard-key" data-key="u">u</button> <button class="keyboard-key" data-key="i">i</button> <button class="keyboard-key" data-key="o">o</button> <button class="keyboard-key" data-key="p">p</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="a">a</button> <button class="keyboard-key" data-key="s">s</button> <button class="keyboard-key" data-key="d">d</button> <button class="keyboard-key" data-key="f">f</button> <button class="keyboard-key" data-key="g">g</button> <button class="keyboard-key" data-key="h">h</button> <button class="keyboard-key" data-key="j">j</button> <button class="keyboard-key" data-key="k">k</button> <button class="keyboard-key" data-key="l">l</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="z">z</button> <button class="keyboard-key" data-key="x">x</button> <button class="keyboard-key" data-key="c">c</button> <button class="keyboard-key" data-key="v">v</button> <button class="keyboard-key" data-key="b">b</button> <button class="keyboard-key" data-key="n">n</button> <button class="keyboard-key" data-key="m">m</button> </div>
+    </div>
+    <div id="numeric-layout" class="numeric-keypad">
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="1">1</button> <button class="keyboard-key" data-key="2">2</button> <button class="keyboard-key" data-key="3">3</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="4">4</button> <button class="keyboard-key" data-key="5">5</button> <button class="keyboard-key" data-key="6">6</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key" data-key="7">7</button> <button class="keyboard-key" data-key="8">8</button> <button class="keyboard-key" data-key="9">9</button> </div>
+        <div class="keyboard-row"> <button class="keyboard-key key-special" data-key="clear">清除</button> <button class="keyboard-key" data-key="0">0</button> <button class="keyboard-key key-special" data-key="backspace"><i class="fas fa-backspace"></i></button> </div>
+    </div>
+     <div class="keyboard-row">
+        <button class="keyboard-key key-special" data-key="switch" style="width: 264px;">切換鍵盤</button>
+    </div>
+</div>
+
+<script>
+  // --- Game State & Constants ---
+  const gameState = { isGameActive: false, isDealing: false, isEnding: false, playerInfo: {}, playerData: {}, ipAddress: '載入中...', mode: null, scriptURL: 'https://script.google.com/macros/s/AKfycbxz3eLRDmWqxsLS2bwWLmtf82p45n_CF2mcM9-BBPKWTU22LM1eD8BUdhVJjc2E7CJeZA/exec', duelRounds: 0, duelWins: { player: 0, computer: 0 }, totalRounds: 8, currentMusic: null, predeterminedWins: 0, isWinningGame: false, luckySlot: 0, visitCount: 0, cycleNum: 1, duelScript: [], pointer: null, assignedScript: null };
+  const SUITS = ['♠', '♥', '♦', '♣'], VALUES = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+  const HAND_STRENGTH_MAP = { 'high-card':1,'pair':2,'two-pairs':3,'three-of-a-kind':4,'straight':5,'flush':6,'full-house':7,'four-of-a-kind':8,'straight-flush':9 };
+  const HAND_NAMES = { 'high-card': '散牌', 'pair': '對子', 'two-pairs': '兩對', 'three-of-a-kind': '三條', 'straight': '順子', 'flush': '同花', 'full-house': '葫蘆', 'four-of-a-kind': '鐵支', 'straight-flush': '同花順' };
+  
+  // --- DOM Elements ---
+  const virtualKeyboard = document.getElementById('virtual-keyboard'), qwertyLayout = document.getElementById('qwerty-layout'), numericLayout = document.getElementById('numeric-layout');
+  let currentFocusedInput = null;
+  const mainContainer = document.getElementById('main-container'), gameWrapper = document.getElementById('game-wrapper'), verifyBtn = document.getElementById('verifyBtn'), nameTailInput = document.getElementById('nameTail'), numberCodeInput = document.getElementById('numberCode'), resultDiv = document.getElementById('result'), fullscreenPrompt = document.getElementById('fullscreen-prompt'), modeSelectionEl = document.getElementById('mode-selection'), forfeitBtn = document.getElementById('forfeit-btn'), gameInstructionsEl = document.getElementById('game-instructions'), duelContentEl = document.getElementById('duel-challenge-content'), currentDuelRoundEl = document.getElementById('current-duel-round'), duelPlayerScoreEl = document.getElementById('duel-player-score'), duelComputerScoreEl = document.getElementById('duel-computer-score'), dealBtnDuel = document.getElementById('deal-btn-duel'), potentialPrizeDuel = document.getElementById('potential-prize-duel'), resultsHistoryContainer = document.getElementById('results-history-container'), resultsHistoryList = document.getElementById('results-history-list'), gameResultDiv = document.getElementById('game-result-display');
+  let dailyCountdownTimerId;
+  const handElements = {
+    player: { front: document.getElementById('front-hand-player'), middle: document.getElementById('middle-hand-player'), back: document.getElementById('back-hand-player'), s_front: document.getElementById('front-strength-player'), s_middle: document.getElementById('middle-strength-player'), s_back: document.getElementById('back-strength-player') },
+    computer: { front: document.getElementById('front-hand-computer'), middle: document.getElementById('middle-hand-computer'), back: document.getElementById('back-hand-computer'), s_front: document.getElementById('front-strength-computer'), s_middle: document.getElementById('middle-strength-computer'), s_back: document.getElementById('back-strength-computer') }
+  };
+
+  // --- Initialization ---
+  document.addEventListener('DOMContentLoaded', init);
+  function init() {
+    verifyBtn.addEventListener('click', () => { playSound('sound-click'); handleLoginAttempt(); });
+    nameTailInput.addEventListener('keypress', e => e.key === 'Enter' && verifyBtn.click());
+    numberCodeInput.addEventListener('keypress', e => e.key === 'Enter' && verifyBtn.click());
+    document.getElementById('duel-mode-btn').addEventListener('click', () => { playSound('sound-click'); selectMode('duel_13cards'); });
+    dealBtnDuel.addEventListener('click', runDuelRound);
+    forfeitBtn.addEventListener('click', handleForfeit);
+    document.addEventListener('fullscreenchange', updateFullscreenUI);
+    const rulesClone = document.getElementById('main-instructions-template').cloneNode(true);
+    rulesClone.style.display = 'block';
+    gameInstructionsEl.appendChild(rulesClone);
+    getIPAddress();
+    nameTailInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'qwerty'));
+    numberCodeInput.addEventListener('focus', (e) => handleInputFocus(e.target, 'numeric'));
+    virtualKeyboard.addEventListener('click', handleKeyboardPress);
+    document.addEventListener('click', (e) => { if (!virtualKeyboard.contains(e.target) && e.target !== nameTailInput && e.target !== numberCodeInput) { hideKeyboard(); } });
+  }
+  
+  // --- Framework Functions ---
+  function handleInputFocus(inputElement, layout) { currentFocusedInput = inputElement; if (layout === 'qwerty') { qwertyLayout.style.display = 'block'; numericLayout.style.display = 'none'; } else { qwertyLayout.style.display = 'none'; numericLayout.style.display = 'block'; } virtualKeyboard.classList.add('visible'); }
+  function hideKeyboard() { virtualKeyboard.classList.remove('visible'); currentFocusedInput = null; }
+  function handleKeyboardPress(event) { const keyElement = event.target.closest('.keyboard-key'); if (!keyElement || !currentFocusedInput) return; playSound('sound-click'); const keyValue = keyElement.dataset.key; switch(keyValue) { case 'backspace': currentFocusedInput.value = currentFocusedInput.value.slice(0, -1); break; case 'clear': currentFocusedInput.value = ''; break; case 'switch': const isQwertyVisible = qwertyLayout.style.display === 'block'; qwertyLayout.style.display = isQwertyVisible ? 'none' : 'block'; numericLayout.style.display = isQwertyVisible ? 'block' : 'none'; break; default: if (currentFocusedInput.value.length < currentFocusedInput.maxLength) { currentFocusedInput.value += keyValue.toUpperCase(); if (currentFocusedInput.value.length >= currentFocusedInput.maxLength) { if (currentFocusedInput.id === 'nameTail') { hideKeyboard(); setTimeout(() => { numberCodeInput.focus(); }, 100); } else { hideKeyboard(); } } } break; } }
+  function playSound(id) { const sound = document.getElementById(id); if (sound) { sound.currentTime = 0; sound.play().catch(e => {}); } }
+  function playBackgroundMusic(trackId) { stopBackgroundMusic(); const music = document.getElementById(trackId); if (music) { music.currentTime = 0; music.play().catch(e => {}); gameState.currentMusic = music; } }
+  function stopBackgroundMusic() { if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; } }
+  
+  // --- Login and Setup ---
+  async function handleLoginAttempt() {
+    const nameTail = nameTailInput.value.trim().toUpperCase(); 
+    const numberCode = numberCodeInput.value.trim(); 
+    if (!nameTail || nameTail.length !== 4 || !/^[A-Z]\d{3}$/.test(nameTail)) return showResult(`帳號格式錯誤（例：A001），請向店家索取`, "error"); 
+    if (!numberCode || numberCode.length !== 4 || !/^\d{4}$/.test(numberCode)) return showResult(`請輸入手機末4碼數字`, "error"); 
+    showResult(`正在驗證...`, "loading"); verifyBtn.disabled = true;
+    try {
+        const res = await fetch(`${gameState.scriptURL}?action=phone_player_slot&account=${encodeURIComponent(nameTail)}&phone4=${encodeURIComponent(numberCode)}&vid=v${Date.now().toString(36)}`, { method: 'GET', redirect: 'follow', cache: 'no-cache' });
+        if (!res.ok) throw new Error(`網路或伺服器錯誤 (狀態碼: ${res.status})`);
+        const result = await res.json();
+        switch (result.status) {
+            case 'OK':
+                gameState.playerData = { roundCount: result.visitCount || 0 };
+                gameState.isWinningGame = result.isWin === true;
+                gameState.visitCount = result.visitCount || 0;
+                gameState.luckySlot  = result.luckySlot  || 0;
+                gameState.cycleNum   = result.cycleNum   || 1;
+                const _wPool = [5,6,7,8], _lPool = [1,2,3,4];
+                const _pool  = gameState.isWinningGame ? _wPool : _lPool;
+                const _pWins = _pool[Math.floor(Math.random()*_pool.length)];
+                gameState.predeterminedWins = _pWins;
+                const _ds = [];
+                for(let _i=0;_i<_pWins;_i++) _ds.push('player');
+                for(let _i=_pWins;_i<8;_i++) _ds.push('computer');
+                for(let _i=_ds.length-1;_i>0;_i--){const _j=Math.floor(Math.random()*(_i+1));[_ds[_i],_ds[_j]]=[_ds[_j],_ds[_i]];}
+                gameState.duelScript = _ds;
+                case 'PLAYED_TODAY': showDailyLockScreen(nameTail.toUpperCase()); break;
+            case 'DENY': if(result.reason==='daily_limit'){showDailyLockScreen(nameTail.toUpperCase());}else{showResult(result.message||'帳號驗證失敗，請確認後重試','error');} break;
+            case 'NOT_IN_LIST': showResult(`您不在遊戲名單中`, "error"); break;
+            default: showResult(`驗證錯誤: ${result.message || '未知伺服器回應'}`, "error"); break;
+        }
+    } catch (error) { showResult(`伺服器連線失敗，請稍後再試。<br><button onclick="window.parent.postMessage('goHome','*')" style="margin-top:12px;padding:8px 20px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">↩ 返回主選單</button>`, "error"); } finally { verifyBtn.disabled = false; }
+  }
+
+  function loginPlayer() { hideKeyboard(); enterFullscreen(); mainContainer.style.opacity = 0; setTimeout(() => { mainContainer.style.display = 'none'; gameWrapper.classList.add('visible'); playBackgroundMusic('music-main'); modeSelectionEl.style.display = 'flex'; }, 400); }
+  function selectMode(mode) { gameState.mode = mode; gameState.isEnding = false; modeSelectionEl.style.display = 'none'; resetGameStates(); initializeGameUI(); }
+  function initializeGameUI() {
+    duelContentEl.style.display = 'flex'; playBackgroundMusic('music-competitive'); gameState.isGameActive = true;
+    forfeitBtn.style.display = 'block'; resultsHistoryContainer.style.display = 'flex'; gameInstructionsEl.style.display = 'flex';
+    updateGameInstructions(); updatePotentialPrizeDisplay();
+  }
+  
+  // --- Core Game Logic ---
+  async function runDuelRound() {
+    if (gameState.isDealing) return;
+    gameState.isDealing = true; dealBtnDuel.disabled = true;
+    gameState.duelRounds++; currentDuelRoundEl.textContent = gameState.duelRounds;
+    
+    Object.values(handElements.player).forEach(el => el.innerHTML = '');
+    Object.values(handElements.computer).forEach(el => { el.innerHTML = ''; if(el.classList.contains('card-hand')) el.innerHTML = Array(el.id.includes('front') ? 3 : 5).fill('<div class="card is-back"></div>').join(''); });
+    playSound('sound-deal');
+    await new Promise(r => setTimeout(r, 1000));
+
+    const roundScript = gameState.duelScript[gameState.duelRounds - 1] || 'computer';
+    const playerHand = dealHand();
+    const playerArrangement = autoArrangeCards(playerHand);
+    let computerArrangement, attempts = 0;
+
+    while (attempts < 100) {
+      const computerHand = dealHand();
+      computerArrangement = autoArrangeCards(computerHand);
+      if (!isValidArrangement(computerArrangement)) { attempts++; continue; }
+      const result = compareHands(playerArrangement, computerArrangement);
+      const playerWinsThisRound = result.player > result.computer, computerWinsThisRound = result.computer > result.player, isTie = result.player === result.computer;
+      if ((roundScript === 'player' && playerWinsThisRound) || (roundScript === 'computer' && computerWinsThisRound) || (roundScript === 'tie' && isTie)) { break; }
+      attempts++;
+    }
+    
+    displayArrangedHands('player', playerArrangement);
+    await new Promise(r => setTimeout(r, 1500));
+    displayArrangedHands('computer', computerArrangement);
+    
+    const finalResult = compareHands(playerArrangement, computerArrangement);
+    let roundWinner = '平手';
+    if (finalResult.player > finalResult.computer) { gameState.duelWins.player++; roundWinner = '玩家'; playSound('sound-win'); }
+    else if (finalResult.computer > finalResult.player) { gameState.duelWins.computer++; roundWinner = '電腦'; playSound('sound-lose'); }
+    
+    duelPlayerScoreEl.textContent = gameState.duelWins.player; duelComputerScoreEl.textContent = gameState.duelWins.computer;
+    addResultToHistory(`第 ${gameState.duelRounds} 回合: <strong>${roundWinner}勝！</strong> (玩家 ${finalResult.player}墩 vs 電腦 ${finalResult.computer}墩)`);
+    updatePotentialPrizeDisplay();
+
+    if (gameState.duelRounds >= gameState.totalRounds) {
+        setTimeout(() => endGame({ finalWins: gameState.duelWins.player }), 2000);
+    } else {
+        gameState.isDealing = false; dealBtnDuel.disabled = false;
+    }
+  }
+  
+  // --- Card Helper Functions ---
+  function getHandValue(hand) {
+    if (!hand || hand.length === 0) return { strength: 'high-card', rank: 0, kickers: [] };
+    const values = hand.map(c => VALUES.indexOf(c.value)).sort((a,b) => b-a);
+    const suits = hand.map(c => c.suit);
+    const valueCounts = values.reduce((acc, v) => (acc[v] = (acc[v] || 0) + 1, acc), {});
+    const counts = Object.values(valueCounts).sort((a,b) => b-a);
+    const isFlush = new Set(suits).size === 1;
+    const isStraight = (new Set(values).size === hand.length && (values[0] - values[values.length-1] === hand.length-1)) || (JSON.stringify(values.sort((a,b)=>a-b)) === JSON.stringify([0,1,2,3,12])); // Ace-low straight
+    const primaryCardValue = parseInt(Object.keys(valueCounts).sort((a,b) => valueCounts[b] - valueCounts[a] || b - a)[0]);
+    let strength = 'high-card';
+    if (isStraight && isFlush) strength = 'straight-flush'; else if (counts[0] === 4) strength = 'four-of-a-kind'; else if (counts[0] === 3 && counts[1] === 2) strength = 'full-house'; else if (isFlush) strength = 'flush'; else if (isStraight) strength = 'straight'; else if (counts[0] === 3) strength = 'three-of-a-kind'; else if (counts[0] === 2 && counts[1] === 2) strength = 'two-pairs'; else if (counts[0] === 2) strength = 'pair';
+    return { strength: strength, rank: HAND_STRENGTH_MAP[strength], primary: primaryCardValue, kickers: values };
+  }
+  function autoArrangeCards(hand) { hand.sort((a, b) => VALUES.indexOf(b.value) - VALUES.indexOf(a.value)); return { back: hand.slice(0, 5), middle: hand.slice(5, 10), front: hand.slice(10, 13) }; }
+  function isValidArrangement(arrangement) { const compareValues = (v1, v2) => { if (v1.rank !== v2.rank) return v1.rank >= v2.rank; for (let i = 0; i < Math.min(v1.kickers.length, v2.kickers.length); i++) { if (v1.kickers[i] !== v2.kickers[i]) return v1.kickers[i] > v2.kickers[i]; } return true; }; return compareValues(getHandValue(arrangement.back), getHandValue(arrangement.middle)) && compareValues(getHandValue(arrangement.middle), getHandValue(arrangement.front)); }
+  function compareHands(player, computer) { let scores = { player: 0, computer: 0 }; const pVals = { back: getHandValue(player.back), middle: getHandValue(player.middle), front: getHandValue(player.front) }; const cVals = { back: getHandValue(computer.back), middle: getHandValue(computer.middle), front: getHandValue(computer.front) }; ['back', 'middle', 'front'].forEach(h => { let winner = 'tie'; if (pVals[h].rank > cVals[h].rank) winner = 'player'; else if (cVals[h].rank > pVals[h].rank) winner = 'computer'; else { for (let i=0; i<pVals[h].kickers.length; i++) { if(pVals[h].kickers[i] > cVals[h].kickers[i]) { winner = 'player'; break; } if(cVals[h].kickers[i] > pVals[h].kickers[i]) { winner = 'computer'; break; } } } if (winner !== 'tie') scores[winner]++; }); return scores; }
+  
+  // --- UI and Display Functions ---
+  function getPrizeByWins(w){return w>=5?"指定商品":null;}
+  function createDeck() { return SUITS.flatMap(suit => VALUES.map(value => ({ suit, value }))); }
+  function dealHand() { const deck = createDeck(); for (let i=deck.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [deck[i], deck[j]] = [deck[j], deck[i]]; } return deck.slice(0, 13); }
+  function createCardElement(card) { const el = document.createElement('div'); el.className = `card ${card.suit==='♥'||card.suit==='♦'?'red':'black'}`; el.innerHTML = `<span class="card-value">${card.value==='T'?'10':card.value}</span><span class="card-suit">${card.suit}</span>`; return el; }
+  function displayArrangedHands(who, arrangement) { const elements = handElements[who]; ['front', 'middle', 'back'].forEach(part => { elements[part].innerHTML = ''; arrangement[part].forEach(c => elements[part].appendChild(createCardElement(c))); elements['s_' + part].textContent = HAND_NAMES[getHandValue(arrangement[part]).strength]; }); }
+  function addResultToHistory(message) { const li = document.createElement('li'); li.innerHTML = message; resultsHistoryList.appendChild(li); resultsHistoryList.scrollTop = resultsHistoryList.scrollHeight; }
+  function updatePotentialPrizeDisplay() { const wins = gameState.duelWins.player; const prize = getPrizeByWins(wins); potentialPrizeDuel.innerHTML = prize ? `已達成: <strong>${prize}</strong>` : `無 (需勝5回合)`; }
+  function updateGameInstructions() { gameInstructionsEl.innerHTML = `<h3><i class="fas fa-book-open"></i> 遊戲玩法</h3> <div class="step"><strong>目標:</strong> 在8回合中贏得比電腦更多的回合，每回合贏得至少2墩即算獲勝。</div>`; }
+  function resetGameStates() { gameState.duelRounds = 0; gameState.duelWins = { player: 0, computer: 0 }; currentDuelRoundEl.textContent = '1'; duelPlayerScoreEl.textContent = '0'; duelComputerScoreEl.textContent = '0'; resultsHistoryList.innerHTML = ''; }
+
+  // --- End Game Flow and Server Sync ---
+  function endGame({ finalWins, isPityWin = false, forfeited = false }) {
+    if (gameState.isEnding) return;
+    gameState.isEnding = true; gameState.isGameActive = false;
+    stopBackgroundMusic(); forfeitBtn.style.display = 'none';
+    const prize = forfeited ? null : getPrizeByWins(finalWins);
+    const isWin = !!prize;
+    let finalRemark;
+    if (forfeited) { finalRemark = "您已放棄本次挑戰。" }
+    else if (isPityWin) { finalRemark = "恭喜您！觸發保底機制，本次直接贈與您最大獎！"; } 
+    else { finalRemark = `8回合結束，最終比分為 ${gameState.duelWins.player}:${gameState.duelWins.computer}。` + (prize ? `恭喜您，最終贏得了【${prize}】！` : '可惜本次未中獎，再接再厲！'); }
+    
+    const resultClass = isWin ? (finalWins >= 8 ? 'jackpot' : 'success') : 'lose';
+    const icon = isWin ? '🎉' : '😥'; const title = forfeited ? "挑戰放棄" : (isWin ? '恭喜！' : '挑戰結束！');
+    const playerInfoHTML = gameState.playerInfo.nameTail ? `<p style="font-size: 1.2rem; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif;">玩家 ${gameState.playerInfo.nameTail.toUpperCase()} (${gameState.playerInfo.numberCode})</p>` : '';
+    const remarkHTML = `<p style="font-size: 1.1rem; font-family: 'Microsoft JhengHei', sans-serif; line-height: 1.6;">${finalRemark}</p>`;
+    const prizeHTML = isWin ? `<p style="font-family: 'Microsoft JhengHei', sans-serif;">您贏得了</p><div class="prize-highlight">${prize}</div><p style="font-size: 0.9rem; color: #facc15; font-weight: bold; line-height: 1.5; padding: 10px; border: 1px dashed #facc15; border-radius: 8px; margin-top: 15px; background: rgba(0,0,0,0.2);">若您已得獎請暫時不要登出，請通知服務員確認。<br>所有操作需由當事人親在現場完成始算生效 (畫面登出就算此次挑戰失敗)。</p>` : '';
+    const finalHTML = `<div class="result-container ${resultClass}"><div class="result-icon">${icon}</div><h2>${title}</h2>${playerInfoHTML}${remarkHTML}${prizeHTML}<button onclick="logout(this)" class="logout-btn">確認並登出</button></div>`;
+    gameWrapper.classList.remove('visible');
+    showFullscreenPage(finalHTML, resultClass);
+    if(isWin) { playSound(resultClass === 'jackpot' ? 'sound-jackpot' : 'sound-win'); if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0.1 } }); } else { playSound('sound-lose'); }
+    syncDataWithServer(isWin, prize || '無', finalRemark, finalWins);
+  }
+  function handleForfeit() { if (gameState.isGameActive && !gameState.isEnding) { playSound('sound-click'); if (confirm('您確定要放棄比賽嗎？放棄後將無法獲得任何獎勵。')) { endGame({ finalWins: gameState.duelWins.player, forfeited: true }); } } }
+  async function syncDataWithServer(isWin, prize, remark, finalWins) {
+    const account   = gameState.playerInfo.nameTail  || '';
+    const phone4    = gameState.playerInfo.numberCode || '';
+    const phone4key = account + '_' + phone4;
+    const payload = {
+        action:       'updatestats',
+        account:      account,
+        phone4key:    phone4key,
+        vid:          'v' + Date.now().toString(36),
+        mode:         '[13支]',
+        isWin:        isWin,
+        prize:        prize || '無',
+        visitCount:   gameState.visitCount  || 0,
+        luckySlot:    gameState.luckySlot   || 0,
+        isLuckySlot:  gameState.isWinningGame || false,
+        remark:       '[13支] ' + remark,
+        timestamp:    new Date().toISOString(),
+        ipAddress:    gameState.ipAddress   || '',
+        finalWins:    finalWins || 0,
+    };
+    try {
+        await fetch(gameState.scriptURL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+            mode:    'no-cors',
+        });
+    } catch(e) { console.error('syncDataWithServer error:', e); }
+}`, timestamp: new Date().toISOString(), lastWinDate: isWin ? new Date().toISOString() : gameState.playerData.lastWinDate, finalWins, pointer: gameState.pointer, assignedScript: gameState.assignedScript };
+    try { await fetch(`${gameState.scriptURL}?${new URLSearchParams(payload)}`); } catch(e) {}
+  }
+  
+  // --- Utility & Display Functions ---
+  function showResult(message, type) { resultDiv.innerHTML = `<div class="result-icon">${type === 'loading' ? '<i class="fas fa-spinner fa-spin"></i>' : '❌'}</div>${message}`; resultDiv.className = `result ${type} show`; }
+  function showFullscreenPage(innerHTML, typeClass) { mainContainer.style.display = 'none'; gameWrapper.classList.remove('visible'); gameResultDiv.innerHTML = innerHTML; gameResultDiv.className = 'game-result-display show'; gameResultDiv.classList.add(typeClass); }
+  function showDailyLockScreen(name) {
+    const messageHTML = `<div class="result-container error"><div class="result-icon">⏳</div><h2>玩家 ${name}，您今日已挑戰過！</h2><p>下次開放倒數：</p><div id="daily-countdown" style="font-size: 2rem; margin: 10px 0;">--:--:--</div><button onclick="logout(this)" class="logout-btn">登出</button></div>`;
+    showFullscreenPage(messageHTML, 'error'); stopBackgroundMusic();
+    const countdownEl = document.getElementById('daily-countdown'); if (!countdownEl) return; if (dailyCountdownTimerId) clearInterval(dailyCountdownTimerId);
+    dailyCountdownTimerId = setInterval(() => { const now = new Date(); const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); const diff = tomorrow - now; if (diff < 0) { logout(null); return; } const [h, m, s] = [String(Math.floor(diff/36e5)).padStart(2,'0'), String(Math.floor((diff%36e5)/6e4)).padStart(2,'0'), String(Math.floor((diff%6e4)/1e3)).padStart(2,'0')]; countdownEl.textContent = `${h}:${m}:${s}`; }, 1000);
+  }
+  function logout(buttonElement) { if (buttonElement) { buttonElement.disabled = true; buttonElement.textContent = '資料儲存中...'; } exitFullscreen().then(() => { setTimeout(() => { window.parent.postMessage('goHome','*'); }, 500); }).catch(() => { setTimeout(() => { window.parent.postMessage('goHome','*'); }, 500); }); }
+  async function getIPAddress() { try { const response = await fetch('https://api.ipify.org?format=json'); gameState.ipAddress = (await response.json()).ip; } catch (error) { gameState.ipAddress = '無法取得'; } }
+  function enterFullscreen() { const el = document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen || function(){}).call(el).catch(()=>{}); }
+  function exitFullscreen() { if (document.exitFullscreen) { return document.exitFullscreen(); } return Promise.resolve(); }
+  function updateFullscreenUI() { fullscreenPrompt.classList.toggle('visible', isFullscreen()); }
+</script>
+
+<script>
+  // --- 安全防护脚本 (V6.15 - 管理员快捷键版) ---
+  const ADMIN_PASSWORD = "123";
+  const ADMIN_HOTKEY = 'q';
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'F12' || (event.ctrlKey && event.shiftKey && event.key === 'I') || (event.ctrlKey && event.key === 's') || (event.ctrlKey && event.key === 'u')) { event.preventDefault(); }
+    if (event.ctrlKey && event.altKey && (event.key.toLowerCase() === ADMIN_HOTKEY)) { event.preventDefault(); if (isFullscreen()) { const password = prompt("请输入管理员密码以退出全荧幕："); if (password !== null) { if (password === ADMIN_PASSWORD) { exitFullscreen(); } else { alert("密码错误！"); } } } else { enterFullscreen(); } }
+  });
+</script>
+
+<script>
+  // --- 闲置超时自动重新整理脚本 ---
+  (function() {
+    let idleTimer = null;
+    const idleTimeout = 300000;
+    function resetIdleTimer() { clearTimeout(idleTimer); idleTimer = setTimeout(function() { if (!gameState.isGameActive) { window.parent.postMessage('goHome','*'); } }, idleTimeout); }
+    window.addEventListener('mousemove', resetIdleTimer, false);
+    window.addEventListener('mousedown', resetIdleTimer, false);
+    window.addEventListener('keypress', resetIdleTimer, false);
+    window.addEventListener('touchmove', resetIdleTimer, false);
+    resetIdleTimer();
+  })();
+</script>
+
+</body>
+</html>
