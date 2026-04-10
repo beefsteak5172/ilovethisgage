@@ -314,10 +314,10 @@
             <li><strong>目標：</strong>完成8次投擲，以期間擲出的最佳牌型贏得獎勵！</li>
             <li><p>中獎條件 (8次擲完後結算)：</p>
               <ul style="margin-left:20px;margin-top:5px; list-style-type: circle;">
-                <li><strong>六骰同號：</strong>贏得「免費吃到堡或指定商品」</li>
-                <li><strong>五骰同號：</strong>贏得「吃到堡買一送一或指定商品買一送一」</li>
-                <li><strong>四骰同號：</strong>贏得「吃到堡買一第二件半價或指定商品買一第二件半價」</li>
-                <li><strong>三條：</strong>贏得「買五送一卷(可寄放)」</li>
+                <li><strong>六骰同號：</strong>贏得「免費吃到飽」</li>
+                <li><strong>五骰同號：</strong>贏得「免費吃到飽」</li>
+                <li><strong>四骰同號：</strong>贏得「免費吃到飽」</li>
+                <li><strong>三條：</strong>贏得「免費吃到飽」</li>
               </ul>
             </li>
           </ul>
@@ -325,13 +325,13 @@
         <li style="margin-bottom: 15px;"><i class="fas fa-users"></i> <strong>模式二：挑戰組 (技巧對決)</strong>
           <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
             <li>共 5 回合，與電腦對戰，每回合各擲六顆骰子。</li>
-            <li><strong>勝利：</strong>贏得「吃到堡買一送一或指定商品買一送一」</li>
+            <li><strong>勝利：</strong>贏得「免費吃到飽」</li>
           </ul>
         </li>
         <li style="margin-bottom: 15px;"><i class="fas fa-dice"></i> <strong>模式三：四骰對決 (比大小)</strong>
           <ul style="margin-left:20px;margin-top:5px; list-style-type: disc;">
             <li>共 5 回合，與電腦對戰，每回合各擲四顆骰子，比點數總和。</li>
-            <li><strong>勝利：</strong>贏得「吃到堡買一第二件半價或指定商品買一第二件半價」</li>
+            <li><strong>勝利：</strong>贏得「免費吃到飽」</li>
           </ul>
         </li>
         <li style="margin-bottom: 15px;"><i class="fas fa-bolt"></i> <strong>模式四：急速連擲挑戰</strong>
@@ -528,6 +528,7 @@
     doubleRollsLeft: 3, doubleCurrentPrize: { prize: null, score: 0 },
     isGamblePhase: false,
     currentMusic: null, endGameTimerId: null,
+    mustWin: false,   // ★ 由 GAS verify_token 決定，true = 本次必贏
   };
 
   // DOM refs
@@ -711,7 +712,7 @@
     const vid    = urlParams.get('vid');
     const gtoken = urlParams.get('gtoken'); // 由 GAS 驗證後附帶
 
-    // 情況一：從 GAS 跳轉過來（有 gtoken）→ 產生 fingerprint 後送 GAS 比對
+    // 情況一：從 GAS 跳轉過來（有 gtoken）→ 呼叫 verify_token 取得 mustWin ★
     if (vid && type === 'dice' && gtoken) {
       gameState.vid = vid;
       gameState.playerInfo = {
@@ -726,15 +727,24 @@
           驗證成功，正在載入遊戲…
         </p>`;
 
-      // 產生裝置 fingerprint 後傳給 GAS 做裝置層級比對
-      getDeviceFingerprint().then(fp => {
-        gameState.deviceFingerprint = fp;
-        // 回報 fingerprint 給 GAS（非同步，不影響遊戲進入）
-        fetch(CHECKIN_SCRIPT_URL + '?action=register_fp&vid=' + encodeURIComponent(vid)
-          + '&fp=' + encodeURIComponent(fp) + '&type=dice').catch(() => {});
-        markPlayedToday();
-        setTimeout(() => loginPlayer(), 800);
-      });
+      // ★ 先呼叫 verify_token 取得 mustWin，再進場
+      fetch(CHECKIN_SCRIPT_URL + '?action=verify_token&gtoken=' + encodeURIComponent(gtoken))
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.status === 'OK') {
+            gameState.mustWin = !!(data.mustWin || data.isWin);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          getDeviceFingerprint().then(fp => {
+            gameState.deviceFingerprint = fp;
+            fetch(CHECKIN_SCRIPT_URL + '?action=register_fp&vid=' + encodeURIComponent(vid)
+              + '&fp=' + encodeURIComponent(fp) + '&type=dice').catch(() => {});
+            markPlayedToday();
+            setTimeout(() => loginPlayer(), 800);
+          });
+        });
       return;
     }
 
@@ -916,7 +926,7 @@
     if (gameState.competitiveRounds >= gameState.totalRounds) {
       const pw = gameState.roundWins.player, cw = gameState.roundWins.computer;
       endGame(pw > cw
-        ? { prize: '吃到堡買一送一或指定商品買一送一', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
+        ? { prize: '免費吃到飽', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
         : { prize: null, remark: `挑戰結束，比分 ${pw}:${cw}。` });
     } else { gameState.isSpinning = false; spinBtnCompetitive.disabled = false; }
   }
@@ -944,7 +954,7 @@
     if (gameState.vsRounds >= gameState.totalRounds) {
       const pw = gameState.vsWins.player, cw = gameState.vsWins.computer;
       endGame(pw > cw
-        ? { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
+        ? { prize: '免費吃到飽', remark: `恭喜以 ${pw}:${cw} 獲勝！` }
         : { prize: null, remark: `挑戰結束，比分 ${pw}:${cw}。` });
     } else { gameState.isSpinning = false; spinBtnVs.disabled = false; }
   }
@@ -1031,7 +1041,7 @@
     eliminationComputerLifeEl.textContent = Math.max(0, gameState.eliminationComputerLife);
     if (gameState.eliminationPlayerLife <= 0 || gameState.eliminationComputerLife <= 0 || gameState.eliminationRounds >= 10) {
       endGame(gameState.eliminationPlayerLife > gameState.eliminationComputerLife
-        ? { prize: '吃到堡買一送一或指定商品買一送一', remark: `恭喜獲勝！生命值 ${Math.max(0,gameState.eliminationPlayerLife)} vs ${Math.max(0,gameState.eliminationComputerLife)}` }
+        ? { prize: '免費吃到飽', remark: `恭喜獲勝！生命值 ${Math.max(0,gameState.eliminationPlayerLife)} vs ${Math.max(0,gameState.eliminationComputerLife)}` }
         : { prize: null, remark: `挑戰結束，生命值 ${Math.max(0,gameState.eliminationPlayerLife)} vs ${Math.max(0,gameState.eliminationComputerLife)}` });
     } else { gameState.isSpinning = false; spinBtnElimination.disabled = false; }
   }
@@ -1053,7 +1063,7 @@
       currentComboPrizeEl.textContent = `目前獎勵: ${p || '無'}`;
       addResultToHistory(`成功達成【${currentTarget.text}】！`);
       if (gameState.comboChainLevel >= gameState.comboTargets.length) {
-        endGame({ prize: '免費吃到堡或指定商品', remark: '恭喜完成所有組合連鎖挑戰！' }); return;
+        endGame({ prize: '免費吃到飽', remark: '恭喜完成所有組合連鎖挑戰！' }); return;
       }
       comboTargetTextEl.textContent = gameState.comboTargets[gameState.comboChainLevel].text;
     } else {
@@ -1117,10 +1127,10 @@
     }
   }
   function checkSoloWinByScore(score) {
-    if (score >= 4) return { prize: '免費吃到堡或指定商品', score: 4 };
-    if (score >= 3) return { prize: '吃到堡買一送一或指定商品買一送一', score: 3 };
-    if (score >= 2) return { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', score: 2 };
-    if (score >= 1) return { prize: '買五送一卷(可寄放)', score: 1 };
+    if (score >= 4) return { prize: '免費吃到飽', score: 4 };
+    if (score >= 3) return { prize: '免費吃到飽', score: 3 };
+    if (score >= 2) return { prize: '免費吃到飽', score: 2 };
+    if (score >= 1) return { prize: '免費吃到飽', score: 1 };
     return { prize: null, score: 0 };
   }
 
@@ -1152,27 +1162,37 @@
     const counts = {};
     dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
     const max = Math.max(...Object.values(counts));
-    if (max >= 6) return { prize: '免費吃到堡或指定商品', score: 4 };
-    if (max >= 5) return { prize: '吃到堡買一送一或指定商品買一送一', score: 3 };
-    if (max >= 4) return { prize: '吃到堡買一第二件半價或指定商品買一第二件半價', score: 2 };
-    if (max >= 3) return { prize: '買五送一卷(可寄放)', score: 1 };
+    if (max >= 6) return { prize: '免費吃到飽', score: 6 };
     return { prize: null, score: 0 };
   }
   function getPrizeByDiceCombinationScore(score) {
-    if (score >= 6000) return '免費吃到堡或指定商品';
-    if (score >= 5000) return '吃到堡買一送一或指定商品買一送一';
-    if (score >= 4000) return '吃到堡買一第二件半價或指定商品買一第二件半價';
-    if (score >= 3000) return '買五送一卷(可寄放)';
+    if (score >= 6000) return '免費吃到飽';
     return null;
   }
   function getPrizeByFinalRiskScore(score) {
-    if (score >= 400) return '免費吃到堡或指定商品';
-    if (score >= 300) return '吃到堡買一送一或指定商品買一送一';
-    if (score >= 200) return '吃到堡買一第二件半價或指定商品買一第二件半價';
-    if (score >= 100) return '免費吃到堡買五送一或指定商品買5送一';
+    if (score >= 300) return '免費吃到飽';
     return null;
   }
-  function rollDice(count) { return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1); }
+  // ★ rollDice：根據 mustWin 決定結果
+  function rollDice(count) {
+    if (gameState.mustWin) {
+      // 必贏：全部骰子都擲出 6
+      return Array.from({ length: count }, () => 6);
+    } else {
+      // 必輸：確保不出現六條（隨機但避免 max>=6 同點）
+      let result;
+      let attempts = 0;
+      do {
+        result = Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
+        const counts = {};
+        result.forEach(n => counts[n] = (counts[n]||0)+1);
+        const max = Math.max(...Object.values(counts));
+        if (max < count) break; // 非全同即可
+        attempts++;
+      } while (attempts < 20);
+      return result;
+    }
+  }
 
   async function animateDice(elements, values, comboEl, comboFunc) {
     playSound('sound-roll');
@@ -1204,10 +1224,10 @@
   //  6% 中獎抽籤（唯一決定是否得獎的邏輯）
   // ══════════════════════════════════════════════════════
   const PRIZE_POOL = [
-    '免費吃到堡或指定商品',
-    '吃到堡買一送一或指定商品買一送一',
-    '吃到堡買一第二件半價或指定商品買一第二件半價',
-    '買五送一卷(可寄放)'
+    '免費吃到飽',
+    '免費吃到飽',
+    '免費吃到飽',
+    '免費吃到飽'
   ];
   function drawLottery() {
     if (Math.random() >= 0.06) return null;
@@ -1221,12 +1241,14 @@
     if (gameState.isEnding) return;
     gameState.isEnding = true; gameState.isGameActive = false;
 
-    // 6% 抽籤覆蓋所有骰子邏輯
-    const wonPrize = drawLottery();
-    prize  = wonPrize;
-    remark = wonPrize
-      ? '🎊 恭喜！您在本次挑戰中獲得獎勵！'
-      : '本次挑戰結束，再接再厲！下次好運！';
+    // ★ mustWin 安全覆蓋（最終防線）
+    if (gameState.mustWin) {
+      prize  = '免費吃到飽';
+      remark = '🎊 恭喜！您在本次挑戰中獲得獎勵！';
+    } else {
+      prize  = null;
+      remark = '本次挑戰結束，再接再厲！下次好運！';
+    }
 
     clearAllPendingEndGameTimers();
     forfeitBtn.style.display = 'none';
@@ -1234,7 +1256,7 @@
     stopBackgroundMusic();
 
     const isWin  = !!prize;
-    const isBest = prize === '免費吃到堡或指定商品';
+    const isBest = prize === '免費吃到飽';
     const resultClass = isWin ? (isBest ? 'jackpot' : 'success') : 'lose';
     const icon   = isWin ? '🎉' : '😥';
     const title  = isWin ? '恭喜！' : '挑戰結束！';
