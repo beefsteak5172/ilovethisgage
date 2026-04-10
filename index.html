@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- PWA：讓使用者加入主畫面後以全螢幕開啟，隱藏網址列 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>🎲 骰子每日挑戰</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
@@ -452,6 +456,9 @@
     <div class="login-logo">🎲</div>
     <div class="login-title">🎲 骰子每日挑戰</div>
     <div class="login-sub">每日限玩一次 · 8回合決勝負</div>
+    <div id="pwa-hint" style="display:none;margin-bottom:16px;padding:8px 12px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;font-size:0.78rem;color:#fcd34d;text-align:center;line-height:1.6;">
+      📱 建議將此頁面「加入主畫面」後開啟，可獲得全螢幕體驗
+    </div>
 
     <div class="field">
       <label>活動帳號（向店家索取）</label>
@@ -694,6 +701,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('fullscreenchange', onFsChange);
   getIP();
   tryFullscreen();
+  // 手機上顯示「加入主畫面」提示
+  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+    const hint = $('pwa-hint');
+    // 若已是 standalone（從主畫面開啟），就不顯示提示
+    if (!window.matchMedia('(display-mode: standalone)').matches && hint) {
+      hint.style.display = 'block';
+    }
+  }
 });
 
 /* ═══════════════════════════════════════════
@@ -1467,6 +1482,8 @@ function setAllBtnsDisabled(state) {
 }
 
 async function tryFullscreen() {
+  // 手機裝置不支援自動全螢幕，略過（請引導使用者從主畫面開啟）
+  if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) return;
   try { await document.documentElement.requestFullscreen(); } catch(e) {}
 }
 
