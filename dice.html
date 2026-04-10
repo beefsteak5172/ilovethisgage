@@ -27,7 +27,7 @@
       position: fixed; display: flex; align-items: center; justify-content: center;
     }
 
-    /* ── 背景影片 ── */
+    /* 背景影片 */
     .video-background {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 0; overflow: hidden; pointer-events: none;
@@ -39,7 +39,7 @@
     .video-background video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; width: auto; height: auto; transform: translateX(-50%) translateY(-50%); object-fit: cover; }
     .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,42,0.72); }
 
-    /* ── 全螢幕提示 ── */
+    /* 全螢幕提示 */
     #ws-fullscreen-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.88); display: flex; flex-direction: column;
@@ -50,14 +50,14 @@
     #ws-fs-btn { padding: 16px 40px; background: linear-gradient(45deg, #ff6600, #ff9933); color: #fff; border: none; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; font-family: 'Microsoft JhengHei', sans-serif; }
     #ws-fs-btn:hover { transform: scale(1.06); }
 
-    /* ── 違規提示 ── */
+    /* 違規提示 */
     #ws-violation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; backdrop-filter: blur(6px); }
     #ws-violation .ws-vbox { background: #1e2240; padding: 40px 36px; border-radius: 16px; border: 2px solid #ff6600; max-width: 480px; text-align: center; }
     #ws-violation h2 { color: #ff6600; font-size: 1.8rem; margin-bottom: 16px; }
     #ws-violation p { font-size: 1.1rem; line-height: 1.7; margin-bottom: 28px; font-family: 'Microsoft JhengHei', sans-serif; }
     #ws-violation button { padding: 12px 28px; background: #ff6600; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-family: 'Microsoft JhengHei', sans-serif; }
 
-    /* ── 影片控制 ── */
+    /* 影片控制 */
     #ws-video-controls { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; gap: 10px; }
     #ws-video-controls button { background: rgba(0,0,0,0.55); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
 
@@ -73,7 +73,7 @@
     }
     .loading-text { font-family: 'Microsoft JhengHei', sans-serif; color: #94a3b8; font-size: 1rem; }
 
-    /* ── 等待畫面 ── */
+    /* 等待畫面 */
     #main-container {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -96,7 +96,7 @@
     .waiting-text { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1.1rem; color: #94a3b8; line-height: 1.8; margin-bottom: 8px; }
     .waiting-sub { font-size: 0.85rem; color: #64748b; font-family: 'Microsoft JhengHei', sans-serif; }
 
-    /* ── 遊戲畫面 ── */
+    /* 遊戲畫面 */
     #game-wrapper {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 20; background: var(--bg-color);
@@ -186,7 +186,7 @@
     #results-history ol { list-style: decimal; list-style-position: inside; max-height: 120px; overflow-y: auto; font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.85rem; color: #94a3b8; }
     #results-history li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
 
-    /* ── 結果全螢幕 ── */
+    /* 結果全螢幕 */
     #game-result-display {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 50; display: none;
@@ -210,7 +210,7 @@
     .logout-btn { margin-top: 20px; padding: 14px 32px; background: #475569; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-family: 'Microsoft JhengHei', sans-serif; font-weight: 600; transition: background 0.2s; }
     .logout-btn:hover { background: #64748b; }
 
-    /* ── 已玩鎖定畫面 ── */
+    /* 鎖定畫面 */
     .lock-container { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 20px; padding: 32px 24px; max-width: 400px; text-align: center; margin: 16px; }
     .lock-container h2 { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1.5rem; margin-bottom: 12px; }
     .lock-container p { font-family: 'Microsoft JhengHei', sans-serif; color: #cbd5e1; margin-bottom: 8px; }
@@ -218,7 +218,7 @@
 
     #ws-badge { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.55); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 7px; z-index: 200; opacity: 0.8; }
 
-    /* ── 手機末4碼輸入 ── */
+    /* 手機末4碼輸入 */
     #phone-input-area { margin-top: 24px; }
     #phone-input-area p { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1rem; color: #94a3b8; margin-bottom: 16px; line-height: 1.8; }
     .phone-digits { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
@@ -283,7 +283,7 @@
       <p class="waiting-text">請掃描桌上的 <strong style="color:#4a6cf7;">QR Code</strong> 進入遊戲</p>
       <p class="waiting-sub">每人每日限玩一次</p>
     </div>
-    <!-- 手機末4碼輸入（有 vid 後顯示） -->
+    <!-- 手機末4碼輸入 -->
     <div id="phone-input-area" style="display:none;">
       <p>請輸入您的<strong style="color:#fff;">手機號碼末 4 碼</strong><br>作為今日參加憑證</p>
       <div class="phone-digits">
@@ -298,7 +298,7 @@
   </div>
 </div>
 
-<!-- VIEW 2: 遊戲畫面（Solo Only） -->
+<!-- VIEW 2: 遊戲畫面（完整 Solo 8次） -->
 <div id="game-wrapper">
   <div class="game-header">
     <h1>🎲 骰子挑戰</h1>
@@ -314,8 +314,8 @@
 
   <button id="spin-btn" class="spin-btn">🎲 擲骰子</button>
 
-  <div id="results-history" style="display:none;">
-    <h4>紀錄</h4>
+  <div id="results-history">
+    <h4>📋 即時紀錄</h4>
     <ol id="results-list"></ol>
   </div>
 </div>
@@ -330,45 +330,55 @@
 <audio id="music-main"    src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  設定區
-// ══════════════════════════════════════════════════════
-// v2.0 GAS（含 PlayerSlots 七次輪轉）
+// ═══════════════════════════════════════════════════════════════
+//  後端設定
+// ═══════════════════════════════════════════════════════════════
 const CHECKIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvvAIsGeHwQ5eyezbaUaY2KqYhMEo2cB_loCPrVSQ_Eme_wbkpNy7w9mID_iby7iyjrQ/exec';
 
-// ══════════════════════════════════════════════════════
-//  遊戲狀態
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  遊戲狀態（完整 Solo 8次邏輯）
+// ═══════════════════════════════════════════════════════════════
 const gameState = {
-  isGameActive: false, isSpinning: false, isEnding: false,
-  vid: null, playerInfo: {}, ipAddress: '載入中...',
+  isGameActive: false,
+  isSpinning: false,
+  isEnding: false,
+  vid: null,
+  playerInfo: {},
+  ipAddress: '載入中...',
   soloSpins: 0,
-  soloBestResult: { prize: null, score: 0 },
-  mustWin: false,   // ★ 由 GAS phone_player_slot 決定（七次輪轉）
-  currentMusic: null,
+  soloBestResult: { prize: null, score: 0, comboText: '' },
+  mustWin: false,        // 由後端七次輪轉決定
+  currentMusic: null
 };
 
-const faceAngles = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:0,y:180}, 4:{x:0,y:90}, 5:{x:-90,y:0}, 6:{x:90,y:0} };
+// 骰子角度對照
+const faceAngles = {
+  1: { x: 0, y: 0 },
+  2: { x: 0, y: -90 },
+  3: { x: 0, y: 180 },
+  4: { x: 0, y: 90 },
+  5: { x: -90, y: 0 },
+  6: { x: 90, y: 0 }
+};
 
-// DOM
-const mainContainer  = document.getElementById('main-container');
-const gameWrapper    = document.getElementById('game-wrapper');
-const gameResultDiv  = document.getElementById('game-result-display');
-const qrWaitingMsg   = document.getElementById('qr-waiting-msg');
-const currentSpinEl  = document.getElementById('current-spin');
-const bestResultBar  = document.getElementById('best-result-bar');
-const diceGrid       = document.getElementById('dice-grid');
-const comboTextEl    = document.getElementById('combo-text');
-const spinBtn        = document.getElementById('spin-btn');
-const resultsHistory = document.getElementById('results-history');
-const resultsList    = document.getElementById('results-list');
+// DOM 元素
+const mainContainer   = document.getElementById('main-container');
+const gameWrapper     = document.getElementById('game-wrapper');
+const gameResultDiv   = document.getElementById('game-result-display');
+const qrWaitingMsg    = document.getElementById('qr-waiting-msg');
+const currentSpinEl   = document.getElementById('current-spin');
+const bestResultBar   = document.getElementById('best-result-bar');
+const diceGrid        = document.getElementById('dice-grid');
+const comboTextEl     = document.getElementById('combo-text');
+const spinBtn         = document.getElementById('spin-btn');
+const resultsList     = document.getElementById('results-list');
 
 let diceElements = [];
 let dailyCountdownTimerId;
 
-// ══════════════════════════════════════════════════════
-//  本機每日快取（第一道防線，最快）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  本機每日快取（第一道防線）
+// ═══════════════════════════════════════════════════════════════
 function getTodayKey() {
   const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
   return `dice_played_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
@@ -387,45 +397,42 @@ function markPlayedTodayLocal() {
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  主入口：QR Code 驗證 → 顯示手機末4碼輸入框
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function checkQRAndEnter() {
   const urlParams = new URLSearchParams(window.location.search);
   const type = urlParams.get('type');
   const vid  = urlParams.get('vid');
 
-  if (!vid || type !== 'dice') return; // 無參數：保持等待畫面
+  if (!vid || type !== 'dice') return;
 
   gameState.vid = vid;
 
-  // ── Layer 1：本機快取（立即擋） ──
+  // 本機快取檢查
   if (hasPlayedTodayLocal()) {
     showDailyLockScreen();
     return;
   }
 
-  // ── 顯示手機末4碼輸入框 ──
+  // 顯示手機末4碼輸入框
   document.getElementById('qr-waiting-msg').style.display = 'none';
   document.getElementById('phone-input-area').style.display = 'block';
   setupPhoneInput();
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  手機末4碼輸入框行為
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function setupPhoneInput() {
-  const digits  = [0,1,2,3].map(i => document.getElementById('d' + i));
-  const btn     = document.getElementById('phone-submit-btn');
-  const errEl   = document.getElementById('phone-error');
+  const digits = [0,1,2,3].map(i => document.getElementById('d' + i));
+  const btn    = document.getElementById('phone-submit-btn');
+  const errEl  = document.getElementById('phone-error');
 
-  // 自動跳格 + 啟用按鈕
   digits.forEach((el, i) => {
     el.addEventListener('input', () => {
-      // 只保留數字
       el.value = el.value.replace(/\D/g, '').slice(-1);
       if (el.value && i < 3) digits[i + 1].focus();
-      // 四格全填才啟用按鈕
       btn.disabled = !digits.every(d => d.value.length === 1);
       if (el.value) el.classList.add('filled');
       else el.classList.remove('filled');
@@ -440,7 +447,6 @@ function setupPhoneInput() {
     });
   });
 
-  // 自動 focus 第一格
   setTimeout(() => digits[0].focus(), 100);
 
   btn.addEventListener('click', async () => {
@@ -458,15 +464,14 @@ function setupPhoneInput() {
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  輸入完成後送 GAS 驗證
-//  識別鍵 = phone4（後端加上今天日期，不存明碼）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  輸入完成後送 GAS 驗證（七次輪轉）
+// ═══════════════════════════════════════════════════════════════
 async function proceedWithPhone(phone4) {
   const vid = gameState.vid;
 
   try {
-    const res  = await fetch(
+    const res = await fetch(
       `${CHECKIN_SCRIPT_URL}?action=phone_player_slot` +
       `&phone4=${encodeURIComponent(phone4)}` +
       `&vid=${encodeURIComponent(vid)}` +
@@ -491,9 +496,9 @@ async function proceedWithPhone(phone4) {
   setTimeout(() => enterGame(), 300);
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  鎖定畫面（今日已玩）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function showDailyLockScreen() {
   mainContainer.style.display = 'none';
   gameWrapper.classList.remove('visible');
@@ -511,9 +516,9 @@ function showDailyLockScreen() {
   stopMusic();
   if (dailyCountdownTimerId) clearInterval(dailyCountdownTimerId);
   dailyCountdownTimerId = setInterval(() => {
-    const taipei   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+    const taipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
     const tomorrow = new Date(taipei.getFullYear(), taipei.getMonth(), taipei.getDate() + 1);
-    const diff     = tomorrow - taipei;
+    const diff = tomorrow - taipei;
     if (diff < 0) { logout(); return; }
     const el = document.getElementById('daily-countdown');
     if (!el) return;
@@ -525,22 +530,28 @@ function showDailyLockScreen() {
   }, 1000);
 }
 
-// ══════════════════════════════════════════════════════
-//  進入遊戲
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  進入遊戲（初始化 8 次擲骰）
+// ═══════════════════════════════════════════════════════════════
 function enterGame() {
   mainContainer.style.display = 'none';
   gameWrapper.classList.add('visible');
-  resultsHistory.style.display = 'block';
   diceElements = generateDice(diceGrid, 6);
   spinBtn.addEventListener('click', runSpin);
   playMusic('music-main');
   gameState.isGameActive = true;
+  gameState.isEnding = false;
+  gameState.soloSpins = 0;
+  gameState.soloBestResult = { prize: null, score: 0, comboText: '' };
+  currentSpinEl.textContent = '1';
+  bestResultBar.textContent = '目前最佳成績：無';
+  comboTextEl.textContent = '';
+  resultsList.innerHTML = '';
 }
 
-// ══════════════════════════════════════════════════════
-//  骰子 HTML 生成
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  骰子 HTML 生成（6顆）
+// ═══════════════════════════════════════════════════════════════
 function generateDice(gridEl, count) {
   gridEl.innerHTML = '';
   const elements = [];
@@ -559,29 +570,36 @@ function generateDice(gridEl, count) {
   return elements;
 }
 
-// ══════════════════════════════════════════════════════
-//  Solo 遊戲邏輯（8次擲骰，保留最佳牌型）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  擲骰子主邏輯（8次機會，mustWin 控制結果）
+// ═══════════════════════════════════════════════════════════════
 async function runSpin() {
   if (!gameState.isGameActive || gameState.isSpinning) return;
   gameState.isSpinning = true;
   spinBtn.disabled = true;
+
   gameState.soloSpins++;
   currentSpinEl.textContent = gameState.soloSpins;
 
   const values = rollDice(6);
   await animateDice(diceElements, values);
+
   const result = getDiceCombination(values);
   comboTextEl.textContent = result.bestComboText;
 
   const isNewBest = result.score > gameState.soloBestResult.score;
   if (isNewBest) {
-    gameState.soloBestResult = { prize: getPrize(result.score), score: result.score };
-    bestResultBar.textContent = `目前最佳成績：${gameState.soloBestResult.prize || '無'}（${result.bestComboText}）`;
+    gameState.soloBestResult = {
+      prize: getPrizeByScore(result.score),
+      score: result.score,
+      comboText: result.bestComboText
+    };
+    const prizeText = gameState.soloBestResult.prize || '無（未達獎勵門檻）';
+    bestResultBar.innerHTML = `目前最佳成績：${prizeText}<br><span style="font-size:0.8rem;">${result.bestComboText}</span>`;
     if (result.score >= 3000) playSound('sound-win');
   }
 
-  addHistory(`第 ${gameState.soloSpins} 次：${result.bestComboText}${isNewBest && result.score >= 3000 ? ' ✨新紀錄' : ''}`);
+  addHistory(`第 ${gameState.soloSpins} 次：${result.bestComboText}${isNewBest && result.score >= 3000 ? ' ✨新紀錄！' : ''}`);
 
   if (gameState.soloSpins >= 8) {
     endGame();
@@ -591,11 +609,11 @@ async function runSpin() {
   }
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  rollDice：mustWin 完全控制結果
-//  mustWin=true  → 全部出6（六條），無論如何都中獎
+//  mustWin=true  → 全部出6（六條）
 //  mustWin=false → 隨機但確保不出現六條（不中獎）
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function rollDice(count) {
   if (gameState.mustWin) {
     return Array.from({ length: count }, () => 6);
@@ -604,7 +622,7 @@ function rollDice(count) {
     do {
       result = Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
       const counts = {};
-      result.forEach(n => counts[n] = (counts[n]||0)+1);
+      result.forEach(n => counts[n] = (counts[n] || 0) + 1);
       const max = Math.max(...Object.values(counts));
       if (max < count) break;
       attempts++;
@@ -613,67 +631,84 @@ function rollDice(count) {
   }
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  骰子動畫
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function animateDice(elements, values) {
   playSound('sound-roll');
-  comboTextEl.textContent = '…';
+  comboTextEl.textContent = '擲骰中...';
   elements.forEach((d, i) => { d.className = `dice rolling-${i % 6}`; });
   await new Promise(r => setTimeout(r, 1500));
   elements.forEach((d, i) => {
     d.className = 'dice';
-    const v  = values[i];
+    const v = values[i];
     const ex = 360 * (Math.floor(Math.random() * 2) + 2);
     const ey = 360 * (Math.floor(Math.random() * 2) + 2);
     d.style.transform = `rotateX(${faceAngles[v].x + ex}deg) rotateY(${faceAngles[v].y + ey}deg)`;
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  牌型計算
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  牌型計算（完整版：六條～對子～散牌）
+// ═══════════════════════════════════════════════════════════════
 function getDiceCombination(dice) {
   const counts = {};
-  dice.forEach(n => counts[n] = (counts[n]||0)+1);
+  dice.forEach(n => counts[n] = (counts[n] || 0) + 1);
   const combos = Object.entries(counts)
     .map(([num, count]) => ({ num: parseInt(num), count }))
     .filter(c => c.count >= 2)
     .sort((a, b) => b.count - a.count || b.num - a.num);
   const sum = dice.reduce((a, b) => a + b, 0);
   let score = sum, bestComboText = '散牌';
+
   if (combos.length > 0) {
     const best = combos[0];
-    if      (best.count === 6) { bestComboText = `六條(${best.num})`; score = 6000 + best.num; }
-    else if (best.count === 5) { bestComboText = `五條(${best.num})`; score = 5000 + best.num; }
-    else if (best.count === 4) { bestComboText = `四條(${best.num})`; score = 4000 + best.num; }
-    else if (best.count === 3) { bestComboText = `三條(${best.num})`; score = 3000 + best.num; }
-    else                        { bestComboText = `對子(${best.num})`; score = 2000 + best.num + sum; }
+    if (best.count === 6) {
+      bestComboText = `六條(${best.num})`;
+      score = 6000 + best.num;
+    } else if (best.count === 5) {
+      bestComboText = `五條(${best.num})`;
+      score = 5000 + best.num;
+    } else if (best.count === 4) {
+      bestComboText = `四條(${best.num})`;
+      score = 4000 + best.num;
+    } else if (best.count === 3) {
+      bestComboText = `三條(${best.num})`;
+      score = 3000 + best.num;
+    } else {
+      bestComboText = `對子(${best.num})`;
+      score = 2000 + best.num + sum;
+    }
   }
   return { score, bestComboText };
 }
-function getPrize(score) {
-  if (score >= 3000) return '免費吃到飽';
+
+// 根據分數決定獎品（對應後端獎勵規則）
+function getPrizeByScore(score) {
+  if (score >= 6000) return "免費吃到飽或指定商品";
+  if (score >= 5000) return "吃到飽買一送一或指定商品買一送一";
+  if (score >= 4000) return "吃到飽買一第二件半價或指定商品買一第二件半價";
+  if (score >= 3000) return "買五送一卷(可寄放)";
   return null;
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  遊戲結束
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function endGame() {
   if (gameState.isEnding) return;
   gameState.isEnding = true;
   gameState.isGameActive = false;
   stopMusic();
 
-  // ★ mustWin 最終安全防線：結果完全由後端決定
+  // 最終獎勵由 mustWin 決定
   let prize, remark;
   if (gameState.mustWin) {
-    prize  = '免費吃到飽';
-    remark = '🎊 恭喜！您在本次挑戰中獲得獎勵！';
+    prize = gameState.soloBestResult.prize || "免費吃到飽或指定商品";
+    remark = `🎊 恭喜！您在本次挑戰中獲得獎勵：${prize}`;
   } else {
-    prize  = null;
-    remark = '本次挑戰結束，再接再厲！下次好運！';
+    prize = null;
+    remark = `本次挑戰結束，最佳成績：${gameState.soloBestResult.comboText || '無'}，再接再厲！`;
   }
 
   const isWin = !!prize;
@@ -689,13 +724,12 @@ function endGame() {
       請通知服務員確認。<br>
       所有操作需由當事人親在現場完成始算生效<br>
       （畫面登出就算此次挑戰失敗）
-    </p>` : '';
+    </p>` : `<p>${remark}</p>`;
 
   gameResultDiv.innerHTML = `
     <div class="result-container ${cls}">
       <div class="result-icon">${icon}</div>
       <h2>${title}</h2>
-      <p>${remark}</p>
       ${prizeHTML}
       <button onclick="logout()" class="logout-btn">確認並登出</button>
     </div>`;
@@ -705,7 +739,9 @@ function endGame() {
 
   if (isWin) {
     playSound('sound-jackpot');
-    if (typeof confetti === 'function') confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0 }, angle: 90, startVelocity: 30 });
+    if (typeof confetti === 'function') {
+      confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0 }, angle: 90, startVelocity: 30 });
+    }
   } else {
     playSound('sound-lose');
   }
@@ -713,11 +749,10 @@ function endGame() {
   syncResult(isWin, prize || '無', remark);
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  回傳結果給後端
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function syncResult(isWin, prize, remark) {
-  const fp = gameState.deviceFingerprint || await getDeviceFingerprint();
   try {
     await fetch(CHECKIN_SCRIPT_URL, {
       method: 'POST',
@@ -726,11 +761,10 @@ async function syncResult(isWin, prize, remark) {
         type:        'dice',
         vid:         gameState.vid,
         mode:        'solo',
-        isWin,
-        prize,
-        remark,
+        isWin:       isWin,
+        prize:       prize,
+        remark:      remark,
         ip:          gameState.ipAddress,
-        fingerprint: fp,
         timestamp:   new Date().toISOString()
       }),
       mode: 'no-cors'
@@ -738,40 +772,59 @@ async function syncResult(isWin, prize, remark) {
   } catch(e) { console.warn('syncResult error:', e); }
 }
 
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  工具函式
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function addHistory(msg) {
   const li = document.createElement('li');
   li.innerHTML = msg;
   resultsList.appendChild(li);
   resultsList.scrollTop = resultsList.scrollHeight;
 }
+
 function playSound(id) {
   const s = document.getElementById(id);
   if (s) { s.currentTime = 0; s.play().catch(() => {}); }
 }
+
 function playMusic(id) {
   stopMusic();
   const m = document.getElementById(id);
   if (m) { m.currentTime = 0; m.play().catch(() => {}); gameState.currentMusic = m; }
 }
+
 function stopMusic() {
-  if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; }
+  if (gameState.currentMusic) {
+    gameState.currentMusic.pause();
+    gameState.currentMusic.currentTime = 0;
+    gameState.currentMusic = null;
+  }
 }
+
 async function getIPAddress() {
-  try { const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); gameState.ipAddress = d.ip; }
-  catch(e) { gameState.ipAddress = '無法取得'; }
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const d = await r.json();
+    gameState.ipAddress = d.ip;
+  } catch(e) {
+    gameState.ipAddress = '無法取得';
+  }
 }
-function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
 async function logout() {
-  if (isFullscreen()) { try { await document.exitFullscreen(); } catch(e) {} }
+  if (isFullscreen()) {
+    try { await document.exitFullscreen(); } catch(e) {}
+  }
   window.location.href = 'index.html';
 }
 
-// ══════════════════════════════════════════════════════
-//  whole_screen：全螢幕 + 內容保護
-// ══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  全螢幕 + 內容保護
+// ═══════════════════════════════════════════════════════════════
 (function() {
   const overlay   = document.getElementById('ws-fullscreen-overlay');
   const fsBtn     = document.getElementById('ws-fs-btn');
@@ -792,7 +845,7 @@ async function logout() {
         if (!document.fullscreenElement) showViolation('此網頁必須在全螢幕模式下瀏覽，請點擊確定以恢復。');
       });
       getIPAddress();
-      checkQRAndEnter(); // 進入全螢幕後才開始驗證
+      checkQRAndEnter();
     }).catch(() => {
       overlay.style.display = 'none';
       getIPAddress();
