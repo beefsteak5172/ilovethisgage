@@ -347,7 +347,7 @@ const gameState = {
   ipAddress: '載入中...',
   soloSpins: 0,
   soloBestResult: { prize: null, score: 0, comboText: '' },
-  mustWin: false,        // 由後端七次輪轉決定
+  mustWin: false,
   currentMusic: null
 };
 
@@ -409,13 +409,11 @@ async function checkQRAndEnter() {
 
   gameState.vid = vid;
 
-  // 本機快取檢查
   if (hasPlayedTodayLocal()) {
     showDailyLockScreen();
     return;
   }
 
-  // 顯示手機末4碼輸入框
   document.getElementById('qr-waiting-msg').style.display = 'none';
   document.getElementById('phone-input-area').style.display = 'block';
   setupPhoneInput();
@@ -509,7 +507,7 @@ function showDailyLockScreen() {
       <p>每人每日限玩一次</p>
       <p style="margin-top:8px;">下次開放倒數：</p>
       <div id="daily-countdown">--:--:--</div>
-      <button onclick="logout()" class="logout-btn">確認</button>
+      <button onclick="closePage()" class="logout-btn">關閉</button>
     </div>`;
   gameResultDiv.className = 'show';
   gameResultDiv.style.display = 'flex';
@@ -519,7 +517,7 @@ function showDailyLockScreen() {
     const taipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
     const tomorrow = new Date(taipei.getFullYear(), taipei.getMonth(), taipei.getDate() + 1);
     const diff = tomorrow - taipei;
-    if (diff < 0) { logout(); return; }
+    if (diff < 0) { closePage(); return; }
     const el = document.getElementById('daily-countdown');
     if (!el) return;
     el.textContent = [
@@ -531,7 +529,7 @@ function showDailyLockScreen() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  進入遊戲（初始化 8 次擲骰）
+//  進入遊戲
 // ═══════════════════════════════════════════════════════════════
 function enterGame() {
   mainContainer.style.display = 'none';
@@ -550,7 +548,7 @@ function enterGame() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  骰子 HTML 生成（6顆）
+//  骰子 HTML 生成
 // ═══════════════════════════════════════════════════════════════
 function generateDice(gridEl, count) {
   gridEl.innerHTML = '';
@@ -571,7 +569,7 @@ function generateDice(gridEl, count) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  擲骰子主邏輯（8次機會，mustWin 控制結果）
+//  擲骰子主邏輯
 // ═══════════════════════════════════════════════════════════════
 async function runSpin() {
   if (!gameState.isGameActive || gameState.isSpinning) return;
@@ -611,8 +609,6 @@ async function runSpin() {
 
 // ═══════════════════════════════════════════════════════════════
 //  rollDice：mustWin 完全控制結果
-//  mustWin=true  → 全部出6（六條）
-//  mustWin=false → 隨機但確保不出現六條（不中獎）
 // ═══════════════════════════════════════════════════════════════
 function rollDice(count) {
   if (gameState.mustWin) {
@@ -649,7 +645,7 @@ async function animateDice(elements, values) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  牌型計算（完整版：六條～對子～散牌）
+//  牌型計算
 // ═══════════════════════════════════════════════════════════════
 function getDiceCombination(dice) {
   const counts = {};
@@ -683,7 +679,6 @@ function getDiceCombination(dice) {
   return { score, bestComboText };
 }
 
-// 根據分數決定獎品（對應後端獎勵規則）
 function getPrizeByScore(score) {
   if (score >= 6000) return "免費吃到飽或指定商品";
   if (score >= 5000) return "吃到飽買一送一或指定商品買一送一";
@@ -701,7 +696,6 @@ function endGame() {
   gameState.isGameActive = false;
   stopMusic();
 
-  // 最終獎勵由 mustWin 決定
   let prize, remark;
   if (gameState.mustWin) {
     prize = gameState.soloBestResult.prize || "免費吃到飽或指定商品";
@@ -731,7 +725,7 @@ function endGame() {
       <div class="result-icon">${icon}</div>
       <h2>${title}</h2>
       ${prizeHTML}
-      <button onclick="logout()" class="logout-btn">確認並登出</button>
+      <button onclick="closePage()" class="logout-btn">確認並關閉</button>
     </div>`;
   gameResultDiv.className = 'show';
   gameResultDiv.style.display = 'flex';
@@ -770,6 +764,37 @@ async function syncResult(isWin, prize, remark) {
       mode: 'no-cors'
     });
   } catch(e) { console.warn('syncResult error:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ★★★ 關閉網頁函式（核心修改）★★★
+// ═══════════════════════════════════════════════════════════════
+function closePage() {
+  // 嘗試多種方法關閉當前標籤頁
+  try {
+    // 方法1：標準 window.close()
+    window.close();
+    
+    // 方法2：如果被瀏覽器阻擋，嘗試關閉所有彈窗
+    setTimeout(() => {
+      if (!window.closed) {
+        // 嘗試打開一個空白頁並關閉自己（某些瀏覽器有效）
+        window.open('', '_self');
+        window.close();
+      }
+    }, 100);
+    
+    // 方法3：對於某些移動端瀏覽器，嘗試導航到 about:blank
+    setTimeout(() => {
+      if (!window.closed) {
+        window.location.href = 'about:blank';
+      }
+    }, 200);
+  } catch(e) {
+    console.warn('關閉視窗失敗:', e);
+    // 備案：導航到空白頁
+    window.location.href = 'about:blank';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -813,13 +838,6 @@ async function getIPAddress() {
 
 function isFullscreen() {
   return !!(document.fullscreenElement || document.webkitFullscreenElement);
-}
-
-async function logout() {
-  if (isFullscreen()) {
-    try { await document.exitFullscreen(); } catch(e) {}
-  }
-  window.location.href = 'index.html';
 }
 
 // ═══════════════════════════════════════════════════════════════
