@@ -542,11 +542,14 @@
 
     <div class="field">
       <label>Account Code (from staff)</label>
-      <input id="inp-account" type="text" maxlength="4" placeholder="e.g. A001" autocomplete="off" style="text-transform:uppercase">
+      <input id="inp-account" type="password" maxlength="4" placeholder="e.g. A001" autocomplete="off" style="text-transform:uppercase">
+      <div style="margin-top:6px; font-size:0.78rem; color:#f59e0b; display:flex; align-items:center; gap:5px;">
+        <span>💡</span><span>第一次玩？請向店家索取您的賬號</span>
+      </div>
     </div>
     <div class="field">
       <label>Last 4 Phone Digits</label>
-      <input id="inp-phone4" type="text" maxlength="4" placeholder="e.g. 1234" autocomplete="off" inputmode="numeric">
+      <input id="inp-phone4" type="password" maxlength="4" placeholder="e.g. 1234" autocomplete="off" inputmode="numeric">
     </div>
     <button class="btn-primary" id="btn-verify">Verify &amp; Start</button>
     <div class="msg-box" id="login-msg"></div>
