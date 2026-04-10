@@ -402,11 +402,7 @@ html, body {
 // ══════════════════════════════════════════════════════
 
 // Google Apps Script 網址（炸雞 checkin + 骰子入口 共用）
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCS4MazTDDtAPUQifyHxFvAr9xcdukJAU6X6Ye-QdE_KApiO8CzYURpFHP69ueqY80Lg/exec';
-
-// ★ 骰子 GAS 入口（帶 Google 登入 + PlayerSlots 七次輪轉）
-//   使用 v2.0 部署網址
-const DICE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzA3lUBo0wnjcRVgLezxcwV9ccKeFz6n47NMgIWS9Pfw7z2w1mFQMzYl3toHyYvDfn3rg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvvAIsGeHwQ5eyezbaUaY2KqYhMEo2cB_loCPrVSQ_Eme_wbkpNy7w9mID_iby7iyjrQ/exec';
 
 // dice.html 的路徑（與 index.html 同資料夾時用 'dice.html'）
 const DICE_HTML_PATH = 'dice.html';
@@ -423,7 +419,7 @@ const params  = new URLSearchParams(location.search);
 const TYPE    = params.get('type');
 const VID     = params.get('vid');
 
-// 骰子方案掃碼 → 指向 GAS（GAS 做 Google 登入 + 七次輪轉 → 自動跳轉 dice.html?gtoken=...）
+// 骰子方案掃碼 → 直接到 dice.html，在 dice.html 內完成 Google 登入 + 七次輪轉
 // 炸雞方案掃碼 → 在 index.html 手機端顯示
 const IS_MOBILE = !!(TYPE && VID && TYPE === 'chicken');
 
@@ -528,12 +524,13 @@ function makeURL(type) {
   const vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   if (type === 'dice') {
-    // 骰子方案：先走 GAS（Google 登入 + PlayerSlots 七次輪轉 → 生成 gtoken → 跳轉 dice.html）
-    return `${DICE_GAS_URL}?action=dice_entry&vid=${vid}`;
+    // 骰子方案：直接指向 dice.html（Google 登入在 dice.html 內完成）
+    const base = location.href.replace(/[^/]*(\?.*)?$/, '');
+    return `${base}${DICE_HTML_PATH}?type=dice&vid=${vid}`;
   }
 
-  // 炸雞方案：指向 GAS（讓 GAS 做 Google 登入驗證）
-  return `https://script.google.com/macros/s/AKfycbyCS4MazTDDtAPUQifyHxFvAr9xcdukJAU6X6Ye-QdE_KApiO8CzYURpFHP69ueqY80Lg/exec?type=chicken&vid=${vid}`;
+  // 炸雞方案：指向 GAS checkin
+  return `${SCRIPT_URL}?action=checkin&type=chicken&vid=${vid}`;
 }
 
 // ── 建立 QR Code ──────────────────────────────────────
