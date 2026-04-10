@@ -748,16 +748,27 @@
       return;
     }
 
-    // 情況二：有 vid 但沒有 gtoken → 引導重新掃碼
+    // 情況二：有 vid 但沒有 gtoken → 直接進入（mustWin=false，等 GAS 更新後帶 gtoken）
     if (vid && type === 'dice' && !gtoken) {
+      gameState.vid = vid;
+      gameState.mustWin = false;
+      gameState.playerInfo = {
+        nameTail: vid.slice(0, 4).toUpperCase(),
+        numberCode: vid.slice(-4).toUpperCase()
+      };
+      gameState.playerData = { roundCount: 0, hasClaimed: false };
       document.getElementById('qr-waiting-msg').innerHTML = `
-        <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
-        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#f59e0b; font-size:1.1rem; margin-bottom:12px;">
-          請重新掃描 QR Code
-        </p>
-        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#64748b; font-size:0.85rem; line-height:1.8;">
-          需要透過 QR Code 掃描進入才能驗證身份<br>請向店員索取最新 QR Code
+        <div class="ld-spinner"></div>
+        <p style="font-family:'Microsoft JhengHei',sans-serif; color:#94a3b8; font-size:1rem;">
+          驗證成功，正在載入遊戲…
         </p>`;
+      getDeviceFingerprint().then(fp => {
+        gameState.deviceFingerprint = fp;
+        fetch(CHECKIN_SCRIPT_URL + '?action=register_fp&vid=' + encodeURIComponent(vid)
+          + '&fp=' + encodeURIComponent(fp) + '&type=dice').catch(() => {});
+        markPlayedToday();
+        setTimeout(() => loginPlayer(), 800);
+      });
       return;
     }
 
