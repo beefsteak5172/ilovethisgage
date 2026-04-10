@@ -1,1152 +1,558 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>骰子每日挑戰</title>
-
-<!-- ===== PWA 全螢幕設定 ===== -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
-<meta name="apple-mobile-web-app-title" content="骰子挑戰">
-<meta name="theme-color" content="#060a08">
-<link rel="manifest" href="manifest.json">
-<!-- iOS 主畫面圖示 (可換成自己的圖) -->
-<link rel="apple-touch-icon" href="icon.png">
-<style>
-/* ===== RESET & BASE ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  width: 100%; height: 100%; overflow: hidden;
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-  background: #060a08;
-  color: #f0ead8;
-  touch-action: manipulation;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* ===== CSS VARIABLES ===== */
-:root {
-  --gold: #c9a227;
-  --gold2: #f0c84a;
-  --gold-dim: #8b6914;
-  --red: #c0392b;
-  --red-glow: #e74c3c;
-  --blue-die: #2e6da4;
-  --green: #1e8449;
-  --bg-dark: #060a08;
-  --bg-felt: #0c1a0e;
-  --bg-player: rgba(30,20,0,0.75);
-  --bg-store: rgba(0,14,28,0.75);
-  --border-gold: rgba(201,162,39,0.3);
-  --border-blue: rgba(46,109,164,0.4);
-  --text-muted: #7a7060;
-  --text-dim: #4a4538;
-  --radius: 12px;
-  --radius-sm: 8px;
-}
-
-/* ===== SCREENS ===== */
-.screen {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.4s;
-}
-.screen.hidden { opacity: 0; pointer-events: none; }
-
-/* ===== FELT BACKGROUND ===== */
-.felt-bg {
-  position: fixed; inset: 0; z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 40%, #122015 0%, #080f09 50%, #030604 100%);
-}
-.felt-bg::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.005) 3px, rgba(255,255,255,0.005) 4px),
-    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,255,255,0.005) 3px, rgba(255,255,255,0.005) 4px);
-}
-
-/* ===== LOGIN SCREEN ===== */
-#loginScreen {
-  z-index: 10;
-  flex-direction: column;
-  gap: 0;
-}
-.login-box {
-  position: relative; z-index: 2;
-  width: min(400px, 92vw);
-  background: rgba(10,15,10,0.92);
-  border: 1px solid var(--border-gold);
-  border-radius: 16px;
-  padding: 36px 32px 32px;
-  box-shadow: 0 0 60px rgba(201,162,39,0.12), 0 20px 40px rgba(0,0,0,0.6);
-}
-.login-logo {
-  text-align: center; margin-bottom: 28px;
-}
-.login-logo .logo-icon {
-  font-size: 52px; line-height: 1;
-  filter: drop-shadow(0 0 12px rgba(201,162,39,0.5));
-}
-.login-logo h1 {
-  font-size: 20px; letter-spacing: 4px; color: var(--gold2);
-  text-shadow: 0 0 20px rgba(201,162,39,0.4);
-  margin-top: 8px;
-}
-.login-logo p {
-  font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-top: 4px;
-}
-.login-field { margin-bottom: 16px; }
-.login-field label {
-  display: block; font-size: 11px; letter-spacing: 2px;
-  color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;
-}
-.login-field input {
-  width: 100%; padding: 12px 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(201,162,39,0.2);
-  border-radius: var(--radius-sm);
-  color: var(--gold2); font-size: 18px; letter-spacing: 4px;
-  font-family: 'Courier New', monospace;
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-  text-align: center;
-}
-.login-field input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201,162,39,0.12);
-}
-.login-field input::placeholder { color: var(--text-dim); letter-spacing: 1px; font-size: 14px; }
-.login-btn {
-  width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #c9a227, #8b6914);
-  border: none; border-radius: 50px;
-  color: #1a0a00; font-size: 16px; font-weight: bold;
-  letter-spacing: 4px; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(201,162,39,0.35), 0 2px 0 #4a3000;
-  transition: all 0.15s; margin-top: 8px;
-  font-family: inherit;
-}
-.login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201,162,39,0.5); }
-.login-btn:active { transform: translateY(1px); }
-.login-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-.login-error {
-  margin-top: 14px; padding: 10px 14px;
-  background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.3);
-  border-radius: var(--radius-sm); font-size: 13px; color: #e88;
-  text-align: center; display: none;
-}
-.login-note {
-  font-size: 11px; color: var(--text-dim); text-align: center;
-  margin-top: 16px; line-height: 1.6;
-}
-
-/* ===== GAME SCREEN ===== */
-#gameScreen {
-  z-index: 5;
-  flex-direction: column;
-  padding: 0;
-  align-items: stretch;
-  justify-content: flex-start;
-}
-
-/* ===== HEADER BAR ===== */
-.header-bar {
-  position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px;
-  background: rgba(0,0,0,0.7);
-  border-bottom: 1px solid rgba(201,162,39,0.2);
-  flex-shrink: 0;
-  min-height: 52px;
-}
-.mode-badge {
-  display: flex; align-items: center; gap: 8px;
-}
-.mode-icon { font-size: 16px; }
-.mode-name {
-  font-size: 15px; font-weight: bold;
-  color: var(--gold2); letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(201,162,39,0.5);
-}
-.round-badge {
-  font-size: 13px; color: var(--text-muted); letter-spacing: 1px;
-}
-.quit-btn {
-  padding: 5px 14px;
-  background: rgba(180,30,30,0.2); color: #e88;
-  border: 1px solid rgba(192,57,43,0.4);
-  border-radius: 20px; font-size: 12px; cursor: pointer;
-  transition: background 0.2s; letter-spacing: 1px;
-}
-.quit-btn:hover { background: rgba(180,30,30,0.5); }
-
-/* ===== SCORE ROW ===== */
-.score-row {
-  position: relative; z-index: 2;
-  display: flex; align-items: center;
-  padding: 6px 16px; gap: 0;
-  background: rgba(0,0,0,0.5);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  flex-shrink: 0;
-}
-.score-block {
-  flex: 1; text-align: center;
-}
-.score-label { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); }
-.score-num {
-  font-size: 32px; font-weight: bold; line-height: 1.1;
-  font-family: 'Courier New', monospace;
-}
-.score-num.player { color: var(--gold2); text-shadow: 0 0 16px rgba(201,162,39,0.6); }
-.score-num.store { color: var(--red-glow); text-shadow: 0 0 16px rgba(231,76,60,0.6); }
-.score-vs {
-  width: 40px; text-align: center;
-  font-size: 13px; color: var(--text-dim); letter-spacing: 1px;
-}
-
-/* ===== ARENA (MAIN BATTLE AREA) ===== */
-.arena {
-  position: relative; z-index: 2;
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 36px 1fr;
-  padding: 10px 10px 6px;
-  gap: 6px;
-  min-height: 0;
-}
-.side {
-  display: flex; flex-direction: column;
-  border-radius: 10px;
-  padding: 10px 10px 8px;
-  gap: 8px;
-  min-height: 0;
-}
-.side-player { background: var(--bg-player); border: 1px solid var(--border-gold); }
-.side-store  { background: var(--bg-store);  border: 1px solid var(--border-blue); }
-
-.side-header {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.side-label {
-  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-/* ===== DICE GRID ===== */
-.dice-grid {
-  flex: 1;
-  display: grid;
-  gap: 6px;
-  align-items: center;
-  justify-items: center;
-  min-height: 0;
-}
-/* default 6 dice = 3x2 */
-.dice-grid.dice-6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
-.dice-grid.dice-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
-.dice-grid.dice-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-.dice-grid.dice-8 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); }
-
-.die {
-  width: 100%; aspect-ratio: 1;
-  max-width: 90px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  transition: transform 0.15s, box-shadow 0.3s;
-  flex-shrink: 0;
-}
-.die.rolling { animation: dieRoll 0.55s cubic-bezier(.36,.07,.19,.97); }
-@keyframes dieRoll {
-  0%   { transform: rotate(0deg) scale(1); }
-  20%  { transform: rotate(-18deg) scale(0.9); }
-  45%  { transform: rotate(22deg) scale(1.08); }
-  70%  { transform: rotate(-10deg) scale(0.96); }
-  85%  { transform: rotate(5deg) scale(1.02); }
-  100% { transform: rotate(0deg) scale(1); }
-}
-/* Player dice — warm wood/ivory */
-.die-p {
-  background: linear-gradient(145deg, #d4aa50 0%, #a07820 40%, #7a5810 100%);
-  border: 2px solid rgba(201,162,39,0.6);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
-}
-.die-p .dot { background: #1a0800; box-shadow: inset 0 1px 2px rgba(0,0,0,0.6); }
-
-/* Store dice — cool slate/blue */
-.die-s {
-  background: linear-gradient(145deg, #4a8fbf 0%, #235f8a 40%, #0f3a5e 100%);
-  border: 2px solid rgba(46,109,164,0.6);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
-}
-.die-s .dot { background: #001020; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
-
-/* Win states */
-.die-p.win {
-  background: linear-gradient(145deg, #f5d565 0%, #c9a227 40%, #9a7510 100%);
-  border-color: var(--gold2);
-  box-shadow: 0 0 22px rgba(201,162,39,0.7), 0 3px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
-  animation: winPulse 0.8s ease-out;
-}
-.die-s.win {
-  background: linear-gradient(145deg, #e87070 0%, #c03030 40%, #7a1010 100%);
-  border-color: var(--red-glow);
-  box-shadow: 0 0 22px rgba(231,76,60,0.7), 0 3px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-  animation: winPulse 0.8s ease-out;
-}
-@keyframes winPulse {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.1); }
-  70% { transform: scale(0.97); }
-  100% { transform: scale(1); }
-}
-
-/* ===== DOT LAYOUTS ===== */
-.dots {
-  position: absolute;
-  width: 72%; height: 72%;
-  display: grid;
-}
-.dots-1 { grid-template: ". . ." ". c ." ". . ." / 1fr 1fr 1fr; }
-.dots-2 { grid-template: "a . ." ". . ." ". . b" / 1fr 1fr 1fr; }
-.dots-3 { grid-template: "a . ." ". c ." ". . b" / 1fr 1fr 1fr; }
-.dots-4 { grid-template: "a . b" ". . ." "c . d" / 1fr 1fr 1fr; }
-.dots-5 { grid-template: "a . b" ". c ." "d . e" / 1fr 1fr 1fr; }
-.dots-6 { grid-template: "a . b" "c . d" "e . f" / 1fr 1fr 1fr; }
-.dot {
-  width: 30%; height: 30%;
-  border-radius: 50%;
-  align-self: center; justify-self: center;
-}
-
-/* ===== HAND LABEL ===== */
-.hand-label {
-  font-size: 12px; text-align: center;
-  color: var(--gold);
-  padding: 4px 8px;
-  background: rgba(201,162,39,0.08);
-  border-radius: 20px;
-  border: 1px solid rgba(201,162,39,0.15);
-  letter-spacing: 1px;
-  flex-shrink: 0;
-  min-height: 26px; display: flex; align-items: center; justify-content: center;
-}
-
-/* ===== VS COLUMN ===== */
-.vs-col {
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: var(--text-dim); letter-spacing: 1px;
-}
-
-/* ===== LOG AREA ===== */
-.log-area {
-  position: relative; z-index: 2;
-  margin: 0 10px 4px;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  height: 68px; overflow-y: auto;
-  font-size: 12px; color: var(--text-muted);
-  font-family: 'Courier New', monospace;
-  flex-shrink: 0;
-  scroll-behavior: smooth;
-}
-.log-entry { padding: 1px 0; line-height: 1.5; }
-.log-win  { color: var(--gold2); }
-.log-lose { color: #e87070; }
-.log-info { color: #5ab4e0; }
-.log-final { color: #7be870; font-weight: bold; font-size: 13px; }
-
-/* ===== ACTION BAR ===== */
-.action-bar {
-  position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: center;
-  padding: 8px 16px 12px;
-  flex-shrink: 0;
-}
-.roll-btn {
-  padding: 13px 0; width: min(320px, 80vw);
-  background: linear-gradient(135deg, #c9a227, #8b6914);
-  border: none; border-radius: 50px;
-  color: #1a0800; font-size: 17px; font-weight: bold;
-  letter-spacing: 5px; cursor: pointer;
-  box-shadow: 0 4px 24px rgba(201,162,39,0.4), 0 2px 0 #3a2000;
-  transition: all 0.15s; font-family: inherit;
-}
-.roll-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(201,162,39,0.6); }
-.roll-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 10px rgba(201,162,39,0.3); }
-.roll-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-/* ===== RESULT OVERLAY ===== */
-#resultScreen {
-  z-index: 20;
-  flex-direction: column; gap: 20px;
-}
-.result-box {
-  position: relative; z-index: 2;
-  text-align: center;
-  width: min(360px, 88vw);
-  background: rgba(8,12,8,0.95);
-  border-radius: 16px;
-  padding: 40px 32px 32px;
-  box-shadow: 0 0 60px rgba(201,162,39,0.2);
-}
-.result-crown { font-size: 60px; line-height: 1; margin-bottom: 12px; }
-.result-title {
-  font-size: 24px; font-weight: bold; letter-spacing: 4px;
-  color: var(--gold2);
-  text-shadow: 0 0 20px rgba(201,162,39,0.5);
-  margin-bottom: 8px;
-}
-.result-subtitle { font-size: 14px; color: var(--text-muted); letter-spacing: 2px; }
-.result-score {
-  margin: 20px 0;
-  display: flex; align-items: center; justify-content: center; gap: 20px;
-}
-.rs-block { text-align: center; }
-.rs-label { font-size: 11px; letter-spacing: 2px; color: var(--text-muted); }
-.rs-num {
-  font-size: 40px; font-weight: bold; font-family: 'Courier New', monospace;
-}
-.rs-num.p { color: var(--gold2); }
-.rs-num.s { color: var(--red-glow); }
-.rs-vs { font-size: 18px; color: var(--text-dim); }
-.result-win-badge {
-  display: inline-block; padding: 8px 24px; border-radius: 20px;
-  font-size: 13px; letter-spacing: 3px; margin-bottom: 16px;
-}
-.badge-win  { background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.4); color: var(--gold2); }
-.badge-lose { background: rgba(192,57,43,0.12); border: 1px solid rgba(192,57,43,0.3); color: #e88; }
-.badge-draw { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #aaa; }
-.result-again-btn {
-  width: 100%; padding: 13px;
-  background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3);
-  border-radius: 50px; color: var(--gold); font-size: 14px; letter-spacing: 3px;
-  cursor: pointer; transition: all 0.2s; font-family: inherit;
-}
-.result-again-btn:hover { background: rgba(201,162,39,0.25); }
-
-/* ===== LOADING ===== */
-.spinner {
-  width: 36px; height: 36px; margin: 0 auto 12px;
-  border: 3px solid rgba(201,162,39,0.2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ===== SPECIAL MODES ===== */
-/* Mode 4 — Timer */
-.timer-display {
-  text-align: center; font-size: 36px; font-family: 'Courier New', monospace;
-  color: var(--gold2); text-shadow: 0 0 12px rgba(201,162,39,0.5);
-  font-weight: bold; letter-spacing: 3px;
-  flex-shrink: 0;
-}
-.timer-display.urgent { color: #e87070; text-shadow: 0 0 12px rgba(231,76,60,0.5); animation: urgentBlink 0.5s step-end infinite; }
-@keyframes urgentBlink { 50% { opacity: 0.5; } }
-
-/* Mode 6 — Life */
-.life-display {
-  display: flex; gap: 10px; justify-content: center; align-items: center;
-  flex-shrink: 0;
-}
-.life-block { text-align: center; }
-.life-num {
-  font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;
-}
-.life-num.p { color: var(--gold2); }
-.life-num.s { color: #e87070; }
-.life-bar {
-  height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); width: 80px;
-  overflow: hidden; margin-top: 4px;
-}
-.life-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
-.life-fill.p { background: linear-gradient(90deg, #c9a227, #f0c84a); }
-.life-fill.s { background: linear-gradient(90deg, #c03030, #e87070); }
-.life-vs { font-size: 14px; color: var(--text-dim); }
-
-/* Mode 7 — Chain sequence */
-.chain-target {
-  text-align: center; font-size: 13px; color: var(--text-muted); flex-shrink: 0;
-  letter-spacing: 1px; padding: 4px 0;
-}
-.chain-target span { color: var(--gold); font-weight: bold; }
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.3); border-radius: 2px; }
-
-/* ===== PARTICLES ===== */
-.particle {
-  position: fixed; pointer-events: none; z-index: 30;
-  border-radius: 50%;
-  animation: particleFly 1.2s ease-out forwards;
-}
-@keyframes particleFly {
-  0%   { opacity: 1; transform: translate(0,0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3); }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>骰子每日挑戰</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <style>
+    /* 此處省略樣式，與之前相同，保持不變 */
+    @font-face { font-family: 'Pixel'; src: url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype'); }
+    :root { --primary: #4a6cf7; --secondary: #10b981; --jackpot: #ff416c; --bg-color: #1e293b; --dice-size: clamp(70px, 15vw, 100px); }
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+    body { background-color: #111; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; position: fixed; display: flex; align-items: center; justify-content: center; }
+    .video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; background: linear-gradient(135deg, #0a0a2a 0%, #1a1a4e 25%, #0d2137 50%, #1a1a4e 75%, #0a0a2a 100%); background-size: 400% 400%; animation: gradientShift 12s ease infinite; }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .video-background video { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; width: auto; height: auto; transform: translateX(-50%) translateY(-50%); object-fit: cover; }
+    .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,42,0.72); }
+    #ws-fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99998; color: #fff; backdrop-filter: blur(6px); }
+    #ws-fullscreen-overlay p { font-size: 1.3rem; margin-bottom: 24px; font-family: 'Microsoft JhengHei', sans-serif; text-align: center; line-height: 1.8; }
+    #ws-fs-btn { padding: 16px 40px; background: linear-gradient(45deg, #ff6600, #ff9933); color: #fff; border: none; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-fs-btn:hover { transform: scale(1.06); }
+    #ws-violation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; backdrop-filter: blur(6px); }
+    #ws-violation .ws-vbox { background: #1e2240; padding: 40px 36px; border-radius: 16px; border: 2px solid #ff6600; max-width: 480px; text-align: center; }
+    #ws-violation h2 { color: #ff6600; font-size: 1.8rem; margin-bottom: 16px; }
+    #ws-violation p { font-size: 1.1rem; line-height: 1.7; margin-bottom: 28px; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-violation button { padding: 12px 28px; background: #ff6600; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-family: 'Microsoft JhengHei', sans-serif; }
+    #ws-video-controls { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; gap: 10px; }
+    #ws-video-controls button { background: rgba(0,0,0,0.55); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
+    .ld-spinner { width: 44px; height: 44px; border: 4px solid rgba(74,108,247,0.3); border-top-color: #4a6cf7; border-radius: 50%; animation: ld-spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes ld-spin { to { transform: rotate(360deg); } }
+    .loading-text { font-family: 'Microsoft JhengHei', sans-serif; color: #94a3b8; font-size: 1rem; }
+    #main-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; overflow-y: auto; padding: 10px; }
+    .container { width: 100%; max-width: 500px; background: rgba(255,255,255,0.07); border-radius: 20px; padding: clamp(24px,5vw,40px); box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    .container h1 { font-family: 'Pixel', monospace; font-size: clamp(1.1rem,4vw,1.6rem); color: #e2e8f0; margin-bottom: 24px; text-shadow: 0 0 20px rgba(74,108,247,0.6); line-height: 1.5; }
+    .waiting-icon { font-size: 4rem; margin-bottom: 16px; animation: float 3s ease-in-out infinite; display: block; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .waiting-text { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1.1rem; color: #94a3b8; line-height: 1.8; margin-bottom: 8px; }
+    .waiting-sub { font-size: 0.85rem; color: #64748b; font-family: 'Microsoft JhengHei', sans-serif; }
+    #game-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; background: var(--bg-color); opacity: 0; transform: scale(0.95); transition: opacity 0.5s ease-out, transform 0.5s ease-out; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(12px,3vw,24px); overflow-y: auto; overflow-x: hidden; }
+    #game-wrapper.visible { display: flex; opacity: 1; transform: scale(1); }
+    .game-header { text-align: center; margin-bottom: 16px; width: 100%; }
+    .game-header h1 { font-family: 'Pixel', monospace; font-size: clamp(1rem,4vw,1.5rem); color: #e2e8f0; text-shadow: 0 0 15px rgba(74,108,247,0.5); margin-bottom: 6px; }
+    .progress-badge { display: inline-block; padding: 4px 16px; background: rgba(74,108,247,0.2); border: 1px solid var(--primary); border-radius: 20px; font-size: 0.9rem; color: #a5b4fc; font-family: 'Microsoft JhengHei', sans-serif; }
+    .dice-area { width: 100%; background: rgba(0,0,0,0.25); border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px; }
+    .dice-grid { display: grid; grid-template-columns: repeat(3, var(--dice-size)); gap: 12px; justify-content: center; margin-bottom: 12px; }
+    .scene { width: var(--dice-size); height: var(--dice-size); perspective: 700px; }
+    .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1s ease-in-out; }
+    .face { position: absolute; width: 100%; height: 100%; background: linear-gradient(145deg, #f5f5f5, #a3a3a3); border-radius: 15%; border: 1.5px solid #555; box-shadow: inset 2px 2px 8px rgba(255,255,255,0.8), inset -2px -2px 6px rgba(0,0,0,0.4), 2px 2px 5px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; backface-visibility: hidden; }
+    .face1 { background: linear-gradient(145deg, #ffffcc, #e6e600); transform: translateZ(calc(var(--dice-size) / 2)); }
+    .face2 { background: linear-gradient(145deg, #d2b48c, #8b4513); transform: rotateY(90deg) translateZ(calc(var(--dice-size) / 2)); }
+    .face3 { background: linear-gradient(145deg, #ffcccc, #e60000); transform: rotateY(180deg) translateZ(calc(var(--dice-size) / 2)); }
+    .face4 { background: linear-gradient(145deg, #cce5ff, #0047ab); transform: rotateY(-90deg) translateZ(calc(var(--dice-size) / 2)); }
+    .face5 { background: linear-gradient(145deg, #ffe6cc, #e67e22); transform: rotateX(90deg) translateZ(calc(var(--dice-size) / 2)); }
+    .face6 { background: linear-gradient(145deg, #ccffcc, #006600); transform: rotateX(-90deg) translateZ(calc(var(--dice-size) / 2)); }
+    .dot { width: 18%; height: 18%; border-radius: 50%; margin: 5%; background: radial-gradient(circle at 30% 30%, #222, #000); box-shadow: inset 1px 1px 2px rgba(255,255,255,0.2), 1px 1px 1px rgba(0,0,0,0.9); }
+    .dice.rolling-0 { animation: spin-0 0.5s infinite linear; }
+    .dice.rolling-1 { animation: spin-1 0.6s infinite linear; }
+    .dice.rolling-2 { animation: spin-2 0.45s infinite ease-in-out; }
+    .dice.rolling-3 { animation: spin-3 0.55s infinite linear; }
+    .dice.rolling-4 { animation: spin-4 0.65s infinite ease-out; }
+    .dice.rolling-5 { animation: spin-5 0.5s infinite linear; }
+    @keyframes spin-0 { 100% { transform: rotateX(360deg) rotateY(720deg); } }
+    @keyframes spin-1 { 100% { transform: rotateX(-720deg) rotateY(360deg); } }
+    @keyframes spin-2 { 100% { transform: rotateY(360deg) rotateZ(720deg); } }
+    @keyframes spin-3 { 100% { transform: rotateX(-360deg) rotateZ(-720deg); } }
+    @keyframes spin-4 { 100% { transform: rotateY(-720deg) rotateZ(360deg); } }
+    @keyframes spin-5 { 100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); } }
+    .combo-text { text-align: center; font-family: 'Microsoft JhengHei', sans-serif; font-weight: bold; font-size: clamp(0.95rem,3vw,1.1rem); color: #f59e0b; min-height: 28px; }
+    .best-result-bar { width: 100%; text-align: center; padding: 10px 16px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.95rem; color: #34d399; margin-bottom: 16px; }
+    .spin-btn { display: block; width: 100%; max-width: 320px; margin: 0 auto; padding: 16px 24px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: #fff; border: none; border-radius: 12px; cursor: pointer; font-size: clamp(1rem,4vw,1.2rem); font-weight: 700; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 2px; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(74,108,247,0.4); }
+    .spin-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(74,108,247,0.5); }
+    .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none; background: #475569; }
+    #results-history { width: 100%; max-width: 480px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.08); margin-top: 12px; }
+    #results-history h4 { font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.85rem; color: #64748b; margin-bottom: 8px; }
+    #results-history ol { list-style: decimal; list-style-position: inside; max-height: 120px; overflow-y: auto; font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.85rem; color: #94a3b8; }
+    #results-history li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    #game-result-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center; background-color: var(--bg-color); }
+    #game-result-display.show { display: flex; }
+    .result-container { width: 100%; max-width: 560px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; border-radius: 20px; text-align: center; margin: 16px; }
+    .result-container.jackpot { background: linear-gradient(135deg, rgba(255,65,108,0.15), rgba(244,63,94,0.15)); border: 1px solid #ff416c; animation: pulse 1.5s infinite; }
+    .result-container.lose { background: rgba(0,0,0,0.3); border: 1px solid #475569; }
+    @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.02)} 100%{transform:scale(1)} }
+    .result-icon { font-size: 4rem; margin-bottom: 16px; }
+    .result-container h2 { font-family: 'Pixel', monospace; font-size: clamp(1.5rem,6vw,2.5rem); margin-bottom: 16px; text-shadow: 2px 2px 4px #000; }
+    .result-container p { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1.1rem; line-height: 1.7; margin-bottom: 12px; color: #cbd5e1; }
+    .prize-highlight { display: inline-block; padding: 14px 28px; margin: 12px 0; background: linear-gradient(45deg, #f59e0b, #ef4444); border-radius: 10px; font-size: 1.8em; font-family: 'Microsoft JhengHei', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); color: #fff; border: 2px solid #fff; }
+    .prize-notice { font-size: 0.9rem; color: #facc15; font-weight: bold; line-height: 1.6; padding: 12px 16px; border: 1px dashed #facc15; border-radius: 8px; margin-top: 12px; background: rgba(0,0,0,0.25); font-family: 'Microsoft JhengHei', sans-serif; }
+    .logout-btn { margin-top: 20px; padding: 14px 32px; background: #475569; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-family: 'Microsoft JhengHei', sans-serif; font-weight: 600; transition: background 0.2s; }
+    .logout-btn:hover { background: #64748b; }
+    .lock-container { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 20px; padding: 32px 24px; max-width: 400px; text-align: center; margin: 16px; }
+    .lock-container h2 { font-family: 'Microsoft JhengHei', sans-serif; font-size: 1.5rem; margin-bottom: 12px; }
+    .lock-container p { font-family: 'Microsoft JhengHei', sans-serif; color: #cbd5e1; margin-bottom: 8px; }
+    #daily-countdown { font-size: 2.5rem; font-family: 'Pixel', monospace; color: #f87171; margin: 12px 0; letter-spacing: 4px; }
+    #ws-badge { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.55); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 13px; display: flex; align-items: center; gap: 7px; z-index: 200; opacity: 0.8; }
+    #login-input-area { margin-top: 20px; }
+    .login-field-wrap { margin-bottom: 14px; text-align: left; }
+    .login-field-wrap label { display: block; font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; letter-spacing: 1px; }
+    .login-text-input { width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; color: #fff; font-size: 1.2rem; letter-spacing: 3px; font-family: 'Pixel', monospace; outline: none; text-align: center; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none; }
+    .login-text-input:focus { border-color: #4a6cf7; background: rgba(74,108,247,0.12); }
+    #login-submit-btn { width: 100%; padding: 14px; background: linear-gradient(45deg, #4a6cf7, #10b981); color: #fff; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; font-family: 'Microsoft JhengHei', sans-serif; letter-spacing: 3px; transition: opacity 0.2s, transform 0.2s; margin-top: 4px; }
+    #login-submit-btn:hover { transform: translateY(-2px); }
+    #login-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    #login-error { font-family: 'Microsoft JhengHei', sans-serif; font-size: 0.9rem; color: #f87171; margin-top: 12px; min-height: 20px; text-align: center; }
+    .close-btn-highlight { background: #c0392b !important; }
+  </style>
 </head>
 <body>
 
-<!-- FELT BACKGROUND (shared) -->
-<div class="felt-bg"></div>
+<div class="video-background">
+  <video id="ws-bg-video" autoplay muted loop playsinline>
+    <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
+  </video>
+  <div class="video-overlay"></div>
+</div>
 
-<!-- =================== LOGIN SCREEN =================== -->
-<div class="screen" id="loginScreen">
-  <div class="login-box">
-    <div class="login-logo">
-      <div class="logo-icon">🎲</div>
-      <h1>骰子每日挑戰</h1>
-      <p>DICE DAILY CHALLENGE</p>
-    </div>
-    <div class="login-field">
-      <label>活動帳號</label>
-      <input type="text" id="inputAccount" placeholder="A001" maxlength="10"
-        oninput="this.value=this.value.toUpperCase()" autocomplete="off" autocorrect="off">
-    </div>
-    <div class="login-field">
-      <label>手機末 4 碼</label>
-      <input type="tel" id="inputPhone" placeholder="0000" maxlength="4"
-        oninput="this.value=this.value.replace(/\D/g,'')" autocomplete="off">
-    </div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">開始挑戰</button>
-    <div class="login-error" id="loginError"></div>
-    <div class="login-note">每人每天只能挑戰一次<br>每 7 次到訪隨機產生一次獎勵</div>
+<div id="ws-fullscreen-overlay">
+  <p>🎲 骰子每日挑戰<br><span style="font-size:0.9rem;color:#aaa;">請進入全螢幕以開始遊戲</span></p>
+  <button id="ws-fs-btn">📱 進入全螢幕</button>
+</div>
+
+<div id="ws-violation">
+  <div class="ws-vbox">
+    <h2><i class="fas fa-exclamation-circle"></i></h2>
+    <p id="ws-violation-msg"></p>
+    <button id="ws-violation-ok">確定</button>
   </div>
 </div>
 
-<!-- =================== GAME SCREEN =================== -->
-<div class="screen hidden" id="gameScreen">
-  <!-- Header -->
-  <div class="header-bar">
-    <div class="mode-badge">
-      <span class="mode-icon" id="modeIcon">♠</span>
-      <span class="mode-name" id="modeName">王牌對決</span>
-    </div>
-    <span class="round-badge" id="roundBadge">第 1 / 8 回合</span>
-    <button class="quit-btn" onclick="doQuit()">放棄</button>
-  </div>
+<div id="ws-video-controls">
+  <button id="ws-mute"><i class="fas fa-volume-mute"></i></button>
+  <button id="ws-pause"><i class="fas fa-pause"></i></button>
+</div>
 
-  <!-- Score -->
-  <div class="score-row">
-    <div class="score-block">
-      <div class="score-label">玩家勝場</div>
-      <div class="score-num player" id="playerWins">0</div>
-    </div>
-    <div class="score-vs">VS</div>
-    <div class="score-block">
-      <div class="score-label">店家勝場</div>
-      <div class="score-num store" id="storeWins">0</div>
-    </div>
-  </div>
+<div id="ws-badge"><i class="fas fa-shield-alt"></i> 安心遊玩</div>
 
-  <!-- Special mode info (timer / life / chain) -->
-  <div id="specialInfo" style="position:relative;z-index:2;padding:4px 10px 0;display:none;"></div>
-
-  <!-- Arena -->
-  <div class="arena" id="arena">
-    <div class="side side-player" id="sidePlayer">
-      <div class="side-header">
-        <span class="side-label">玩家</span>
+<!-- VIEW 1: 登入畫面 -->
+<div id="main-container">
+  <div class="container">
+    <h1>骰子每日挑戰</h1>
+    <span class="waiting-icon">🎲</span>
+    <div id="login-input-area">
+      <div class="login-field-wrap">
+        <label>活動帳號</label>
+        <input class="login-text-input" id="input-account" type="text" maxlength="10" placeholder="A001" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       </div>
-      <div class="dice-grid dice-6" id="playerDice"></div>
-      <div class="hand-label" id="playerHand">—</div>
-    </div>
-    <div class="vs-col">VS</div>
-    <div class="side side-store" id="sideStore">
-      <div class="side-header">
-        <span class="side-label">店家</span>
+      <div class="login-field-wrap">
+        <label>手機末 4 碼</label>
+        <input class="login-text-input" id="input-phone" type="tel" maxlength="4" placeholder="1234" inputmode="numeric" autocomplete="off">
       </div>
-      <div class="dice-grid dice-6" id="storeDice"></div>
-      <div class="hand-label" id="storeHand">—</div>
+      <button id="login-submit-btn">驗證並開始 🎲</button>
+      <div id="login-error"></div>
     </div>
-  </div>
-
-  <!-- Log -->
-  <div class="log-area" id="logArea">
-    <div class="log-entry log-info">— 按下擲骰子開始 —</div>
-  </div>
-
-  <!-- Action -->
-  <div class="action-bar">
-    <button class="roll-btn" id="rollBtn" onclick="doRoll()">擲 骰 子</button>
   </div>
 </div>
 
-<!-- =================== RESULT SCREEN =================== -->
-<div class="screen hidden" id="resultScreen">
-  <div class="result-box" id="resultBox">
-    <div class="result-crown" id="resultCrown">🎲</div>
-    <div class="result-title" id="resultTitle">遊戲結束</div>
-    <div class="result-subtitle" id="resultSubtitle"></div>
-    <div class="result-score">
-      <div class="rs-block">
-        <div class="rs-label">玩家</div>
-        <div class="rs-num p" id="rPlayerScore">0</div>
-      </div>
-      <div class="rs-vs">:</div>
-      <div class="rs-block">
-        <div class="rs-label">店家</div>
-        <div class="rs-num s" id="rStoreScore">0</div>
-      </div>
-    </div>
-    <div class="result-win-badge" id="resultBadge"></div>
-    <button class="result-again-btn" onclick="goLogin()">← 返回</button>
+<!-- VIEW 2: 遊戲畫面 -->
+<div id="game-wrapper">
+  <div class="game-header">
+    <h1>🎲 骰子挑戰</h1>
+    <div class="progress-badge">第 <span id="current-spin">1</span> / 8 次機會</div>
+  </div>
+  <div class="best-result-bar" id="best-result-bar">目前最佳成績：無</div>
+  <div class="dice-area">
+    <div id="dice-grid" class="dice-grid"></div>
+    <div id="combo-text" class="combo-text"></div>
+  </div>
+  <button id="spin-btn" class="spin-btn">🎲 擲骰子</button>
+  <div id="results-history">
+    <h4>📋 即時紀錄</h4>
+    <ol id="results-list"></ol>
   </div>
 </div>
+
+<!-- VIEW 3: 結果全螢幕 -->
+<div id="game-result-display"></div>
+
+<audio id="sound-roll" src="https://assets.mixkit.co/sfx/preview/mixkit-game-dice-roll-2021.mp3" preload="auto"></audio>
+<audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" preload="auto"></audio>
+<audio id="sound-lose" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3" preload="auto"></audio>
+<audio id="sound-jackpot" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3" preload="auto"></audio>
+<audio id="music-main" src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3" loop preload="auto"></audio>
 
 <script>
-/* ================================================================
-   CONFIGURATION — 修改這裡即可
-================================================================ */
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw9auOy4sMENXw_SzA07wdOdD31Y6FgZTp6cC1IZylbPO8NNgajHEyWW5KDKuVLOhF7w/exec';
+const CHECKIN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvvAIsGeHwQ5eyezbaUaY2KqYhMEo2cB_loCPrVSQ_Eme_wbkpNy7w9mID_iby7iyjrQ/exec';
 
-/* ================================================================
-   GAME MODES CONFIG
-================================================================ */
-const MODES = [
-  { id:1, icon:'♠', name:'王牌對決',  desc:'6骰比牌型',         dice:6, rounds:8, type:'hand'   },
-  { id:2, icon:'♣', name:'技巧對決',  desc:'6骰比牌型',         dice:6, rounds:8, type:'hand'   },
-  { id:3, icon:'⚄', name:'四骰對決',  desc:'4骰比點數總和',     dice:4, rounds:8, type:'sum'    },
-  { id:4, icon:'⏱', name:'限時對決',  desc:'90秒最佳成績',      dice:6, rounds:0, type:'timer'  },
-  { id:5, icon:'⚡', name:'膽量對決',  desc:'選6or8骰比總分',   dice:6, rounds:8, type:'brave'  },
-  { id:6, icon:'❤', name:'生命決鬥',  desc:'雙方各15命',        dice:6, rounds:0, type:'life'   },
-  { id:7, icon:'🔗', name:'連鎖競速',  desc:'先達成目標牌型',    dice:6, rounds:0, type:'chain'  },
-  { id:8, icon:'🎯', name:'終極賭注',  desc:'單骰比大小',        dice:1, rounds:8, type:'single' },
-];
-
-/* ================================================================
-   HAND RANKING
-================================================================ */
-const HAND_RANKS = ['高牌','一對','兩對','三條','順子','葫蘆','四條','五條'];
-function getHand(dice) {
-  const cnt = {};
-  dice.forEach(d => cnt[d] = (cnt[d]||0)+1);
-  const vals = Object.values(cnt).sort((a,b)=>b-a);
-  const keys = Object.keys(cnt).map(Number).sort((a,b)=>a-b);
-  const isStraight = keys.length===5 && keys[4]-keys[0]===4 && vals[0]===1;
-  if(vals[0]===5) return {name:'五條', score:7, tiebreak:Math.max(...dice)};
-  if(vals[0]===4) return {name:'四條', score:6, tiebreak:Math.max(...dice)};
-  if(vals[0]===3&&vals[1]===2) return {name:'葫蘆', score:5, tiebreak:Math.max(...dice)};
-  if(isStraight) return {name:'順子', score:4, tiebreak:keys[4]};
-  if(vals[0]===3) return {name:'三條', score:3, tiebreak:Math.max(...dice)};
-  if(vals[0]===2&&vals[1]===2) return {name:'兩對', score:2, tiebreak:Math.max(...dice)};
-  if(vals[0]===2) return {name:'一對', score:1, tiebreak:Math.max(...dice)};
-  return {name:'高牌', score:0, tiebreak:Math.max(...dice)};
-}
-function rollDice(n) { return Array.from({length:n},()=>Math.floor(Math.random()*6)+1); }
-
-/* ================================================================
-   DOT RENDERING
-================================================================ */
-const DOT_AREAS = {
-  1:['c'], 2:['a','b'], 3:['a','c','b'],
-  4:['a','b','c','d'], 5:['a','b','c','d','e'], 6:['a','b','c','d','e','f']
+const gameState = {
+  isGameActive: false, isSpinning: false, isEnding: false,
+  vid: null, playerInfo: {}, ipAddress: '載入中...',
+  soloSpins: 0, soloBestResult: { prize: null, score: 0, comboText: '' },
+  mustWin: false, currentMusic: null
 };
-function makeDie(val, cls, extraClass='') {
-  const areas = DOT_AREAS[val]||[];
-  const div = document.createElement('div');
-  div.className = `die ${cls} ${extraClass}`;
-  div.dataset.val = val;
-  const dots = document.createElement('div');
-  dots.className = `dots dots-${val}`;
-  areas.forEach(a => {
-    const dot = document.createElement('div');
-    dot.className = 'dot';
-    dot.style.gridArea = a;
-    dots.appendChild(dot);
+
+const faceAngles = { 1:{x:0,y:0}, 2:{x:0,y:-90}, 3:{x:0,y:180}, 4:{x:0,y:90}, 5:{x:-90,y:0}, 6:{x:90,y:0} };
+
+const mainContainer = document.getElementById('main-container');
+const gameWrapper = document.getElementById('game-wrapper');
+const gameResultDiv = document.getElementById('game-result-display');
+const currentSpinEl = document.getElementById('current-spin');
+const bestResultBar = document.getElementById('best-result-bar');
+const diceGrid = document.getElementById('dice-grid');
+const comboTextEl = document.getElementById('combo-text');
+const spinBtn = document.getElementById('spin-btn');
+const resultsList = document.getElementById('results-list');
+
+let diceElements = [];
+let dailyCountdownTimerId;
+
+function getTodayKey() {
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return `dice_played_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+}
+function hasPlayedTodayLocal() {
+  try { return localStorage.getItem(getTodayKey()) === '1'; } catch(e) { return false; }
+}
+function markPlayedTodayLocal() {
+  try {
+    const key = getTodayKey();
+    localStorage.setItem(key, '1');
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('dice_played_') && k !== key) localStorage.removeItem(k);
+    }
+  } catch(e) {}
+}
+
+function checkQRAndEnter() {
+  // 改為帳號+密碼登入，直接顯示登入表單
+  setupLoginForm();
+}
+
+function setupLoginForm() {
+  const accountEl = document.getElementById('input-account');
+  const phoneEl   = document.getElementById('input-phone');
+  const btn       = document.getElementById('login-submit-btn');
+  const errEl     = document.getElementById('login-error');
+
+  // Enter key support
+  [accountEl, phoneEl].forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
   });
-  div.appendChild(dots);
-  return div;
+
+  btn.addEventListener('click', async () => {
+    const account = accountEl.value.trim().toUpperCase();
+    const phone4  = phoneEl.value.trim();
+    errEl.textContent = '';
+
+    if (!account) { errEl.textContent = '請輸入活動帳號'; return; }
+    if (!/^\d{4}$/.test(phone4)) { errEl.textContent = '請輸入手機末 4 碼（數字）'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '驗證中...';
+
+    await proceedWithAccountPhone(account, phone4);
+  });
+
+  setTimeout(() => accountEl.focus(), 100);
 }
 
-/* ================================================================
-   STATE
-================================================================ */
-let G = {
-  account:'', phone4:'', isWin:false, mode:null,
-  round:1, maxRound:8,
-  playerWins:0, storeWins:0,
-  rolling:false,
-  // mode 4 timer
-  timerSec:90, timerInterval:null, bestPlayerSum:0, bestStoreSum:0,
-  // mode 5 brave: chosen dice count
-  braveChoice:null,
-  // mode 6 life
-  playerLife:15, storeLife:15,
-  // mode 7 chain: target hand, who got it first
-  chainTarget:null,
-  // planned round outcomes (deterministic win/lose control)
-  plan:[]
-};
-
-/* ================================================================
-   planRounds — 確定性勝負控制 (Fisher-Yates)
-================================================================ */
-function planRounds(isWin, total) {
-  // isWin=true  → 玩家贏 5~8 局
-  // isWin=false → 玩家贏 0~3 局
-  const arr = Array.from({length:total}, (_,i)=>i);
-  // shuffle
-  for(let i=arr.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-  }
-  const winCount = isWin ? (5+Math.floor(Math.random()*4)) : Math.floor(Math.random()*4);
-  const plan=[];
-  for(let i=0;i<total;i++) plan.push(i<winCount?'win':'lose');
-  // shuffle plan
-  for(let i=plan.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [plan[i],plan[j]]=[plan[j],plan[i]];
-  }
-  return plan;
-}
-
-/* ================================================================
-   LOGIN
-================================================================ */
-function showError(msg){ const el=document.getElementById('loginError'); el.textContent=msg; el.style.display='block'; }
-function hideError(){ document.getElementById('loginError').style.display='none'; }
-
-async function doLogin(){
-  const acc = document.getElementById('inputAccount').value.trim().toUpperCase();
-  const ph  = document.getElementById('inputPhone').value.trim();
-  if(!acc){ showError('請輸入活動帳號'); return; }
-  if(!/^\d{4}$/.test(ph)){ showError('請輸入手機末 4 碼（數字）'); return; }
-
-  hideError();
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.textContent = '驗證中...';
+async function proceedWithAccountPhone(account, phone4) {
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-submit-btn');
 
   try {
-    const url = `${SCRIPT_URL}?action=phone_player_slot&account=${encodeURIComponent(acc)}&phone4=${ph}`;
-    const res = await fetch(url);
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzw9auOy4sMENXw_SzA07wdOdD31Y6FgZTp6cC1IZylbPO8NNgajHEyWW5KDKuVLOhF7w/exec';
+    const res  = await fetch(`${GAS_URL}?action=phone_player_slot&account=${encodeURIComponent(account)}&phone4=${encodeURIComponent(phone4)}&t=${Date.now()}`);
     const data = await res.json();
 
-    if(data.status==='DENY'){
-      const msgs = {
-        account_invalid:'帳號不存在或已停用',
-        daily_limit:'今日已挑戰過，明天再來！',
-        default:'驗證失敗，請聯絡店家'
-      };
-      showError(msgs[data.reason]||msgs.default);
-      btn.disabled=false; btn.textContent='開始挑戰';
+    if (data && data.status === 'DENY') {
+      const msgs = { account_invalid:'帳號不存在或已停用', daily_limit:'今日已挑戰過，明天再來！' };
+      errEl.textContent = msgs[data.reason] || '驗證失敗，請聯絡店家';
+      btn.disabled = false; btn.textContent = '驗證並開始 🎲';
       return;
     }
-
-    G.account = acc;
-    G.phone4  = ph;
-    G.isWin   = !!data.isWin;
-    startGame();
-
+    if (data && data.status === 'OK') { gameState.mustWin = !!(data.isWin); }
   } catch(e) {
-    // DEV fallback: bypass GAS for offline testing
-    console.warn('GAS unreachable, using fallback', e);
-    G.account='TEST'; G.phone4=ph; G.isWin=Math.random()>0.5;
-    startGame();
+    console.warn('GAS 連線失敗，使用離線模式', e);
+    gameState.mustWin = Math.random() > 0.5;
+  }
+
+  gameState.vid = account;
+  markPlayedTodayLocal();
+  setTimeout(() => enterGame(), 300);
+}
+
+function showDailyLockScreen() {
+  mainContainer.style.display = 'none';
+  gameWrapper.classList.remove('visible');
+  gameResultDiv.innerHTML = `<div class="lock-container"><div style="font-size:3rem;margin-bottom:12px;">⏳</div><h2>今日已挑戰過！</h2><p>每人每日限玩一次</p><p style="margin-top:8px;">下次開放倒數：</p><div id="daily-countdown">--:--:--</div><button onclick="forceClosePage()" class="logout-btn close-btn-highlight">🔒 關閉視窗</button></div>`;
+  gameResultDiv.className = 'show';
+  gameResultDiv.style.display = 'flex';
+  stopMusic();
+  if (dailyCountdownTimerId) clearInterval(dailyCountdownTimerId);
+  dailyCountdownTimerId = setInterval(() => {
+    const taipei = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+    const tomorrow = new Date(taipei.getFullYear(), taipei.getMonth(), taipei.getDate() + 1);
+    const diff = tomorrow - taipei;
+    if (diff < 0) { forceClosePage(); return; }
+    const el = document.getElementById('daily-countdown');
+    if (!el) return;
+    el.textContent = [String(Math.floor(diff/36e5)).padStart(2,'0'), String(Math.floor((diff%36e5)/6e4)).padStart(2,'0'), String(Math.floor((diff%6e4)/1e3)).padStart(2,'0')].join(':');
+  }, 1000);
+}
+
+function enterGame() {
+  mainContainer.style.display = 'none';
+  gameWrapper.classList.add('visible');
+  diceElements = generateDice(diceGrid, 6);
+  spinBtn.addEventListener('click', runSpin);
+  playMusic('music-main');
+  gameState.isGameActive = true;
+  gameState.isEnding = false;
+  gameState.soloSpins = 0;
+  gameState.soloBestResult = { prize: null, score: 0, comboText: '' };
+  currentSpinEl.textContent = '1';
+  bestResultBar.textContent = '目前最佳成績：無';
+  comboTextEl.textContent = '';
+  resultsList.innerHTML = '';
+}
+
+function generateDice(gridEl, count) {
+  gridEl.innerHTML = '';
+  const elements = [];
+  for (let i = 0; i < count; i++) {
+    const scene = document.createElement('div'); scene.className = 'scene';
+    const dice = document.createElement('div'); dice.className = 'dice';
+    for (let f = 1; f <= 6; f++) {
+      const face = document.createElement('div'); face.className = `face face${f}`;
+      for (let d = 0; d < f; d++) { const dot = document.createElement('div'); dot.className = 'dot'; face.appendChild(dot); }
+      dice.appendChild(face);
+    }
+    scene.appendChild(dice); gridEl.appendChild(scene); elements.push(dice);
+  }
+  return elements;
+}
+
+async function runSpin() {
+  if (!gameState.isGameActive || gameState.isSpinning) return;
+  gameState.isSpinning = true;
+  spinBtn.disabled = true;
+  gameState.soloSpins++;
+  currentSpinEl.textContent = gameState.soloSpins;
+  const values = rollDice(6);
+  await animateDice(diceElements, values);
+  const result = getDiceCombination(values);
+  comboTextEl.textContent = result.bestComboText;
+  const isNewBest = result.score > gameState.soloBestResult.score;
+  if (isNewBest) {
+    gameState.soloBestResult = { prize: getPrizeByScore(result.score), score: result.score, comboText: result.bestComboText };
+    const prizeText = gameState.soloBestResult.prize || '無（未達獎勵門檻）';
+    bestResultBar.innerHTML = `目前最佳成績：${prizeText}<br><span style="font-size:0.8rem;">${result.bestComboText}</span>`;
+    if (result.score >= 3000) playSound('sound-win');
+  }
+  addHistory(`第 ${gameState.soloSpins} 次：${result.bestComboText}${isNewBest && result.score >= 3000 ? ' ✨新紀錄！' : ''}`);
+  if (gameState.soloSpins >= 8) { endGame(); } 
+  else { gameState.isSpinning = false; spinBtn.disabled = false; }
+}
+
+function rollDice(count) {
+  if (gameState.mustWin) { return Array.from({ length: count }, () => 6); }
+  else {
+    let result, attempts = 0;
+    do {
+      result = Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
+      const counts = {};
+      result.forEach(n => counts[n] = (counts[n]||0)+1);
+      const max = Math.max(...Object.values(counts));
+      if (max < count) break;
+      attempts++;
+    } while (attempts < 20);
+    return result;
   }
 }
 
-/* ================================================================
-   START GAME — pick random mode, init state
-================================================================ */
-function startGame(){
-  const modeIdx = Math.floor(Math.random()*MODES.length);
-  G.mode = MODES[modeIdx];
-  G.round = 1;
-  G.playerWins=0; G.storeWins=0;
-  G.maxRound = G.mode.rounds || 8;
-  G.plan = (G.mode.type!=='timer'&&G.mode.type!=='life'&&G.mode.type!=='chain')
-    ? planRounds(G.isWin, G.maxRound) : [];
-  G.rolling = false;
-  G.braveChoice = null;
-  G.playerLife=15; G.storeLife=15;
-  G.bestPlayerSum=0; G.bestStoreSum=0;
-  G.timerSec=90;
-  G.chainTarget = pickChainTarget();
+async function animateDice(elements, values) {
+  playSound('sound-roll');
+  comboTextEl.textContent = '擲骰中...';
+  elements.forEach((d, i) => { d.className = `dice rolling-${i % 6}`; });
+  await new Promise(r => setTimeout(r, 1500));
+  elements.forEach((d, i) => {
+    d.className = 'dice';
+    const v = values[i];
+    const ex = 360 * (Math.floor(Math.random() * 2) + 2);
+    const ey = 360 * (Math.floor(Math.random() * 2) + 2);
+    d.style.transform = `rotateX(${faceAngles[v].x + ex}deg) rotateY(${faceAngles[v].y + ey}deg)`;
+  });
+}
 
-  // Set mode UI
-  document.getElementById('modeIcon').textContent = G.mode.icon;
-  document.getElementById('modeName').textContent = G.mode.name;
-  updateRoundBadge();
+function getDiceCombination(dice) {
+  const counts = {};
+  dice.forEach(n => counts[n] = (counts[n]||0)+1);
+  const combos = Object.entries(counts).map(([num,count]) => ({ num: parseInt(num), count })).filter(c => c.count >= 2).sort((a,b) => b.count - a.count || b.num - a.num);
+  const sum = dice.reduce((a,b) => a+b, 0);
+  let score = sum, bestComboText = '散牌';
+  if (combos.length > 0) {
+    const best = combos[0];
+    if (best.count === 6) { bestComboText = `六條(${best.num})`; score = 6000 + best.num; }
+    else if (best.count === 5) { bestComboText = `五條(${best.num})`; score = 5000 + best.num; }
+    else if (best.count === 4) { bestComboText = `四條(${best.num})`; score = 4000 + best.num; }
+    else if (best.count === 3) { bestComboText = `三條(${best.num})`; score = 3000 + best.num; }
+    else { bestComboText = `對子(${best.num})`; score = 2000 + best.num + sum; }
+  }
+  return { score, bestComboText };
+}
 
-  // Init dice grids
-  const dCls = `dice-${G.mode.dice>6?8:G.mode.dice}`;
-  ['playerDice','storeDice'].forEach(id=>{
-    const el=document.getElementById(id);
-    el.className='dice-grid '+dCls;
-    el.innerHTML='';
-    Array.from({length:G.mode.dice}).forEach(()=>{
-      el.appendChild(makeDie(1,id.includes('player')?'die-p':'die-s'));
+function getPrizeByScore(score) {
+  if (score >= 6000) return "免費吃到飽或指定商品";
+  if (score >= 5000) return "吃到飽買一送一或指定商品買一送一";
+  if (score >= 4000) return "吃到飽買一第二件半價或指定商品買一第二件半價";
+  if (score >= 3000) return "買五送一卷(可寄放)";
+  return null;
+}
+
+function endGame() {
+  if (gameState.isEnding) return;
+  gameState.isEnding = true;
+  gameState.isGameActive = false;
+  stopMusic();
+  let prize, remark;
+  if (gameState.mustWin) {
+    prize = gameState.soloBestResult.prize || "免費吃到飽或指定商品";
+    remark = `🎊 恭喜！您在本次挑戰中獲得獎勵：${prize}`;
+  } else {
+    prize = null;
+    remark = `本次挑戰結束，最佳成績：${gameState.soloBestResult.comboText || '無'}，再接再厲！`;
+  }
+  const isWin = !!prize;
+  const icon = isWin ? '🎉' : '😥';
+  const title = isWin ? '恭喜！' : '挑戰結束！';
+  const cls = isWin ? 'jackpot' : 'lose';
+  const prizeHTML = isWin ? `<p>您贏得了</p><div class="prize-highlight">${prize}</div><p class="prize-notice">若您已得獎請暫時不要登出，請通知服務員確認。<br>所有操作需由當事人親在現場完成始算生效<br>（畫面登出就算此次挑戰失敗）</p>` : `<p>${remark}</p>`;
+  gameResultDiv.innerHTML = `<div class="result-container ${cls}"><div class="result-icon">${icon}</div><h2>${title}</h2>${prizeHTML}<button onclick="forceClosePage()" class="logout-btn close-btn-highlight">✅ 確認並關閉</button></div>`;
+  gameResultDiv.className = 'show';
+  gameResultDiv.style.display = 'flex';
+  gameWrapper.classList.remove('visible');
+  if (isWin) {
+    playSound('sound-jackpot');
+    if (typeof confetti === 'function') { confetti({ particleCount: 200, spread: 120, origin: { x: 0.5, y: 0 }, angle: 90, startVelocity: 30 }); }
+  } else { playSound('sound-lose'); }
+  syncResult(isWin, prize || '無', remark);
+}
+
+async function syncResult(isWin, prize, remark) {
+  try {
+    await fetch(CHECKIN_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStats', type: 'dice', vid: gameState.vid, mode: 'solo', isWin: isWin, prize: prize, remark: remark, ip: gameState.ipAddress, timestamp: new Date().toISOString() }), mode: 'no-cors' });
+  } catch(e) { console.warn('syncResult error:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ★★★ 強化版關閉視窗函式 ★★★
+// ═══════════════════════════════════════════════════════════════
+function forceClosePage() {
+  // 方法1：標準關閉
+  try { window.close(); } catch(e) {}
+  
+  // 方法2：嘗試用 _self 打開空白頁再關閉
+  setTimeout(() => {
+    try {
+      if (!window.closed) {
+        let win = window.open('about:blank', '_self');
+        if (win) win.close();
+      }
+    } catch(e) {}
+  }, 50);
+  
+  // 方法3：特殊協議
+  setTimeout(() => {
+    try {
+      if (!window.closed) {
+        window.location.href = 'javascript:window.close()';
+      }
+    } catch(e) {}
+  }, 100);
+  
+  // 方法4：顯示關閉提示（備案）
+  setTimeout(() => {
+    try {
+      if (!window.closed) {
+        document.body.innerHTML = `
+          <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:sans-serif;z-index:99999;">
+            <div style="font-size:4rem;">✅</div>
+            <h2>遊戲已完成</h2>
+            <p>請手動關閉此分頁</p>
+            <button onclick="window.close()" style="margin-top:20px;padding:12px 40px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">🔒 點此關閉</button>
+            <p style="margin-top:20px;font-size:12px;color:#888;">或使用瀏覽器的「關閉分頁」功能</p>
+          </div>
+        `;
+      }
+    } catch(e) {}
+  }, 200);
+}
+
+function addHistory(msg) {
+  const li = document.createElement('li');
+  li.innerHTML = msg;
+  resultsList.appendChild(li);
+  resultsList.scrollTop = resultsList.scrollHeight;
+}
+
+function playSound(id) { const s = document.getElementById(id); if (s) { s.currentTime = 0; s.play().catch(()=>{}); } }
+function playMusic(id) { stopMusic(); const m = document.getElementById(id); if (m) { m.currentTime = 0; m.play().catch(()=>{}); gameState.currentMusic = m; } }
+function stopMusic() { if (gameState.currentMusic) { gameState.currentMusic.pause(); gameState.currentMusic.currentTime = 0; gameState.currentMusic = null; } }
+async function getIPAddress() { try { const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); gameState.ipAddress = d.ip; } catch(e) { gameState.ipAddress = '無法取得'; } }
+function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+
+// 全螢幕 + 內容保護
+(function() {
+  const overlay = document.getElementById('ws-fullscreen-overlay');
+  const fsBtn = document.getElementById('ws-fs-btn');
+  const violation = document.getElementById('ws-violation');
+  const violMsg = document.getElementById('ws-violation-msg');
+  const violOk = document.getElementById('ws-violation-ok');
+  const bgVideo = document.getElementById('ws-bg-video');
+  const muteBtn = document.getElementById('ws-mute');
+  const pauseBtn = document.getElementById('ws-pause');
+
+  function showViolation(msg) { violMsg.textContent = msg; violation.style.display = 'flex'; }
+  function hideViolation() { violation.style.display = 'none'; }
+
+  fsBtn && fsBtn.addEventListener('click', () => {
+    document.documentElement.requestFullscreen().then(() => {
+      overlay.style.display = 'none';
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) showViolation('此網頁必須在全螢幕模式下瀏覽，請點擊確定以恢復。');
+      });
+      getIPAddress();
+      checkQRAndEnter();
+    }).catch(() => {
+      overlay.style.display = 'none';
+      getIPAddress();
+      checkQRAndEnter();
     });
   });
 
-  document.getElementById('playerWins').textContent='0';
-  document.getElementById('storeWins').textContent='0';
-  document.getElementById('playerHand').textContent='—';
-  document.getElementById('storeHand').textContent='—';
-  document.getElementById('logArea').innerHTML='<div class="log-entry log-info">— 按下擲骰子開始 —</div>';
-  document.getElementById('rollBtn').textContent='擲 骰 子';
-  document.getElementById('rollBtn').disabled=false;
-
-  // Special mode init
-  const sp=document.getElementById('specialInfo');
-  sp.style.display='none'; sp.innerHTML='';
-
-  if(G.mode.type==='life'){
-    sp.style.display='block';
-    sp.innerHTML=`<div class="life-display">
-      <div class="life-block"><div class="rs-label">玩家</div><div class="life-num p" id="lifeP">15</div><div class="life-bar"><div class="life-fill p" id="lifeBarP" style="width:100%"></div></div></div>
-      <div class="life-vs">♥</div>
-      <div class="life-block"><div class="rs-label">店家</div><div class="life-num s" id="lifeS">15</div><div class="life-bar"><div class="life-fill s" id="lifeBarS" style="width:100%"></div></div></div>
-    </div>`;
-    G.maxRound=999;
-  }
-  if(G.mode.type==='timer'){
-    sp.style.display='block';
-    sp.innerHTML=`<div class="timer-display" id="timerDisp">1:30</div>`;
-    document.getElementById('rollBtn').textContent='開 始 計 時';
-    G.maxRound=999;
-  }
-  if(G.mode.type==='chain'){
-    sp.style.display='block';
-    sp.innerHTML=`<div class="chain-target">目標牌型：<span id="chainTargetLabel">${G.chainTarget}</span>　先達成者勝！</div>`;
-    G.maxRound=999;
-  }
-
-  showScreen('gameScreen');
-}
-
-function pickChainTarget(){
-  const targets=['一對','兩對','三條','順子','葫蘆','四條'];
-  return targets[Math.floor(Math.random()*targets.length)];
-}
-
-/* ================================================================
-   ROLL
-================================================================ */
-function doRoll(){
-  if(G.rolling) return;
-  const t = G.mode.type;
-
-  // Start timer mode
-  if(t==='timer' && !G.timerInterval){
-    startTimer(); return;
-  }
-
-  // Brave mode: choose dice count
-  if(t==='brave' && !G.braveChoice){
-    chooseBrave(); return;
-  }
-
-  G.rolling=true;
-  document.getElementById('rollBtn').disabled=true;
-
-  const diceCount = (t==='brave'&&G.braveChoice)?G.braveChoice:G.mode.dice;
-  const pDice=rollDice(diceCount);
-  const sDice=rollDice(diceCount);
-
-  // Apply deterministic outcome tweak if applicable
-  let plannedWin = G.plan[G.round-1]; // 'win' | 'lose' | undefined
-
-  animateDice('playerDice', pDice, 'die-p', ()=>{
-    animateDice('storeDice', sDice, 'die-s', ()=>{
-      resolveRound(pDice, sDice, plannedWin, t);
-    }, 80);
-  }, 0);
-}
-
-function animateDice(containerId, values, cls, cb, delay){
-  const el=document.getElementById(containerId);
-  el.innerHTML='';
-  values.forEach(v=>{
-    const d=makeDie(v,cls,'rolling');
-    el.appendChild(d);
-    setTimeout(()=>d.classList.remove('rolling'), 600);
+  violOk && violOk.addEventListener('click', () => {
+    document.documentElement.requestFullscreen().then(() => hideViolation()).catch(() => hideViolation());
   });
-  setTimeout(cb, 640+delay);
-}
 
-/* ================================================================
-   RESOLVE ROUND
-================================================================ */
-function resolveRound(pDice, sDice, plannedWin, type){
-  let pScore, sScore, pLabel, sLabel, winner;
-
-  if(type==='hand'||type==='brave'){
-    const pH=getHand(pDice), sH=getHand(sDice);
-    pScore=pH.score+(pH.tiebreak*0.01);
-    sScore=sH.score+(sH.tiebreak*0.01);
-    pLabel=pH.name; sLabel=sH.name;
-    // nudge for deterministic
-    if(plannedWin==='win' && pScore<=sScore) pScore=sScore+0.1;
-    if(plannedWin==='lose'&& pScore>=sScore) sScore=pScore+0.1;
-    winner = pScore>sScore?'player':sScore>pScore?'store':'draw';
-  }
-  else if(type==='sum'||type==='single'){
-    pScore=pDice.reduce((a,b)=>a+b,0);
-    sScore=sDice.reduce((a,b)=>a+b,0);
-    pLabel=`總和 ${pScore}`; sLabel=`總和 ${sScore}`;
-    if(plannedWin==='win' && pScore<=sScore) pScore=sScore+1;
-    if(plannedWin==='lose'&& pScore>=sScore) sScore=pScore+1;
-    winner=pScore>sScore?'player':sScore>pScore?'store':'draw';
-  }
-  else if(type==='timer'){
-    pScore=pDice.reduce((a,b)=>a+b,0);
-    sScore=sDice.reduce((a,b)=>a+b,0);
-    pLabel=`${pScore}點`; sLabel=`${sScore}點`;
-    if(pScore>G.bestPlayerSum) G.bestPlayerSum=pScore;
-    if(sScore>G.bestStoreSum) G.bestStoreSum=sScore;
-    winner=pScore>sScore?'player':sScore>pScore?'store':'draw';
-  }
-  else if(type==='life'){
-    const pH=getHand(pDice),sH=getHand(sDice);
-    pScore=pH.score; sScore=sH.score;
-    pLabel=pH.name; sLabel=sH.name;
-    const diff=Math.abs(pScore-sScore)||1;
-    if(pScore<sScore){ G.playerLife=Math.max(0,G.playerLife-diff); winner='store'; }
-    else if(sScore<pScore){ G.storeLife=Math.max(0,G.storeLife-diff); winner='player'; }
-    else { winner='draw'; }
-    updateLife();
-  }
-  else if(type==='chain'){
-    const pH=getHand(pDice),sH=getHand(sDice);
-    pLabel=pH.name; sLabel=sH.name;
-    winner='draw';
-    if(pH.name===G.chainTarget){ winner='player'; }
-    else if(sH.name===G.chainTarget){ winner='store'; }
-  }
-
-  // Apply win/lose visuals
-  const pEl=document.getElementById('playerDice');
-  const sEl=document.getElementById('storeDice');
-  pEl.querySelectorAll('.die').forEach(d=>{ if(winner==='player') d.classList.add('win'); });
-  sEl.querySelectorAll('.die').forEach(d=>{ if(winner==='store')  d.classList.add('win'); });
-
-  // Update labels
-  document.getElementById('playerHand').textContent = pLabel||'—';
-  document.getElementById('storeHand').textContent  = sLabel||'—';
-
-  // Tally
-  if(winner==='player') G.playerWins++;
-  else if(winner==='store') G.storeWins++;
-  document.getElementById('playerWins').textContent=G.playerWins;
-  document.getElementById('storeWins').textContent =G.storeWins;
-
-  // Log
-  const resultTxt = winner==='player'?'玩家勝':winner==='store'?'店家勝':'平局';
-  const logCls = winner==='player'?'log-win':winner==='store'?'log-lose':'';
-  addLog(`第${G.round}回合：玩家 ${pLabel} vs 店家 ${sLabel} → ${resultTxt}`, logCls);
-  if(winner==='player') spawnParticles(true);
-
-  G.round++;
-  updateRoundBadge();
-  G.rolling=false;
-  G.braveChoice=null;
-
-  // Check end conditions
-  if(type==='life'){
-    if(G.playerLife<=0||G.storeLife<=0){ setTimeout(endGame,800); return; }
-    document.getElementById('rollBtn').disabled=false;
-    return;
-  }
-  if(type==='chain'){
-    if(winner==='player'||winner==='store'){ setTimeout(endGame,800); return; }
-    document.getElementById('rollBtn').disabled=false;
-    return;
-  }
-  if(type!=='timer'){
-    if(G.round>G.maxRound){ setTimeout(endGame,800); return; }
-    document.getElementById('rollBtn').disabled=false;
-  }
-}
-
-/* ================================================================
-   TIMER MODE
-================================================================ */
-function startTimer(){
-  G.timerSec=90; G.bestPlayerSum=0; G.bestStoreSum=0;
-  document.getElementById('rollBtn').textContent='擲 骰 子';
-  G.timerInterval=setInterval(()=>{
-    G.timerSec--;
-    const m=Math.floor(G.timerSec/60), s=G.timerSec%60;
-    const td=document.getElementById('timerDisp');
-    if(td){ td.textContent=`${m}:${s<10?'0':''}${s}`; if(G.timerSec<=10) td.classList.add('urgent'); }
-    if(G.timerSec<=0){ clearInterval(G.timerInterval); G.timerInterval=null; setTimeout(endGame,400); }
-  },1000);
-}
-
-/* ================================================================
-   BRAVE MODE
-================================================================ */
-function chooseBrave(){
-  // Simple inline prompt via log area
-  addLog('選擇骰子數：', 'log-info');
-  G.rolling=false;
-  const bar=document.getElementById('action-bar');
-  const btn=document.getElementById('rollBtn');
-  // Replace button temporarily
-  btn.textContent='6骰（安全）';
-  btn.onclick=()=>{ G.braveChoice=6; btn.textContent='擲 骰 子'; btn.onclick=doRoll; doRoll(); };
-  // add 8 dice button
-  let btn8=document.getElementById('btn8');
-  if(!btn8){
-    btn8=document.createElement('button');
-    btn8.id='btn8'; btn8.className='roll-btn';
-    btn8.style.marginLeft='8px'; btn8.style.width='auto'; btn8.style.padding='13px 28px';
-    btn8.textContent='8骰（冒險）';
-    document.querySelector('.action-bar').appendChild(btn8);
-  }
-  btn8.onclick=()=>{
-    G.braveChoice=8;
-    document.getElementById('playerDice').className='dice-grid dice-8';
-    document.getElementById('storeDice').className='dice-grid dice-8';
-    btn.textContent='擲 骰 子'; btn.onclick=doRoll;
-    btn8.remove(); doRoll();
-  };
-}
-
-/* ================================================================
-   LIFE BAR UPDATE
-================================================================ */
-function updateLife(){
-  const maxL=15;
-  const lp=document.getElementById('lifeP'), ls=document.getElementById('lifeS');
-  const lbp=document.getElementById('lifeBarP'), lbs=document.getElementById('lifeBarS');
-  if(lp) lp.textContent=G.playerLife;
-  if(ls) ls.textContent=G.storeLife;
-  if(lbp) lbp.style.width=(G.playerLife/maxL*100)+'%';
-  if(lbs) lbs.style.width=(G.storeLife/maxL*100)+'%';
-}
-
-/* ================================================================
-   END GAME
-================================================================ */
-function endGame(){
-  if(G.timerInterval){ clearInterval(G.timerInterval); G.timerInterval=null; }
-  const t=G.mode.type;
-  let finalWinner, pFinal, sFinal;
-
-  if(t==='timer'){
-    pFinal=G.bestPlayerSum; sFinal=G.bestStoreSum;
-    // Deterministic final
-    if(G.isWin && pFinal<=sFinal) pFinal=sFinal+2;
-    if(!G.isWin && pFinal>=sFinal) sFinal=pFinal+2;
-    finalWinner=pFinal>sFinal?'player':'store';
-  } else if(t==='life'){
-    pFinal=G.playerLife; sFinal=G.storeLife;
-    finalWinner=pFinal>sFinal?'player':sFinal>pFinal?'store':'draw';
-  } else if(t==='chain'){
-    pFinal=G.playerWins; sFinal=G.storeWins;
-    finalWinner=pFinal>sFinal?'player':sFinal>pFinal?'store':'draw';
-  } else {
-    pFinal=G.playerWins; sFinal=G.storeWins;
-    finalWinner=pFinal>sFinal?'player':sFinal>pFinal?'store':'draw';
-  }
-
-  // Build result screen
-  const isPlayerWin = finalWinner==='player';
-  const isDraw = finalWinner==='draw';
-  document.getElementById('resultCrown').textContent = isPlayerWin?'🏆':isDraw?'🤝':'🎲';
-  document.getElementById('resultTitle').textContent = isPlayerWin?'恭喜獲勝！':isDraw?'平局':';下次再來！';
-  document.getElementById('resultSubtitle').textContent = `${G.mode.icon} ${G.mode.name}`;
-  document.getElementById('rPlayerScore').textContent=pFinal;
-  document.getElementById('rStoreScore').textContent=sFinal;
-
-  const badge=document.getElementById('resultBadge');
-  if(isPlayerWin){
-    badge.className='result-win-badge badge-win';
-    badge.textContent = G.isWin ? '🎁 恭喜！您已獲得獎品！' : '未中獎場次';
-  } else if(isDraw){
-    badge.className='result-win-badge badge-draw';
-    badge.textContent='平局';
-  } else {
-    badge.className='result-win-badge badge-lose';
-    badge.textContent='未中獎，明天再來';
-  }
-
-  if(isPlayerWin) spawnParticles(true, 30);
-  showScreen('resultScreen');
-}
-
-/* ================================================================
-   UI HELPERS
-================================================================ */
-function showScreen(id){
-  ['loginScreen','gameScreen','resultScreen'].forEach(s=>{
-    document.getElementById(s).classList.toggle('hidden', s!==id);
+  muteBtn && muteBtn.addEventListener('click', () => {
+    if (bgVideo) { bgVideo.muted = !bgVideo.muted; muteBtn.innerHTML = bgVideo.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>'; }
   });
-}
-function goLogin(){ showScreen('loginScreen'); }
-function doQuit(){ endGame(); }
+  pauseBtn && pauseBtn.addEventListener('click', () => {
+    if (bgVideo) { bgVideo.paused ? bgVideo.play() : bgVideo.pause(); pauseBtn.innerHTML = bgVideo.paused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>'; }
+  });
 
-function updateRoundBadge(){
-  const t=G.mode.type;
-  if(t==='life')  { document.getElementById('roundBadge').textContent='生命決鬥'; return; }
-  if(t==='timer') { document.getElementById('roundBadge').textContent='限時模式'; return; }
-  if(t==='chain') { document.getElementById('roundBadge').textContent='連鎖競速'; return; }
-  const r=Math.min(G.round, G.maxRound);
-  document.getElementById('roundBadge').textContent=`第 ${r} / ${G.maxRound} 回合`;
-}
-
-function addLog(msg, cls=''){
-  const el=document.getElementById('logArea');
-  const div=document.createElement('div');
-  div.className='log-entry '+cls;
-  div.textContent=msg;
-  el.appendChild(div);
-  el.scrollTop=el.scrollHeight;
-}
-
-/* ================================================================
-   PARTICLES
-================================================================ */
-function spawnParticles(gold=true, count=14){
-  const colors=gold
-    ? ['#f0c84a','#c9a227','#ffe08a','#ffb800']
-    : ['#e87070','#c03030','#ff8080'];
-  for(let i=0;i<count;i++){
-    const p=document.createElement('div');
-    p.className='particle';
-    const size=4+Math.random()*6;
-    const x=20+Math.random()*60;
-    const y=30+Math.random()*40;
-    p.style.cssText=`
-      left:${x}vw; top:${y}vh;
-      width:${size}px; height:${size}px;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      --tx:${(Math.random()-0.5)*120}px;
-      --ty:${-40-Math.random()*80}px;
-      animation-delay:${Math.random()*0.3}s;
-      animation-duration:${0.9+Math.random()*0.6}s;
-    `;
-    document.body.appendChild(p);
-    setTimeout(()=>p.remove(), 2000);
-  }
-}
-
-/* ================================================================
-   ENTER KEY support
-================================================================ */
-document.addEventListener('keydown', e=>{
-  if(e.key==='Enter'){
-    const ls=document.getElementById('loginScreen');
-    if(!ls.classList.contains('hidden')) doLogin();
-  }
-});
+  document.addEventListener('contextmenu', e => { e.preventDefault(); showViolation('此操作已被禁止：內容受版權保護。'); });
+  document.addEventListener('keydown', e => {
+    if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+      e.preventDefault(); showViolation('此網頁內容受保護，無法使用開發者工具。');
+    }
+  });
+  document.body.onselectstart = () => false;
+  document.body.oncopy = () => false;
+  document.addEventListener('dragstart', e => { if (e.target.tagName === 'IMG') { e.preventDefault(); showViolation('圖像拖拽保存已被禁止。'); } });
+})();
 </script>
 </body>
 </html>
