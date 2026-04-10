@@ -401,8 +401,12 @@ html, body {
 //  設定區（請依實際部署情況修改）
 // ══════════════════════════════════════════════════════
 
-// Google Apps Script 網址（炸雞 checkin 使用）
+// Google Apps Script 網址（炸雞 checkin + 骰子入口 共用）
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCS4MazTDDtAPUQifyHxFvAr9xcdukJAU6X6Ye-QdE_KApiO8CzYURpFHP69ueqY80Lg/exec';
+
+// ★ 骰子 GAS 入口（帶 Google 登入 + PlayerSlots 七次輪轉）
+//   使用 v2.0 部署網址
+const DICE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzA3lUBo0wnjcRVgLezxcwV9ccKeFz6n47NMgIWS9Pfw7z2w1mFQMzYl3toHyYvDfn3rg/exec';
 
 // dice.html 的路徑（與 index.html 同資料夾時用 'dice.html'）
 const DICE_HTML_PATH = 'dice.html';
@@ -419,7 +423,7 @@ const params  = new URLSearchParams(location.search);
 const TYPE    = params.get('type');
 const VID     = params.get('vid');
 
-// 骰子方案掃碼 → 直接跳轉至 dice.html（不在 index 處理）
+// 骰子方案掃碼 → 指向 GAS（GAS 做 Google 登入 + 七次輪轉 → 自動跳轉 dice.html?gtoken=...）
 // 炸雞方案掃碼 → 在 index.html 手機端顯示
 const IS_MOBILE = !!(TYPE && VID && TYPE === 'chicken');
 
@@ -436,11 +440,8 @@ window.addEventListener('load', () => {
     document.getElementById('fs-overlay').style.display = 'none';
     document.getElementById('page-mobile').classList.add('active');
     runMobile(TYPE, VID);
-  } else if (TYPE === 'dice' && VID) {
-    // 骰子方案：重定向至 dice.html（理論上 QR 直接指向 dice.html，此處為保險）
-    location.replace(`${DICE_HTML_PATH}?type=dice&vid=${encodeURIComponent(VID)}`);
   } else {
-    // 無參數 → 電腦管理台
+    // 無參數（或其他）→ 電腦管理台
     setupFullscreen();
     setupVideoControls();
     setupProtection();
@@ -527,9 +528,8 @@ function makeURL(type) {
   const vid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   if (type === 'dice') {
-    // 骰子方案：直接指向 dice.html
-    const base = location.href.replace(/[^/]*(\?.*)?$/, '');
-    return `${base}${DICE_HTML_PATH}?type=dice&vid=${vid}`;
+    // 骰子方案：先走 GAS（Google 登入 + PlayerSlots 七次輪轉 → 生成 gtoken → 跳轉 dice.html）
+    return `${DICE_GAS_URL}?action=dice_entry&vid=${vid}`;
   }
 
   // 炸雞方案：指向 GAS（讓 GAS 做 Google 登入驗證）
