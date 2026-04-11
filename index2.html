@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>3D撲克主題遊戲平台 - 完整整合版</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        user-select: none;
+    }
+
+    body {
+        background: #0a0a1a;
+        color: #fff;
+        font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+    }
+
+    .stars {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: radial-gradient(circle at center, #0f0f2a 0%, #03030c 100%);
+        z-index: -2;
+    }
+    .stars::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(2px 2px at 20px 40px, #fff, rgba(0,0,0,0)),
+                          radial-gradient(1px 1px at 80px 200px, #ffe6aa, rgba(0,0,0,0));
+        background-size: 200px 200px, 150px 150px;
+        background-repeat: repeat;
+        opacity: 0.4;
+        animation: twinkle 8s infinite alternate;
+    }
+    @keyframes twinkle {
+        0% { opacity: 0.2; }
+        100% { opacity: 0.7; }
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 70px;
+        background: rgba(10, 10, 25, 0.9);
+        backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        transition: width 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        z-index: 100;
+        overflow-x: hidden;
+        white-space: nowrap;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+    }
+    .sidebar:hover { width: 260px; }
+    .sidebar .logo-area {
+        display: flex;
+        align-items: center;
+        padding: 20px 18px;
+        gap: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 20px;
+    }
+    .sidebar .logo-icon { font-size: 28px; filter: drop-shadow(0 0 6px #ffaa33); }
+    .sidebar .logo-text {
+        font-size: 1.2rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #ffcc66, #ff884d);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .sidebar:hover .logo-text { opacity: 1; }
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 14px 20px;
+        color: #ccc;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+    }
+    .sidebar a:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffaa66;
+        border-left-color: #ffaa66;
+        padding-left: 24px;
+    }
+    .sidebar a .menu-icon { font-size: 1.4rem; min-width: 32px; text-align: center; }
+    .sidebar .version {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 0.7rem;
+        color: #555;
+        padding: 10px;
+    }
+
+    /* phone4 顯示條 */
+    #phone4-bar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 70px;
+        right: 0;
+        background: rgba(74,108,247,0.15);
+        border-bottom: 1px solid rgba(74,108,247,0.4);
+        padding: 8px 20px;
+        font-size: 0.85rem;
+        color: #a5b4fc;
+        z-index: 200;
+        backdrop-filter: blur(6px);
+    }
+    #phone4-bar.show { display: block; }
+
+    .main-content {
+        margin-left: 70px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: margin-left 0.4s;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        font-size: 2.2rem;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 15px rgba(255, 100, 50, 0.5);
+        background: linear-gradient(135deg, #fff, #ffaa66);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .carousel-3d {
+        perspective: 1200px;
+        width: 100%;
+        height: 65vh;
+        min-height: 500px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .carousel-track {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        animation: rotateCarousel 40s infinite linear;
+        transition: animation-play-state 0.2s;
+    }
+    .carousel-3d:hover .carousel-track { animation-play-state: paused; }
+    @keyframes rotateCarousel {
+        0% { transform: rotateY(0deg); }
+        100% { transform: rotateY(360deg); }
+    }
+    .game-card {
+        position: absolute;
+        width: 240px;
+        height: 320px;
+        left: 50%;
+        top: 50%;
+        margin-left: -120px;
+        margin-top: -160px;
+        background: rgba(20, 20, 45, 0.85);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 215, 120, 0.5);
+        box-shadow: 0 20px 35px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,200,100,0.1) inset;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+        overflow: hidden;
+    }
+    .game-card:hover {
+        transform: translateZ(40px) scale(1.05);
+        border-color: #ffaa55;
+        box-shadow: 0 30px 50px rgba(0,0,0,0.6), 0 0 20px rgba(255,170,85,0.6);
+        background: rgba(30, 30, 65, 0.95);
+    }
+    .game-icon { font-size: 3.2rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); margin-bottom: 10px; }
+    .game-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin: 10px 0 6px;
+        background: linear-gradient(135deg, #ffdd99, #ffaa66);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .game-desc { font-size: 0.75rem; color: #aaa; padding: 0 8px; line-height: 1.4; }
+    .badge {
+        margin-top: 12px;
+        background: rgba(255, 100, 50, 0.2);
+        border-radius: 30px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        color: #ffaa66;
+        border: 1px solid rgba(255, 170, 100, 0.4);
+    }
+    .info-footer {
+        margin-top: 20px;
+        text-align: center;
+        color: #888;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .fullscreen-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: #000000dd;
+        z-index: 2000;
+        backdrop-filter: blur(4px);
+    }
+    .fullscreen-content { position: relative; width: 100%; height: 100%; }
+    .close-fullscreen {
+        position: absolute;
+        top: 20px; right: 35px;
+        font-size: 40px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        z-index: 2002;
+        background: rgba(0,0,0,0.5);
+        width: 50px; height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+    .close-fullscreen:hover { background: #ff5533; transform: scale(1.1); }
+    .game-iframe { width: 100%; height: 100%; border: none; background: #0a0a14; }
+
+    @media (max-width: 760px) {
+        .sidebar { width: 55px; }
+        .sidebar:hover { width: 200px; }
+        .main-content { margin-left: 55px; }
+        #phone4-bar { left: 55px; }
+        .game-card { width: 180px; height: 260px; margin-left: -90px; margin-top: -130px; }
+        .game-icon { font-size: 2.5rem; }
+        .game-title { font-size: 1rem; }
+        h1 { font-size: 1.5rem; }
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #ffaa66; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- phone4 顯示條：有帶識別碼時才顯示 -->
+<div id="phone4-bar">🎮 識別碼：<strong id="phone4-display"></strong>　｜　選擇你要玩的遊戲</div>
+
+<div class="sidebar" id="sidebar">
+    <div class="logo-area">
+        <span class="logo-icon">♠️🎲</span>
+        <span class="logo-text">牌藝殿堂</span>
+    </div>
+    <a href="#" class="nav-home" data-game="home">
+        <span class="menu-icon">🏠</span>
+        <span class="nav-text">首頁</span>
+    </a>
+    <a href="#" data-game="bigtwo">
+        <span class="menu-icon">🃏</span>
+        <span class="nav-text">大老二</span>
+    </a>
+    <a href="#" data-game="pickred">
+        <span class="menu-icon">♥️</span>
+        <span class="nav-text">撿紅點</span>
+    </a>
+    <a href="#" data-game="texas">
+        <span class="menu-icon">♠️</span>
+        <span class="nav-text">德州撲克</span>
+    </a>
+    <a href="#" data-game="thirteen">
+        <span class="menu-icon">🂡</span>
+        <span class="nav-text">十三支</span>
+    </a>
+    <a href="#" data-game="threecard">
+        <span class="menu-icon">🎴</span>
+        <span class="nav-text">三公</span>
+    </a>
+    <a href="#" data-game="baccarat">
+        <span class="menu-icon">🎭</span>
+        <span class="nav-text">百家樂</span>
+    </a>
+    <a href="#" data-game="paigow">
+        <span class="menu-icon">🎴</span>
+        <span class="nav-text">牌九撲克</span>
+    </a>
+    <a href="#" data-game="caribbean">
+        <span class="menu-icon">⚓</span>
+        <span class="nav-text">加勒比梭哈</span>
+    </a>
+    <a href="#" data-game="letitride">
+        <span class="menu-icon">🏇</span>
+        <span class="nav-text">Let It Ride</span>
+    </a>
+    <div class="version">版本 2.1 · 全系列整合</div>
+</div>
+
+<div class="main-content" id="mainContent">
+    <h1>✨ 3D 撲克主題遊戲平台 ✨</h1>
+    <div class="carousel-3d" id="carousel3d">
+        <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+    <div class="info-footer">🖱️ 滑鼠懸停輪盤暫停旋轉 | 點擊卡片或左側選單開啟遊戲</div>
+</div>
+
+<div id="fullscreenModal" class="fullscreen-modal">
+    <span class="close-fullscreen" onclick="closeFullscreenGame()">&times;</span>
+    <div class="fullscreen-content">
+        <iframe id="gameFrame" class="game-iframe" allowfullscreen></iframe>
+    </div>
+</div>
+
+<script>
+    // ── 接收 phone4 ──────────────────────────────
+    const _urlParams = new URLSearchParams(location.search);
+    const PHONE4 = _urlParams.get('phone4') || '';
+
+    if (PHONE4 && /^\d{4}$/.test(PHONE4)) {
+        const bar = document.getElementById('phone4-bar');
+        const disp = document.getElementById('phone4-display');
+        if (bar && disp) {
+            disp.textContent = PHONE4;
+            bar.classList.add('show');
+        }
+    }
+
+    // ── 遊戲清單 ─────────────────────────────────
+    const GAMES_LIST = [
+        { id: "bigtwo",    title: "大老二",       desc: "經典撲克比大小，誰先出完誰贏",       icon: "🃏", file: "大老二每日挑戰v8.html" },
+        { id: "pickred",   title: "撿紅點",       desc: "湊10點吃牌，紅心方塊計分",           icon: "♥️", file: "撿紅點v8.html" },
+        { id: "texas",     title: "德州撲克",     desc: "組最強五張牌型，8局激戰",            icon: "♠️", file: "德州撲克每日挑戰v8.html" },
+        { id: "thirteen",  title: "十三支",       desc: "分前中後三墩，牌型鬥智",             icon: "🂡", file: "十三支每日挑戰v8.html" },
+        { id: "threecard", title: "三公",         desc: "三張牌比點，特殊牌型三公最大",        icon: "🎴", file: "三公每日挑戰v8.html" },
+        { id: "baccarat",  title: "百家樂",       desc: "投注閒莊和局，預測勝負拿大獎",        icon: "🎭", file: "百家樂每日挑戰v8.html" },
+        { id: "paigow",    title: "牌九撲克",     desc: "7張分兩墩，前墩需小於後墩",          icon: "🎴", file: "牌九撲克每日挑戰v8.html" },
+        { id: "caribbean", title: "加勒比梭哈",   desc: "5張牌比大小，挑戰莊家牌型",          icon: "⚓", file: "加勒比海梭哈挑戰v8.html" },
+        { id: "letitride", title: "Let It Ride", desc: "3張手牌+2公牌，組最強5張組合",       icon: "🏇", file: "Let_It_Ride_每日挑戰v8.html" }
+    ];
+
+    // ── 3D 輪盤 ──────────────────────────────────
+    const track = document.getElementById('carouselTrack');
+    const RADIUS = 380;
+
+    function buildCarousel() {
+        track.innerHTML = '';
+        const angleStep = (Math.PI * 2) / GAMES_LIST.length;
+        GAMES_LIST.forEach((game, idx) => {
+            const angle = idx * angleStep;
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.innerHTML = `
+                <div class="game-icon">${game.icon}</div>
+                <div class="game-title">${game.title}</div>
+                <div class="game-desc">${game.desc}</div>
+                <div class="badge">🎮 點擊開始</div>
+            `;
+            const x = Math.sin(angle) * RADIUS;
+            const z = Math.cos(angle) * RADIUS;
+            const yRotate = angle * (180 / Math.PI);
+            card.style.transform = `translateX(${x}px) translateZ(${z}px) rotateY(${yRotate}deg)`;
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openGame(game.file);
+            });
+            track.appendChild(card);
+        });
+    }
+
+    // ── 開啟遊戲（自動帶入 phone4）────────────────
+    function openGame(fileName) {
+        const modal = document.getElementById('fullscreenModal');
+        const iframe = document.getElementById('gameFrame');
+        if (!iframe) return;
+
+        // 如果有 phone4，帶入 URL 參數
+        let src = fileName;
+        if (PHONE4) {
+            src = fileName + '?phone4=' + encodeURIComponent(PHONE4);
+        }
+        iframe.src = src;
+        modal.style.display = 'block';
+
+        const elem = modal;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => console.warn('全螢幕請求失敗', err));
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        }
+    }
+
+    function closeFullscreenGame() {
+        const modal = document.getElementById('fullscreenModal');
+        const iframe = document.getElementById('gameFrame');
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+        if (iframe) iframe.src = '';
+        modal.style.display = 'none';
+    }
+
+    // ── 側邊欄 ───────────────────────────────────
+    function bindSidebarMenu() {
+        document.querySelectorAll('.sidebar a').forEach(link => {
+            const gameAttr = link.getAttribute('data-game');
+            if (gameAttr && gameAttr !== 'home') {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetGame = GAMES_LIST.find(g => g.id === gameAttr);
+                    if (targetGame) openGame(targetGame.file);
+                });
+            } else if (link.classList.contains('nav-home')) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    closeFullscreenGame();
+                });
+            }
+        });
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const modal = document.getElementById('fullscreenModal');
+            if (modal && modal.style.display === 'block') {
+                const iframe = document.getElementById('gameFrame');
+                if (iframe) iframe.src = '';
+                modal.style.display = 'none';
+            }
+        }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (!document.webkitFullscreenElement) {
+            const modal = document.getElementById('fullscreenModal');
+            if (modal && modal.style.display === 'block') {
+                const iframe = document.getElementById('gameFrame');
+                if (iframe) iframe.src = '';
+                modal.style.display = 'none';
+            }
+        }
+    });
+
+    const carouselContainer = document.getElementById('carousel3d');
+    if (carouselContainer) {
+        carouselContainer.addEventListener('mouseenter', () => { track.style.animationPlayState = 'paused'; });
+        carouselContainer.addEventListener('mouseleave', () => { track.style.animationPlayState = 'running'; });
+    }
+
+    window.addEventListener('message', (e) => {
+        if (e.data === 'goHome') closeFullscreenGame();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('fullscreenModal');
+            if (modal && modal.style.display === 'block') closeFullscreenGame();
+        }
+    });
+
+    buildCarousel();
+    bindSidebarMenu();
+
+    const randomOffset = Math.random() * 30;
+    track.style.transform = `rotateY(${randomOffset}deg)`;
+
+    console.log('遊戲平台已啟動，識別碼：', PHONE4 || '（無）');
+</script>
+</body>
+</html>

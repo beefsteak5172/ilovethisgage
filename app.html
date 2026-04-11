@@ -854,7 +854,7 @@ function runAdmin(){ buildQRCodes(); startAdminPolling(); startRefreshCountdown(
 // ══════════════════════════════════════════════════════════════
 const GAS_URL = SCRIPT_URL;
 const INDEX_URL = (function(){
-  return location.href.split('?')[0].replace(/index.html$/, '') + 'index2.html';
+  return location.href.split('?')[0].replace(/app\.html$/,'') + 'index.html';
 })();
 
 function showPage(id){
