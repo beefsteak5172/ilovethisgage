@@ -788,9 +788,23 @@ function apiGet(action,params){
 const PLAN={chicken:'🍗 炸雞第二份半價',dice:'🎲 骰子每日挑戰',shake:'🎲 手把手骰子盅'};
 const PRIZE_POOL='免費吃到堡或指定商品';
 
-const urlParams=new URLSearchParams(location.search);
-const ROUTE_TYPE=urlParams.get('type');
-const ROUTE_TOKEN=urlParams.get('token')||urlParams.get('vid')||'';
+// ── liff.state 參數解析（LIFF 登入後參數會藏在 liff.state）──
+function getRouteParams() {
+  const sp = new URLSearchParams(location.search);
+  if (sp.get("type")) return sp;
+  const state = sp.get("liff.state") || "";
+  if (state) {
+    try {
+      const decoded = decodeURIComponent(state);
+      const clean = decoded.startsWith("?") ? decoded.slice(1) : decoded;
+      return new URLSearchParams(clean);
+    } catch(e) {}
+  }
+  return sp;
+}
+const urlParams=getRouteParams();
+const ROUTE_TYPE=urlParams.get("type");
+const ROUTE_TOKEN=urlParams.get("token")||urlParams.get("vid")||"";
 
 // ── 啟動 ──────────────────────────────────────────────
 window.addEventListener('load', async ()=>{
