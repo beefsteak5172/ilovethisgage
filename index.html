@@ -407,7 +407,7 @@ button:disabled,.mode-btn:disabled,.game-btn:disabled{opacity:.6;cursor:not-allo
   </div>
 </div>
 
-<!-- ★ 搖骰子：PASS 畫面 -->
+<!-- ★ 搖骰子：PASS 畫面（備用） -->
 <div id="page-shake-pass" class="player-page">
   <div class="p-card">
     <div class="p-logo">✅</div>
@@ -415,6 +415,21 @@ button:disabled,.mode-btn:disabled,.game-btn:disabled{opacity:.6;cursor:not-allo
     <div class="pass-badge">PASS</div>
     <div class="pass-hint">請向店員出示此畫面<br>享受手把手骰子盅活動！</div>
     <button class="p-btn p-btn-ok" id="shake-ok-btn">店員確認完成</button>
+  </div>
+</div>
+
+<!-- ★ 搖骰子：4位識別碼畫面（LINE UID 綁定） -->
+<div id="page-shake-code" class="player-page">
+  <div class="p-card">
+    <div class="p-logo">🎲</div>
+    <div class="p-title">資格確認！</div>
+    <div style="font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:4px;">您的專屬識別碼</div>
+    <div class="code-display" id="shake-confirm-code">----</div>
+    <div class="code-hint">
+      請向店員出示此號碼<br>
+      由店員引導參加手把手骰子盅挑戰
+    </div>
+    <button class="p-btn p-btn-ok" id="shake-code-ok-btn">店員確認完成</button>
   </div>
 </div>
 
@@ -626,7 +641,7 @@ button:disabled,.mode-btn:disabled,.game-btn:disabled{opacity:.6;cursor:not-allo
 ;(function(){ if(window.self!==window.top){ try{window.top.location=window.self.location;}catch(e){document.body.innerHTML='';} } })();
 
 /* [S2] SCRIPT_URL */
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycby6nD_7_typYGqNOhENBe-Ft9IDDSz9Ta-beHdX1B5aLMBTYgqbxd0Xe4I9osUEq-xVIw/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwtRXhPAgkuxFAManwkJfe3LxFNkwuAGuRwSWxLU4AFYCHjVbdx4IuKCR_4vqCROTwt0A/exec';
 
 /* LIFF ID */
 const LIFF_ID = '2009772018-YA6NBDMf';
@@ -776,22 +791,9 @@ async function apiPost(action,params){
   return await res.json();
 }
 async function apiGet_read(action,params){
-  const qs=Object.entries(params).map(([k,v])=>k+"="+encodeURIComponent(v)).join("&");
-  const url=SCRIPT_URL+"?action="+action+"&"+qs+"&t="+Date.now();
-  try {
-    const res=await fetch(url,{redirect:"follow",mode:"cors"});
-    return await res.json();
-  } catch(e1) {
-    return await new Promise((resolve,reject)=>{
-      const cbName="_cb"+Date.now();
-      const s=document.createElement("script");
-      window[cbName]=function(data){ resolve(data); delete window[cbName]; s.remove(); };
-      s.onerror=()=>{ reject(new Error("JSONP fail")); delete window[cbName]; s.remove(); };
-      s.src=url+"&callback="+cbName;
-      document.head.appendChild(s);
-      setTimeout(()=>{ reject(new Error("timeout")); },8000);
-    });
-  }
+  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const res=await fetch(SCRIPT_URL+'?action='+action+'&'+qs+'&t='+Date.now(),{redirect:'follow'});
+  return await res.json();
 }
 function apiGet(action,params){
   const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
@@ -801,23 +803,9 @@ function apiGet(action,params){
 const PLAN={chicken:'🍗 炸雞第二份半價',dice:'🎲 骰子每日挑戰',shake:'🎲 手把手骰子盅'};
 const PRIZE_POOL='免費吃到堡或指定商品';
 
-// ── liff.state 參數解析（LIFF 登入後參數會藏在 liff.state）──
-function getRouteParams() {
-  const sp = new URLSearchParams(location.search);
-  if (sp.get("type")) return sp;
-  const state = sp.get("liff.state") || "";
-  if (state) {
-    try {
-      const decoded = decodeURIComponent(state);
-      const clean = decoded.startsWith("?") ? decoded.slice(1) : decoded;
-      return new URLSearchParams(clean);
-    } catch(e) {}
-  }
-  return sp;
-}
-const urlParams=getRouteParams();
-const ROUTE_TYPE=urlParams.get("type");
-const ROUTE_TOKEN=urlParams.get("token")||urlParams.get("vid")||"";
+const urlParams=new URLSearchParams(location.search);
+const ROUTE_TYPE=urlParams.get('type');
+const ROUTE_TOKEN=urlParams.get('token')||urlParams.get('vid')||'';
 
 // ── 啟動 ──────────────────────────────────────────────
 window.addEventListener('load', async ()=>{
@@ -982,7 +970,8 @@ function initPlayerPage(type){
       : null;
     if(!param){ onError('無法取得識別碼'); return; }
     try{
-      const data = await apiGet_read('check_today', Object.fromEntries(new URLSearchParams(param+'&t='+Date.now())));
+      const res = await fetch(GAS_URL+'?action=check_today&'+param+'&t='+Date.now());
+      const data = await res.json();
       if(data.status === 'DENY') onDeny();
       else onPass(uid);
     } catch(e){ onError('網路錯誤，請再試'); }
@@ -1045,7 +1034,18 @@ function initPlayerPage(type){
       document.getElementById('si-btn').style.display = 'none';
       setMsg('si-msg', '🔄 Line 帳號驗證中…', 'loading');
       checkWithId(uid, 'shake',
-        ()=>{ showPage('page-shake-pass'); recordSlot(uid,'shake'); },
+        async ()=>{
+          // ★ 取得固定4位識別碼
+          try {
+            const cres = await fetch(GAS_URL+'?action=get_code&lineuid='+encodeURIComponent(uid)+'&t='+Date.now());
+            const cdata = await cres.json();
+            document.getElementById('shake-confirm-code').textContent = cdata.code || uid.slice(-4);
+          } catch(e) {
+            document.getElementById('shake-confirm-code').textContent = uid.slice(-4);
+          }
+          recordSlot(uid,'shake');
+          showPage('page-shake-code');
+        },
         ()=>{ document.getElementById('deny-title').textContent='搖骰子今日額度已滿'; document.getElementById('deny-badge').textContent='您今日已參加過搖骰子'; showPage('page-deny'); startDenyCountdown(); },
         (msg)=>{ setMsg('si-msg', msg, 'error'); }
       );
@@ -1066,8 +1066,9 @@ function initPlayerPage(type){
             document.getElementById('deny-badge').textContent = '此號碼今日已參加過搖骰子';
             showPage('page-deny'); startDenyCountdown();
           } else {
-            showPage('page-shake-pass');
             fetch(GAS_URL+'?action=phone_player_slot&phone4='+p+'&type=shake&t='+Date.now());
+            document.getElementById('shake-confirm-code').textContent = p;
+            showPage('page-shake-code');
           }
         } catch(e){ setMsg('si-msg','網路錯誤，請再試','error'); btn.disabled=false; }
       });
@@ -1075,11 +1076,13 @@ function initPlayerPage(type){
     document.getElementById('shake-ok-btn').addEventListener('click', function(){
       window.close(); location.href='about:blank';
     });
+    document.getElementById('shake-code-ok-btn').addEventListener('click', function(){
+      window.close(); location.href='about:blank';
+    });
 
   } else if(type === 'dice'){
     const uid = window._LINE_UID;
     if(uid){
-      // 有 UID：自動驗證，直接跳遊戲選單
       showPage('page-dice-input');
       const inp = document.getElementById('di-phone4');
       inp.value = uid.slice(-4);
@@ -1087,9 +1090,19 @@ function initPlayerPage(type){
       document.getElementById('di-btn').style.display = 'none';
       setMsg('di-msg', '🔄 Line 帳號驗證中…', 'loading');
       checkWithId(uid, 'dice',
-        ()=>{
-          // 直接跳遊戲，帶入 UID 末4作為 phone4 顯示用
-          window.location.href = INDEX_URL + '?phone4=' + encodeURIComponent(uid.slice(-4)) + '&lineuid=' + encodeURIComponent(uid);
+        async ()=>{
+          // ★ 取得固定4位識別碼
+          let code = uid.slice(-4);
+          try {
+            const cres = await fetch(GAS_URL+'?action=get_code&lineuid='+encodeURIComponent(uid)+'&t='+Date.now());
+            const cdata = await cres.json();
+            if(cdata.code) code = cdata.code;
+          } catch(e) {}
+          document.getElementById('dice-confirm-code').textContent = code;
+          showPage('page-dice-confirm');
+          document.getElementById('dice-go-btn').onclick = function(){
+            window.location.href = INDEX_URL + '?phone4=' + encodeURIComponent(code) + '&lineuid=' + encodeURIComponent(uid);
+          };
         },
         ()=>{ document.getElementById('deny-title').textContent='遊戲今日額度已滿'; document.getElementById('deny-badge').textContent='您今日已參加過遊戲挑戰'; showPage('page-deny'); startDenyCountdown(); },
         (msg)=>{ setMsg('di-msg', msg, 'error'); }
