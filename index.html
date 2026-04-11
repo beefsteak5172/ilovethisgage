@@ -776,9 +776,22 @@ async function apiPost(action,params){
   return await res.json();
 }
 async function apiGet_read(action,params){
-  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
-  const res=await fetch(SCRIPT_URL+'?action='+action+'&'+qs+'&t='+Date.now(),{redirect:'follow'});
-  return await res.json();
+  const qs=Object.entries(params).map(([k,v])=>k+"="+encodeURIComponent(v)).join("&");
+  const url=SCRIPT_URL+"?action="+action+"&"+qs+"&t="+Date.now();
+  try {
+    const res=await fetch(url,{redirect:"follow",mode:"cors"});
+    return await res.json();
+  } catch(e1) {
+    return await new Promise((resolve,reject)=>{
+      const cbName="_cb"+Date.now();
+      const s=document.createElement("script");
+      window[cbName]=function(data){ resolve(data); delete window[cbName]; s.remove(); };
+      s.onerror=()=>{ reject(new Error("JSONP fail")); delete window[cbName]; s.remove(); };
+      s.src=url+"&callback="+cbName;
+      document.head.appendChild(s);
+      setTimeout(()=>{ reject(new Error("timeout")); },8000);
+    });
+  }
 }
 function apiGet(action,params){
   const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
@@ -969,8 +982,7 @@ function initPlayerPage(type){
       : null;
     if(!param){ onError('無法取得識別碼'); return; }
     try{
-      const res = await fetch(GAS_URL+'?action=check_today&'+param+'&t='+Date.now());
-      const data = await res.json();
+      const data = await apiGet_read('check_today', Object.fromEntries(new URLSearchParams(param+'&t='+Date.now())));
       if(data.status === 'DENY') onDeny();
       else onPass(uid);
     } catch(e){ onError('網路錯誤，請再試'); }
