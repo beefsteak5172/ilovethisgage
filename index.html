@@ -104,8 +104,7 @@ async function init() {
   await liff.init({ liffId: "2009772018-YA6NBDMf" });
 
   // 取得 ?type= 參數
-  const params = new URLSearchParams(liff.getDecodedIDToken ? window.location.search : "");
-  activityType = params.get("type") || new URL(location.href).searchParams.get("type") || "";
+  activityType = new URL(location.href).searchParams.get("type") || "";
 
   const info = ACTIVITY_INFO[activityType];
   if (!info) {
@@ -128,19 +127,36 @@ async function init() {
   document.getElementById("loading-area").style.display = "none";
   document.getElementById("main-area").style.display    = "block";
 
-  // 預先查詢是否已簽到
+  // 預先查詢是否已簽到（用 GET + no-cors iframe trick，改用 script tag jsonp 方式）
   checkStatus();
 }
 
-async function checkStatus() {
-  try {
-    const res = await fetch(`${GAS_URL}?userId=${liffProfile.userId}&type=${activityType}`);
-    const data = await res.json();
-    if (data.alreadyCheckedIn) {
+// 用 script tag JSONP 方式繞過 CORS 限制查詢狀態
+function checkStatus() {
+  const cbName = "gasCallback_" + Date.now();
+  const script = document.createElement("script");
+  const url = GAS_URL
+    + "?userId=" + encodeURIComponent(liffProfile.userId)
+    + "&type="   + encodeURIComponent(activityType)
+    + "&callback=" + cbName;
+
+  window[cbName] = function(data) {
+    delete window[cbName];
+    document.body.removeChild(script);
+    if (data && data.alreadyCheckedIn) {
       showResult("warn", "你今天已經簽到過「" + data.activity + "」了！\n明天再來 🌟");
       document.getElementById("checkin-btn").disabled = true;
+      document.getElementById("checkin-btn").textContent = "今日已簽到";
     }
-  } catch(e) {}
+  };
+
+  script.onerror = function() {
+    delete window[cbName];
+    try { document.body.removeChild(script); } catch(e) {}
+  };
+
+  script.src = url;
+  document.body.appendChild(script);
 }
 
 async function doCheckin() {
@@ -149,14 +165,15 @@ async function doCheckin() {
   btn.textContent = "簽到中...";
 
   try {
+    // 用 form POST 方式送出，GAS 會從 e.parameter 讀取
+    const formData = new FormData();
+    formData.append("userId",      liffProfile.userId);
+    formData.append("displayName", liffProfile.displayName);
+    formData.append("type",        activityType);
+
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId:      liffProfile.userId,
-        displayName: liffProfile.displayName,
-        type:        activityType
-      })
+      body: formData
     });
     const data = await res.json();
 
