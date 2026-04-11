@@ -90,7 +90,7 @@
 // ══════════════════════════════════════════════════════
 //  ★ 設定區：兩個值必須正確
 // ══════════════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycby67piX4xN0TBGf9-IuVfQrzPDaAcroOFd0n0yP83Mt7-57Zu4HIeo9QKQIw8NrIGcGpQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzWFqWDgM2RrAZAIV-qyZgxlc6ZWn6WG_cxjp626u6138rWL72sN_MJY8tF0pHKlsvB-A/exec";
 const LIFF_ID = "2009772018-YA6NBDMf";
 // ══════════════════════════════════════════════════════
 
@@ -168,10 +168,14 @@ async function doCheckin() {
     const data = await res.json();
 
     if (data.status === "OK") {
+      const timesText = data.isFirstEver
+        ? "🌟 首次參加！歡迎加入！"
+        : "📅 第 " + data.visitCount + " 次參加此活動";
       showResult("success",
         "🎉 簽到成功！\n" +
         "活動：" + ACTIVITY_INFO[activityType].label + "\n" +
-        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "")
+        "玩家編號：" + (data.uid4 || "----") + "\n" +
+        timesText
       );
       btn.textContent = "已簽到 ✓";
 
