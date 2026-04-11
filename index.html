@@ -59,14 +59,13 @@
     font-size: 15px;
     font-weight: 500;
     display: none;
+    white-space: pre-line;
   }
   .result.success { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
   .result.warn    { background: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
   .result.error   { background: #FFEBEE; color: #B71C1C; border: 1px solid #FFCDD2; }
   .loading { color: #888; font-size: 14px; margin-top: 16px; }
   .user-info { font-size: 12px; color: #aaa; margin-top: 16px; }
-
-  /* emoji icons */
   .icon { font-size: 36px; margin-bottom: 12px; }
 </style>
 </head>
@@ -88,8 +87,12 @@
 </div>
 
 <script>
-// ── 設定：填入你的 Apps Script 部署網址 ──
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw5gG_ddQbc9U4Nc3Y6WC4s_wglCZRyGNcgKQY1uX13mMfFf3ayxYFVjEnp0JVAw8tW/exec";
+// ══════════════════════════════════════════════════════
+//  ★ 設定區：兩個值必須正確
+// ══════════════════════════════════════════════════════
+const GAS_URL = "https://script.google.com/macros/s/AKfycby67piX4xN0TBGf9-IuVfQrzPDaAcroOFd0n0yP83Mt7-57Zu4HIeo9QKQIw8NrIGcGpQ/exec";
+const LIFF_ID = "2009772018-YA6NBDMf";
+// ══════════════════════════════════════════════════════
 
 const ACTIVITY_INFO = {
   chicken: { icon: "🍗", label: "炸雞活動" },
@@ -97,22 +100,19 @@ const ACTIVITY_INFO = {
   dice:    { icon: "🎮", label: "每日遊戲" }
 };
 
-let liffProfile = null;
+let liffProfile  = null;
 let activityType = "";
 
 async function init() {
-  await liff.init({ liffId: "2009772018-YA6NBDMf" });
+  await liff.init({ liffId: LIFF_ID });
 
-  // 取得 ?type= 參數
   activityType = new URL(location.href).searchParams.get("type") || "";
-
   const info = ACTIVITY_INFO[activityType];
   if (!info) {
     showError("未知的活動類型，請重新掃描 QR Code");
     return;
   }
 
-  // 取得用戶 Profile
   if (!liff.isLoggedIn()) {
     liff.login({ redirectUri: location.href });
     return;
@@ -127,36 +127,27 @@ async function init() {
   document.getElementById("loading-area").style.display = "none";
   document.getElementById("main-area").style.display    = "block";
 
-  // 預先查詢是否已簽到（用 GET + no-cors iframe trick，改用 script tag jsonp 方式）
   checkStatus();
 }
 
-// 用 script tag JSONP 方式繞過 CORS 限制查詢狀態
+// 預先查詢今日是否已簽到
 function checkStatus() {
-  const cbName = "gasCallback_" + Date.now();
-  const script = document.createElement("script");
   const url = GAS_URL
-    + "?userId=" + encodeURIComponent(liffProfile.userId)
-    + "&type="   + encodeURIComponent(activityType)
-    + "&callback=" + cbName;
+    + "?action=check_today"
+    + "&lineuid=" + encodeURIComponent(liffProfile.userId)
+    + "&type="    + encodeURIComponent(activityType);
 
-  window[cbName] = function(data) {
-    delete window[cbName];
-    document.body.removeChild(script);
-    if (data && data.alreadyCheckedIn) {
-      showResult("warn", "你今天已經簽到過「" + data.activity + "」了！\n明天再來 🌟");
-      document.getElementById("checkin-btn").disabled = true;
-      document.getElementById("checkin-btn").textContent = "今日已簽到";
-    }
-  };
-
-  script.onerror = function() {
-    delete window[cbName];
-    try { document.body.removeChild(script); } catch(e) {}
-  };
-
-  script.src = url;
-  document.body.appendChild(script);
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === "DENY") {
+        showResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
+        const btn = document.getElementById("checkin-btn");
+        btn.disabled = true;
+        btn.textContent = "今日已簽到";
+      }
+    })
+    .catch(() => {});
 }
 
 async function doCheckin() {
@@ -165,29 +156,35 @@ async function doCheckin() {
   btn.textContent = "簽到中...";
 
   try {
-    // 用 form POST 方式送出，GAS 會從 e.parameter 讀取
-    const formData = new FormData();
-    formData.append("userId",      liffProfile.userId);
-    formData.append("displayName", liffProfile.displayName);
-    formData.append("type",        activityType);
-
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: formData
+    // ★ GET + action=sign_in + lineuid（修正原本 POST + userId 的錯誤）
+    const params = new URLSearchParams({
+      action:      "sign_in",
+      lineuid:     liffProfile.userId,
+      displayName: liffProfile.displayName,
+      type:        activityType
     });
+
+    const res  = await fetch(GAS_URL + "?" + params.toString());
     const data = await res.json();
 
-    if (data.success) {
-      showResult("success", "🎉 簽到成功！\n活動：" + data.activity + "\n時間：" + data.date + " " + data.time);
+    if (data.status === "OK") {
+      showResult("success",
+        "🎉 簽到成功！\n" +
+        "活動：" + ACTIVITY_INFO[activityType].label + "\n" +
+        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "")
+      );
       btn.textContent = "已簽到 ✓";
-    } else if (data.alreadyCheckedIn) {
+
+    } else if (data.status === "DENY") {
       showResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
       btn.textContent = "今日已簽到";
+
     } else {
-      showResult("error", "簽到失敗：" + data.message);
+      showResult("error", "簽到失敗：" + (data.message || "未知錯誤"));
       btn.disabled = false;
       btn.textContent = "重試";
     }
+
   } catch(err) {
     showResult("error", "連線錯誤，請稍後再試");
     btn.disabled = false;
