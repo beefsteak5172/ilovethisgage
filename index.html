@@ -8,9 +8,13 @@
   content="default-src 'self' 'unsafe-inline' 'unsafe-eval'
     https://fonts.googleapis.com https://fonts.gstatic.com
     https://cdnjs.cloudflare.com https://cdn.jsdelivr.net
-    https://script.google.com https://assets.mixkit.co
+    https://script.google.com https://script.googleusercontent.com
+    https://assets.mixkit.co
     https://api.ipify.org https://www.myinstants.com
-    https://static.line-scdn.net https://access.line.me https://api.line.me;
+    https://static.line-scdn.net https://liff.line.me
+    https://liffsdk.line-scdn.net https://obs.line-scdn.net
+    https://access.line.me https://api.line.me
+    https://profile.line-scdn.net;
     frame-ancestors 'none';">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -641,10 +645,12 @@ button:disabled,.mode-btn:disabled,.game-btn:disabled{opacity:.6;cursor:not-allo
 ;(function(){ if(window.self!==window.top){ try{window.top.location=window.self.location;}catch(e){document.body.innerHTML='';} } })();
 
 /* [S2] SCRIPT_URL */
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwtRXhPAgkuxFAManwkJfe3LxFNkwuAGuRwSWxLU4AFYCHjVbdx4IuKCR_4vqCROTwt0A/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxYi6kfoelB_v5D1q0Kw8ZM-IrBQnsMm4Co5-oQjteOOVdwJ1nE2KxMCHvwg7kiaqdjBQ/exec';
 
 /* LIFF ID */
 const LIFF_ID = '2009772018-YA6NBDMf';
+/* GAS URL（早期用，LIFF init 前可用） */
+const GAS_URL_EARLY = SCRIPT_URL;
 
 /* [S3] Console 封鎖 */
 ;(function(){
@@ -824,6 +830,16 @@ window.addEventListener('load', async ()=>{
       const profile = await liff.getProfile();
       window._LINE_UID = profile.userId;
       window._LINE_NAME = profile.displayName;
+
+      // ★ 自動簽到：綁定 LINE ID 寫入簽到簿
+      if(ROUTE_TYPE && ['chicken','shake','dice'].includes(ROUTE_TYPE)){
+        fetch(GAS_URL_EARLY + '?action=sign_in'
+          + '&lineuid=' + encodeURIComponent(profile.userId)
+          + '&displayName=' + encodeURIComponent(profile.displayName)
+          + '&type=' + ROUTE_TYPE
+          + '&t=' + Date.now()
+        ).catch(()=>{});
+      }
     } catch(e) {
       // 不在 Line 環境（例如電腦瀏覽器測試），降級用末4碼
       window._LINE_UID = null;
