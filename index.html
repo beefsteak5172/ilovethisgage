@@ -2,1738 +2,194 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>活動管理 & 骰子挑戰 v8.20-SEC</title>
-<meta http-equiv="Content-Security-Policy"
-  content="default-src 'self' 'unsafe-inline' 'unsafe-eval'
-    https://fonts.googleapis.com https://fonts.gstatic.com
-    https://cdnjs.cloudflare.com https://cdn.jsdelivr.net
-    https://script.google.com https://script.googleusercontent.com
-    https://assets.mixkit.co
-    https://api.ipify.org https://www.myinstants.com
-    https://static.line-scdn.net https://liff.line.me
-    https://liffsdk.line-scdn.net https://obs.line-scdn.net
-    https://access.line.me https://api.line.me
-    https://profile.line-scdn.net;
-    frame-ancestors 'none';">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>無名牛排 簽到</title>
+<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Color+Emoji&display=swap');
-@font-face{font-family:'Pixel';src:url('https://cdn.jsdelivr.net/gh/wbox/b2-plus-show-posts-in-same-tag@5.2.1/asset/font/PressStart2P-Regular.ttf') format('truetype');}
-*{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation;}
-:root{
-  --primary:#4a6cf7;--secondary:#10b981;--green:#22c55e;--red:#ef4444;
-  --yellow:#f59e0b;--blue:#60a5fa;--jackpot:#ff416c;--success-clr:#00b09b;
-  --bg:#0a0a1a;--bg2:#1e293b;--border:rgba(255,255,255,0.1);
-  --dice-size:clamp(70px,15vw,100px);
-}
-html,body{width:100%;height:100%;overflow:hidden;
-  font-family:'Noto Sans TC','Noto Color Emoji',system-ui,sans-serif;
-  color:#fff;background:var(--bg);position:fixed;}
-body.dice-mode{overflow:auto;position:static;}
-/* 禁用選取與拖曳 */
-*{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none;}
-.video-background{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
-  background:linear-gradient(135deg,#0a0a2a,#1a1a4e,#0d2137,#1a1a4e,#0a0a2a);
-  background-size:400% 400%;animation:gradientShift 12s ease infinite;}
-@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.video-background video{position:absolute;top:50%;left:50%;min-width:100%;min-height:100%;width:auto;height:auto;transform:translate(-50%,-50%);object-fit:cover;}
-.video-overlay{position:absolute;inset:0;background:rgba(5,5,20,0.78);}
-#loading-overlay{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s;}
-.spinner-ring{width:56px;height:56px;border:6px solid rgba(255,255,255,.2);border-top-color:var(--yellow);border-radius:50%;animation:ld-spin 1.2s linear infinite;}
-@keyframes ld-spin{to{transform:rotate(360deg)}}
-#fs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:9998;backdrop-filter:blur(6px);}
-#fs-overlay h2{font-size:22px;color:#ddd;}
-#fs-btn{padding:14px 36px;background:var(--yellow);color:#000;border:none;border-radius:10px;font-size:18px;font-weight:900;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:transform .2s;}
-#fs-btn:hover{transform:scale(1.05);}
-#ws-violation{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(6px);}
-#ws-violation .ws-vbox{background:#1e2240;padding:40px 36px;border-radius:16px;border:2px solid #ff6600;max-width:480px;text-align:center;}
-#ws-violation h2{color:#ff6600;font-size:1.8rem;margin-bottom:16px;}
-#ws-violation p{font-size:1.1rem;line-height:1.7;margin-bottom:28px;}
-#ws-violation button{padding:12px 28px;background:#ff6600;color:#fff;border:none;border-radius:6px;font-size:1rem;cursor:pointer;}
-.vid-ctrl{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;gap:8px;}
-.vid-ctrl button{width:40px;height:40px;background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:background .2s;}
-.vid-ctrl button:hover{background:rgba(0,0,0,.85);}
-#ws-badge{position:fixed;bottom:20px;left:20px;background:rgba(0,0,0,.55);color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;display:flex;align-items:center;gap:7px;z-index:200;opacity:.8;}
-#fullscreen-prompt{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:10px 20px;border-radius:8px;font-size:.9rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
-#fullscreen-prompt.visible{opacity:1;}
-/* 管理台 */
-#page-admin{position:relative;z-index:10;width:100vw;height:100vh;display:none;flex-direction:column;}
-#page-admin.active{display:flex;}
-.top-bar{padding:14px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(0,0,0,.3);backdrop-filter:blur(10px);}
-.top-bar h1{font-size:17px;font-weight:900;letter-spacing:1px;display:flex;align-items:center;gap:10px;}
-.live-dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:blink 2s infinite;display:inline-block;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.top-right{font-size:12px;color:rgba(255,255,255,.4);}
-.qr-main{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden;}
-.qr-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:20px;}
-.qr-panel:not(:last-child){border-right:1px solid var(--border);}
-.qr-label{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.qr-badge{font-size:11px;font-weight:700;letter-spacing:2px;padding:3px 14px;border-radius:100px;}
-.chicken-badge{background:rgba(245,158,11,.2);color:var(--yellow);}
-.dice-badge{background:rgba(96,165,250,.2);color:var(--blue);}
-.shake-badge{background:rgba(245,158,11,.2);color:var(--yellow);}
-.qr-title{font-size:clamp(20px,2.5vw,30px);font-weight:900;text-align:center;}
-.qr-desc{font-size:clamp(12px,1.2vw,15px);color:rgba(255,255,255,.5);text-align:center;line-height:1.8;}
-.qr-frame{background:#fff;border-radius:16px;padding:12px;box-shadow:0 0 60px rgba(255,255,255,.08);width:clamp(180px,28vw,380px);height:clamp(180px,28vw,380px);display:flex;align-items:center;justify-content:center;}
-.qr-frame canvas,.qr-frame img{width:100% !important;height:100% !important;}
-.qr-refresh-hint{font-size:11px;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:5px;}
-.qr-refresh-hint span{color:var(--yellow);font-weight:700;}
-.qr-link-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:100px;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;text-decoration:none;letter-spacing:.5px;transition:background .2s,border-color .2s,color .2s;cursor:pointer;}
-.qr-link-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff;}
-.bottom-bar{flex-shrink:0;padding:10px 24px;border-top:1px solid var(--border);background:rgba(0,0,0,.4);backdrop-filter:blur(10px);display:flex;align-items:center;gap:16px;overflow:hidden;}
-.b-stat{display:flex;align-items:center;gap:6px;font-size:13px;flex-shrink:0;}
-.b-stat .bn{font-size:18px;font-weight:900;}
-.b-stat.ok .bn{color:var(--green);}
-.b-stat.deny .bn{color:var(--red);}
-.b-stat.tot .bn{color:var(--blue);}
-.b-divider{width:1px;height:24px;background:var(--border);flex-shrink:0;}
-.b-log-strip{flex:1;overflow:hidden;display:flex;gap:10px;align-items:center;}
-.b-chip{flex-shrink:0;font-size:11px;padding:4px 12px;border-radius:100px;border:1px solid;animation:slideChip .3s ease;white-space:nowrap;}
-@keyframes slideChip{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.b-chip.ok{border-color:var(--green);color:var(--green);}
-.b-chip.deny{border-color:var(--red);color:var(--red);}
-#admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(12px);}
-#admin-overlay.show{display:flex;animation:fadeIn .2s ease;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.popup{width:min(420px,88vw);background:rgba(20,20,40,.98);border:1px solid var(--border);border-radius:28px;padding:48px 36px;text-align:center;animation:popIn .3s cubic-bezier(.34,1.56,.64,1);}
-@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
-.p-icon{font-size:72px;margin-bottom:16px;}
-.p-title{font-size:32px;font-weight:900;margin-bottom:10px;}
-.ok-pop .p-title{color:var(--green);}
-.deny-pop .p-title{color:var(--red);}
-.p-desc{font-size:15px;color:rgba(255,255,255,.55);line-height:1.8;}
-.p-plan{margin-top:20px;font-size:14px;background:rgba(255,255,255,.06);border-radius:10px;padding:12px;color:rgba(255,255,255,.6);}
-.p-plan strong{color:#fff;}
-.prog-bar{margin-top:22px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
-.prog-fill{height:100%;border-radius:2px;}
-.ok-pop .prog-fill{background:var(--green);}
-.deny-pop .prog-fill{background:var(--red);}
-/* 炸雞手機端 */
-#page-chicken{position:relative;z-index:10;width:100vw;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;gap:20px;}
-#page-chicken.active{display:flex;}
-.m-icon{font-size:80px;}
-.m-title{font-size:28px;font-weight:900;}
-.m-ok .m-title{color:var(--green);}
-.m-deny .m-title{color:var(--red);}
-.m-wait .m-title{color:rgba(255,255,255,.4);}
-.m-err .m-title{color:var(--red);}
-.m-desc{font-size:15px;color:rgba(255,255,255,.55);line-height:1.9;white-space:pre-line;}
-.m-box{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:14px;padding:16px 24px;font-size:15px;width:100%;max-width:320px;}
-.m-spin{width:44px;height:44px;border:4px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.6);border-radius:50%;animation:ld-spin 1s linear infinite;}
-/* 骰子遊戲 */
-#page-dice-wait{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px;background:#111;}
-#page-dice-wait.active{display:flex;}
-#page-dice-game{position:fixed;inset:0;z-index:20;background:var(--bg2);opacity:0;transform:scale(.95);transition:opacity .5s ease-out,transform .5s ease-out;display:none;flex-direction:row;align-items:flex-start;justify-content:center;gap:16px;padding:16px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-#page-dice-game.visible{display:flex;opacity:1;transform:scale(1);}
-#page-dice-result{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);}
-#page-dice-result.show{display:flex;}
-/* 驗證中畫面 */
-#syncing-overlay{position:fixed;inset:0;z-index:60;background:rgba(10,10,26,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:40px;}
-#syncing-overlay.show{display:flex;}
-.dice-container{width:100%;max-width:860px;background:rgba(255,255,255,.05);border-radius:16px;padding:clamp(12px,3vw,24px);box-shadow:0 10px 30px rgba(0,0,0,.3);text-align:center;position:relative;flex-grow:1;}
-.dice-sidebar{flex:0 0 260px;background:rgba(0,0,0,.3);padding:16px;border-radius:15px;border:1px solid var(--primary);align-self:flex-start;display:none;flex-direction:column;font-family:'Noto Sans TC',sans-serif;max-height:calc(100vh - 32px);overflow-y:auto;}
-.dice-sidebar h3{color:var(--primary);font-family:'Pixel',sans-serif;margin-bottom:12px;font-size:1rem;}
-.dice-sidebar .step{background:rgba(255,255,255,.05);padding:8px 10px;border-radius:8px;border-left:3px solid var(--secondary);margin-bottom:8px;font-size:.9rem;line-height:1.5;}
-h1,h2,h3{margin-bottom:14px;font-size:clamp(1.2rem,5vw,2.2rem);color:#e2e8f0;text-shadow:2px 2px 4px rgba(0,0,0,.5);line-height:1.2;}
-h2{font-size:clamp(1.1rem,4.5vw,1.8rem);}
-h3{font-size:clamp(.95rem,3.5vw,1.4rem);color:#94a3b8;}
-button,.mode-btn,.game-btn{font-family:'Noto Sans TC',sans-serif;font-weight:600;font-size:clamp(.9rem,3.5vw,1.1rem);padding:11px 20px;background:linear-gradient(45deg,var(--primary),var(--secondary));color:#fff;border:none;border-radius:8px;cursor:pointer;text-shadow:1px 1px 2px rgba(0,0,0,.2);margin:6px;min-width:min(200px,80vw);width:auto;transition:all .3s ease;}
-button:hover,.mode-btn:hover,.game-btn:hover{transform:translateY(-2px);box-shadow:0 5px 12px rgba(0,0,0,.3);}
-button:disabled,.mode-btn:disabled,.game-btn:disabled{opacity:.6;cursor:not-allowed;transform:none !important;box-shadow:none;background:#64748b;}
-.forfeit-btn{position:absolute;top:10px;right:10px;background:#c0392b;min-width:auto;padding:6px 14px;font-size:.85rem;z-index:100;}
-#dice-mode-sel,.game-content{display:none;flex-direction:column;align-items:center;width:100%;}
-.combo-text{font-family:'Noto Sans TC',sans-serif;font-weight:bold;font-size:.95rem;color:#f59e0b;margin-top:8px;min-height:22px;}
-.dice-result-container{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 16px;text-align:center;}
-.prize-highlight{display:inline-block;padding:10px 20px;margin:10px 0;background:linear-gradient(45deg,#f59e0b,#ef4444);border-radius:8px;font-size:clamp(1.1rem,4vw,1.7rem);font-family:'Noto Sans TC',sans-serif;text-shadow:2px 2px 4px rgba(0,0,0,.8);color:#fff;border:2px solid #fff;}
-.logout-btn{margin-top:16px;padding:12px 24px;min-width:min(220px,70vw);background:#475569;}
-.jackpot{background:linear-gradient(135deg,var(--jackpot),#f43f5e);animation:pulse 1.5s infinite;}
-.success{background:linear-gradient(135deg,var(--success-clr),#34d399);}
-.lose,.error{background:linear-gradient(135deg,#f97316,#ef4444);}
-.result-icon{font-size:2.8rem;margin-bottom:12px;}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
-.dice-area{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;width:100%;margin-bottom:12px;}
-.dice-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:10px 0;}
-.scene{width:var(--dice-size);height:var(--dice-size);perspective:600px;flex-shrink:0;}
-.dice{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 1s ease-in-out;}
-.face{position:absolute;width:100%;height:100%;border-radius:14%;border:1.5px solid #555;box-shadow:inset 2px 2px 8px rgba(255,255,255,.8),inset -2px -2px 6px rgba(0,0,0,.4),2px 2px 5px rgba(0,0,0,.5);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;backface-visibility:hidden;}
-.face1{background:linear-gradient(145deg,#ffffcc,#e6e600);}
-.face2{background:linear-gradient(145deg,#d2b48c,#8b4513);}
-.face3{background:linear-gradient(145deg,#ffcccc,#e60000);}
-.face4{background:linear-gradient(145deg,#cce5ff,#0047ab);}
-.face5{background:linear-gradient(145deg,#ffe6cc,#e67e22);}
-.face6{background:linear-gradient(145deg,#ccffcc,#006600);}
-.dot{width:18%;height:18%;border-radius:50%;margin:4%;background:radial-gradient(circle at 30% 30%,#222,#000);box-shadow:inset 1px 1px 2px rgba(255,255,255,.2),1px 1px 1px rgba(0,0,0,.9);}
-.face1{transform:translateZ(calc(var(--dice-size)/2));}
-.face2{transform:rotateY(90deg) translateZ(calc(var(--dice-size)/2));}
-.face3{transform:rotateY(180deg) translateZ(calc(var(--dice-size)/2));}
-.face4{transform:rotateY(-90deg) translateZ(calc(var(--dice-size)/2));}
-.face5{transform:rotateX(90deg) translateZ(calc(var(--dice-size)/2));}
-.face6{transform:rotateX(-90deg) translateZ(calc(var(--dice-size)/2));}
-.dice.rolling-0{animation:spin-0 .5s infinite linear;}
-.dice.rolling-1{animation:spin-1 .6s infinite linear;}
-.dice.rolling-2{animation:spin-2 .45s infinite ease-in-out;}
-.dice.rolling-3{animation:spin-3 .55s infinite linear;}
-.dice.rolling-4{animation:spin-4 .65s infinite ease-out;}
-.dice.rolling-5{animation:spin-5 .5s infinite linear;}
-@keyframes spin-0{100%{transform:rotateX(360deg) rotateY(720deg)}}
-@keyframes spin-1{100%{transform:rotateX(-720deg) rotateY(360deg)}}
-@keyframes spin-2{100%{transform:rotateY(360deg) rotateZ(720deg)}}
-@keyframes spin-3{100%{transform:rotateX(-360deg) rotateZ(-720deg)}}
-@keyframes spin-4{100%{transform:rotateY(-720deg) rotateZ(360deg)}}
-@keyframes spin-5{100%{transform:rotateX(360deg) rotateY(360deg) rotateZ(360deg)}}
-.duel-area{display:flex;justify-content:center;width:100%;align-items:flex-start;flex-wrap:wrap;gap:12px;}
-.competitor-zone{flex:1;min-width:min(260px,42vw);display:flex;flex-direction:column;align-items:center;}
-.score-board{font-size:1.1rem;margin-bottom:8px;font-weight:bold;}
-.score-board span{display:inline-block;padding:4px 10px;border-radius:5px;}
-.score-board .player-score{background-color:var(--primary);}
-.score-board .computer-score{background-color:var(--red);}
-#dice-rules-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s ease-out;}
-#dice-rules-modal.visible{opacity:1;pointer-events:auto;}
-#dice-rules-content{background:#1e293b;border-radius:15px;padding:24px 24px 56px;width:92%;max-width:580px;max-height:88vh;overflow-y:auto;border:1px solid #4a6cf7;position:relative;}
-#dice-countdown{position:absolute;top:12px;right:12px;background:#ef4444;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:bold;}
-#dice-history-container{width:100%;margin-top:16px;background:rgba(0,0,0,.2);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.2);display:none;}
-#dice-history-list{list-style-type:decimal;list-style-position:inside;max-height:120px;overflow-y:auto;text-align:left;font-family:'Noto Sans TC',sans-serif;font-size:clamp(.78rem,2.5vw,.88rem);}
-#ver-badge{position:fixed;top:10px;right:12px;z-index:9990;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);border:1px solid rgba(74,108,247,.5);border-radius:6px;padding:3px 10px;font-size:11px;font-family:monospace;color:rgba(165,180,252,.8);letter-spacing:1px;pointer-events:none;user-select:none;}
-/* 確認碼樣式 */
-.confirm-code-box{background:rgba(0,0,0,.4);border:2px solid rgba(245,158,11,.6);border-radius:12px;padding:12px 20px;margin-top:14px;text-align:center;}
-.confirm-code-label{font-size:.75rem;color:rgba(255,255,255,.5);letter-spacing:2px;margin-bottom:4px;}
-.confirm-code-value{font-size:2rem;font-weight:900;font-family:monospace;color:#f59e0b;letter-spacing:8px;text-shadow:0 0 12px rgba(245,158,11,.5);}
-.confirm-code-hint{font-size:.7rem;color:rgba(255,255,255,.35);margin-top:4px;}
-@media (max-width:640px){
-  :root{--dice-size: clamp(48px,13vw,72px);}
-  #page-dice-game{flex-direction:column;align-items:center;padding:10px 8px;gap:0;}
-  .dice-sidebar{display:none !important;}
-  .dice-container{border-radius:12px;padding:10px 8px;}
-  button,.mode-btn,.game-btn{font-size:.9rem;padding:10px 14px;min-width:min(170px,75vw);margin:5px;}
-  .forfeit-btn{padding:5px 10px;font-size:.8rem;}
-  .duel-area{gap:8px;}
-  .competitor-zone{min-width:min(150px,46vw);}
-  .competitor-zone h3{font-size:.9rem;margin-bottom:6px;}
-  .dice-area{padding:8px;}
-  h2{font-size:1.1rem;margin-bottom:10px;}
-  h3{font-size:.95rem;}
-  .score-board{font-size:.95rem;}
-  .combo-text{font-size:.85rem;}
-  #dice-history-container{margin-top:10px;}
-  #dice-history-list{max-height:90px;font-size:.78rem;}
-  .prize-highlight{font-size:1.1rem;padding:8px 14px;}
-  .result-icon{font-size:2.2rem;}
-  #page-dice-result h2{font-size:1.4rem;}
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 28px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .logo { font-size: 48px; margin-bottom: 8px; }
+  .title { font-size: 22px; font-weight: 700; color: #1B5E20; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+  .activity-badge {
+    display: inline-block;
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1.5px solid #A5D6A7;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 8px 24px;
+    margin-bottom: 24px;
+  }
+  .btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.1s;
+    background: #2E7D32;
+    color: #fff;
+    margin-top: 8px;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.9; }
+  .btn:disabled { background: #ccc; cursor: not-allowed; }
+  .result {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    display: none;
+  }
+  .result.success { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
+  .result.warn    { background: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
+  .result.error   { background: #FFEBEE; color: #B71C1C; border: 1px solid #FFCDD2; }
+  .loading { color: #888; font-size: 14px; margin-top: 16px; }
+  .user-info { font-size: 12px; color: #aaa; margin-top: 16px; }
 
-    /* ── 玩家手機通用頁面 ── */
-    .player-page {
-      position:fixed; inset:0; z-index:10;
-      display:none; flex-direction:column; align-items:center; justify-content:center;
-      padding:28px 20px;
-      background:linear-gradient(135deg,#0a0a2a 0%,#1a1a4e 60%,#0d2137 100%);
-    }
-    .player-page.active { display:flex; }
-    .p-card {
-      background:rgba(255,255,255,0.06);
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius:24px;
-      padding:36px 28px;
-      width:100%; max-width:360px;
-      text-align:center;
-    }
-    .p-logo { font-size:3.2rem; margin-bottom:10px; animation:pFloat 3s ease-in-out infinite; }
-    @keyframes pFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
-    .p-title { font-size:1.5rem; font-weight:900; color:#fff; margin-bottom:4px; }
-    .p-sub   { font-size:.82rem; color:rgba(255,255,255,.45); margin-bottom:22px; }
-
-    /* 輸入區 */
-    .p-label { font-size:.75rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; text-align:left; }
-    .p-input {
-      width:100%; padding:14px; margin-bottom:14px;
-      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
-      border-radius:12px; color:#fff; font-size:1.6rem; font-weight:900;
-      text-align:center; letter-spacing:.18em; font-family:inherit;
-      cursor:pointer; caret-color:transparent;
-    }
-    .p-input:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.25); }
-    .p-btn {
-      width:100%; padding:14px; margin-bottom:8px;
-      border:none; border-radius:12px; color:#fff;
-      font-size:1rem; font-weight:700; cursor:pointer; font-family:inherit;
-      transition:transform .2s, box-shadow .2s;
-    }
-    .p-btn:active { transform:scale(0.97); }
-    .p-btn-primary { background:linear-gradient(135deg,#6366f1,#818cf8); }
-    .p-btn-primary:hover { box-shadow:0 6px 20px rgba(99,102,241,.4); }
-    .p-btn-primary:disabled { opacity:.5; cursor:not-allowed; }
-    .p-msg { font-size:.85rem; font-weight:600; padding:10px 14px; border-radius:10px; margin-top:10px; display:none; }
-    .p-msg.show { display:block; }
-    .p-msg.error   { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); color:#fca5a5; }
-    .p-msg.loading { background:rgba(245,158,11,.15); border:1px solid rgba(245,158,11,.3); color:#fcd34d; }
-
-    /* PASS 畫面 */
-    .pass-badge {
-      display:inline-block; margin:14px 0;
-      background:linear-gradient(135deg,#22c55e,#10b981);
-      border-radius:16px; padding:18px 36px;
-      font-size:2.4rem; font-weight:900; color:#fff; letter-spacing:.08em;
-      box-shadow:0 0 40px rgba(34,197,94,.35);
-      animation:passPulse 2s ease-in-out infinite;
-    }
-    @keyframes passPulse { 0%,100%{box-shadow:0 0 40px rgba(34,197,94,.35)} 50%{box-shadow:0 0 60px rgba(34,197,94,.6)} }
-    .pass-hint { font-size:.85rem; color:rgba(255,255,255,.55); margin-bottom:20px; line-height:1.7; }
-    .p-btn-ok { background:linear-gradient(135deg,#22c55e,#10b981); }
-    .p-btn-ok:hover { box-shadow:0 6px 20px rgba(34,197,94,.4); }
-
-    /* 拒絕畫面 */
-    .deny-badge {
-      display:inline-block; margin:14px 0;
-      background:rgba(239,68,68,.15); border:2px solid #ef4444;
-      border-radius:14px; padding:12px 24px;
-      font-size:1.1rem; font-weight:700; color:#fca5a5;
-    }
-    .deny-countdown { font-size:2.2rem; font-weight:900; color:#f59e0b; margin:10px 0 6px; letter-spacing:.04em; }
-
-    /* 識別碼確認畫面（方案C） */
-    .code-display {
-      display:inline-block; margin:14px 0;
-      background:rgba(99,102,241,.2); border:2px solid #6366f1;
-      border-radius:14px; padding:16px 32px;
-      font-size:2.6rem; font-weight:900; color:#818cf8; letter-spacing:.2em;
-    }
-    .code-hint { font-size:.82rem; color:rgba(255,255,255,.5); line-height:1.7; margin-bottom:20px; }
-
-    /* 數字小鍵盤 */
-    #app-vkb {
-      position:fixed; bottom:0; left:50%;
-      transform:translateX(-50%) translateY(110%);
-      transition:transform .25s ease-out;
-      z-index:9999; background:#0f172a;
-      border-top:1px solid rgba(255,255,255,.1);
-      border-radius:16px 16px 0 0;
-      padding:clamp(8px,2vw,14px) clamp(10px,3vw,20px) clamp(10px,2.5vw,16px);
-      box-shadow:0 -4px 24px rgba(0,0,0,.5);
-      user-select:none; width:clamp(200px,44vw,300px);
-    }
-    #app-vkb.show { transform:translateX(-50%) translateY(0); }
-    #app-vkb .vr { display:flex; gap:clamp(4px,1vw,8px); margin-bottom:clamp(4px,1vw,7px); justify-content:center; }
-    #app-vkb .vr:last-child { margin-bottom:0; }
-    #app-vkb .vk {
-      flex:1; height:clamp(38px,6.5vh,54px);
-      background:#1e293b; border:1px solid rgba(99,102,241,.3); border-radius:8px;
-      color:#e2e8f0; font-size:clamp(.88rem,2.2vw,1.15rem); font-weight:700; font-family:inherit;
-      cursor:pointer; transition:background .12s,transform .08s;
-      display:flex; align-items:center; justify-content:center;
-    }
-    #app-vkb .vk:active { background:#6366f1; transform:scale(.93); }
-    #app-vkb .vk.vdel:active { background:#ef4444; }
-    #app-vkb .vk.vok  { background:linear-gradient(135deg,#6366f1,#818cf8); border-color:#6366f1; font-size:clamp(.72rem,1.6vw,.88rem); }
-    #app-vkb .vk.vok:active { background:#4f46e5; }
-    #app-vkb .vk.vdel { font-size:clamp(.72rem,1.6vw,.88rem); }
-  </style>
+  /* emoji icons */
+  .icon { font-size: 36px; margin-bottom: 12px; }
+</style>
 </head>
 <body>
+<div class="card">
+  <div class="logo">🥩</div>
+  <div class="title">無名牛排</div>
+  <div class="subtitle">每日簽到 · 天天好康</div>
 
-<div class="video-background">
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="https://assets.codepen.io/3364143/sample.mp4" type="video/mp4">
-  </video>
-  <div class="video-overlay"></div>
-</div>
+  <div id="loading-area" class="loading">載入中...</div>
 
-<div id="loading-overlay"><div class="spinner-ring"></div></div>
-<div id="fs-overlay">
-  <h2>請進入全螢幕模式</h2>
-  <button id="fs-btn">⛶ 進入全螢幕</button>
-</div>
-<div id="ws-violation">
-  <div class="ws-vbox">
-    <h2><i class="fas fa-exclamation-circle"></i></h2>
-    <p id="ws-violation-msg"></p>
-    <button id="ws-violation-ok">確定</button>
+  <div id="main-area" style="display:none;">
+    <div class="icon" id="activity-icon"></div>
+    <div class="activity-badge" id="activity-label"></div>
+    <div id="user-name" class="user-info"></div>
+    <button class="btn" id="checkin-btn" onclick="doCheckin()">立即簽到 ✓</button>
+    <div class="result" id="result-box"></div>
   </div>
 </div>
-<div class="vid-ctrl">
-  <button id="vid-mute"><i class="fas fa-volume-mute"></i></button>
-  <button id="vid-pause"><i class="fas fa-pause"></i></button>
-</div>
-<div id="ws-badge"><i class="fas fa-shield-alt"></i></div>
-<div id="fullscreen-prompt">按 ESC 鍵退出全螢幕模式</div>
-<div id="ver-badge">v8.20-SEC</div>
-
-<!-- 管理台 -->
-
-<!-- ★ 炸雞：輸入末4碼 -->
-<div id="page-chicken-input" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">🍗</div>
-    <div class="p-title">炸雞第二份半價</div>
-    <div class="p-sub">請輸入手機末 4 碼確認資格</div>
-    <div class="p-label">手機末 4 碼</div>
-    <input id="ci-phone4" class="p-input" type="tel" inputmode="none" maxlength="4" placeholder="0000" readonly>
-    <button class="p-btn p-btn-primary" id="ci-btn">確認參加</button>
-    <div class="p-msg" id="ci-msg"></div>
-  </div>
-</div>
-
-<!-- ★ 炸雞：PASS 畫面 -->
-<div id="page-chicken-pass" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">✅</div>
-    <div class="p-title">可以參加！</div>
-    <div class="pass-badge">PASS</div>
-    <div class="pass-hint">請向店員出示此畫面<br>享受炸雞第二份半價優惠！</div>
-    <button class="p-btn p-btn-ok" id="chicken-ok-btn">店員確認完成</button>
-  </div>
-</div>
-
-<!-- ★ 炸雞/搖骰子：今日已滿 -->
-<div id="page-deny" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">⏳</div>
-    <div class="p-title" id="deny-title">今日額度已滿</div>
-    <div class="deny-badge" id="deny-badge">此項目今日已參加過</div>
-    <div style="font-size:.82rem;color:rgba(255,255,255,.45);margin-top:8px;">明天重置倒數</div>
-    <div class="deny-countdown" id="deny-countdown">--:--:--</div>
-  </div>
-</div>
-
-<!-- ★ 搖骰子：輸入末4碼 -->
-<div id="page-shake-input" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">🎲</div>
-    <div class="p-title">手把手骰子盅</div>
-    <div class="p-sub">請輸入手機末 4 碼確認資格</div>
-    <div class="p-label">手機末 4 碼</div>
-    <input id="si-phone4" class="p-input" type="tel" inputmode="none" maxlength="4" placeholder="0000" readonly>
-    <button class="p-btn p-btn-primary" id="si-btn">確認參加</button>
-    <div class="p-msg" id="si-msg"></div>
-  </div>
-</div>
-
-<!-- ★ 搖骰子：PASS 畫面（備用） -->
-<div id="page-shake-pass" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">✅</div>
-    <div class="p-title">可以參加！</div>
-    <div class="pass-badge">PASS</div>
-    <div class="pass-hint">請向店員出示此畫面<br>享受手把手骰子盅活動！</div>
-    <button class="p-btn p-btn-ok" id="shake-ok-btn">店員確認完成</button>
-  </div>
-</div>
-
-<!-- ★ 搖骰子：4位識別碼畫面（LINE UID 綁定） -->
-<div id="page-shake-code" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">🎲</div>
-    <div class="p-title">資格確認！</div>
-    <div style="font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:4px;">您的專屬識別碼</div>
-    <div class="code-display" id="shake-confirm-code">----</div>
-    <div class="code-hint">
-      請向店員出示此號碼<br>
-      由店員引導參加手把手骰子盅挑戰
-    </div>
-    <button class="p-btn p-btn-ok" id="shake-code-ok-btn">店員確認完成</button>
-  </div>
-</div>
-
-<!-- ★ 骰子遊戲：輸入末4碼（方案C） -->
-<div id="page-dice-input" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">🎮</div>
-    <div class="p-title">每日遊戲挑戰</div>
-    <div class="p-sub">請輸入手機末 4 碼開始遊戲</div>
-    <div class="p-label">手機末 4 碼</div>
-    <input id="di-phone4" class="p-input" type="tel" inputmode="none" maxlength="4" placeholder="0000" readonly>
-    <button class="p-btn p-btn-primary" id="di-btn">確認並進入遊戲</button>
-    <div class="p-msg" id="di-msg"></div>
-  </div>
-</div>
-
-<!-- ★ 骰子遊戲：識別碼確認畫面（方案C） -->
-<div id="page-dice-confirm" class="player-page">
-  <div class="p-card">
-    <div class="p-logo">🎉</div>
-    <div class="p-title">識別碼確認！</div>
-    <div style="font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:4px;">您今日的識別碼</div>
-    <div class="code-display" id="dice-confirm-code">----</div>
-    <div class="code-hint">
-      請記住這個號碼<br>
-      進入遊戲後輸入此識別碼即可開始挑戰
-    </div>
-    <button class="p-btn p-btn-primary" id="dice-go-btn">🎮 前往選擇遊戲</button>
-  </div>
-</div>
-
-<!-- 數字小鍵盤（共用） -->
-<div id="app-vkb">
-  <div class="vr">
-    <button class="vk" data-k="1">1</button>
-    <button class="vk" data-k="2">2</button>
-    <button class="vk" data-k="3">3</button>
-  </div>
-  <div class="vr">
-    <button class="vk" data-k="4">4</button>
-    <button class="vk" data-k="5">5</button>
-    <button class="vk" data-k="6">6</button>
-  </div>
-  <div class="vr">
-    <button class="vk" data-k="7">7</button>
-    <button class="vk" data-k="8">8</button>
-    <button class="vk" data-k="9">9</button>
-  </div>
-  <div class="vr">
-    <button class="vk vdel" data-k="del">⌫ 刪除</button>
-    <button class="vk" data-k="0">0</button>
-    <button class="vk vok"  data-k="ok">確認 ✓</button>
-  </div>
-</div>
-
-<div id="page-admin">
-  <div class="top-bar">
-    <h1><span class="live-dot"></span>活動簽到管理台 <span style="background:rgba(74,108,247,.35);border:1px solid #4a6cf7;border-radius:6px;padding:2px 10px;font-size:13px;letter-spacing:1px;color:#a5b4fc;font-family:monospace;">v8.20-SEC</span></h1>
-    <div class="top-right" id="sync-text">等待中...</div>
-  </div>
-  <div class="qr-main">
-    <div class="qr-panel">
-      <div class="qr-label"><span class="qr-badge chicken-badge">方案 A</span><div class="qr-title">🍗 炸雞第二份半價</div><div class="qr-desc">購買第一份炸雞，第二份享 5 折<br>每人每天限一次</div></div>
-      <div class="qr-frame" id="qr-chicken"></div>
-      <div class="qr-refresh-hint">QR 每小時刷新 · 剩餘 <span id="chicken-cnt">--</span> 分鐘</div>
-      <a id="link-chicken" href="#" target="_blank" class="qr-link-btn"><i class="fas fa-link"></i> 掃不到？點此進入</a>
-    </div>
-    <div class="qr-panel">
-      <div class="qr-label"><span class="qr-badge dice-badge">方案 B</span><div class="qr-title">🎲 骰子每日挑戰</div><div class="qr-desc">掃描進入骰子挑戰遊戲<br>贏得免費吃到堡或其他獎品 · 每人每天限一次</div></div>
-      <div class="qr-frame" id="qr-dice"></div>
-      <div class="qr-refresh-hint">QR 每小時刷新 · 剩餘 <span id="dice-cnt">--</span> 分鐘</div>
-      <a id="link-dice" href="#" target="_blank" class="qr-link-btn"><i class="fas fa-link"></i> 掃不到？點此進入</a>
-    </div>
-    <div class="qr-panel">
-      <div class="qr-label"><span class="qr-badge shake-badge">方案 C</span><div class="qr-title">🎲 手把手骰子盅</div><div class="qr-desc">搖出同號骰子贏得豐富獎品 · 每人每天限一次</div></div>
-      <div class="qr-frame" id="qr-shake"></div>
-      <div class="qr-refresh-hint">QR 每小時刷新 · 剩餘 <span id="shake-cnt">--</span> 分鐘</div>
-      <a id="link-shake" href="#" target="_blank" class="qr-link-btn"><i class="fas fa-link"></i> 掃不到？點此進入</a>
-    </div>
-  </div>
-  <div class="bottom-bar">
-    <div class="b-stat ok"><span class="bn" id="s-ok">0</span><span>通過</span></div>
-    <div class="b-divider"></div>
-    <div class="b-stat deny"><span class="bn" id="s-deny">0</span><span>已參加</span></div>
-    <div class="b-divider"></div>
-    <div class="b-stat tot"><span class="bn" id="s-total">0</span><span>今日總計</span></div>
-    <div class="b-divider"></div>
-    <div class="b-log-strip" id="b-log-strip"><span style="font-size:12px;color:rgba(255,255,255,.3)">等待客人掃描...</span></div>
-  </div>
-</div>
-<div id="admin-overlay">
-  <div class="popup" id="admin-popup">
-    <div class="p-icon" id="p-icon"></div>
-    <div class="p-title" id="p-title"></div>
-    <div class="p-desc" id="p-desc"></div>
-    <div class="p-plan" id="p-plan"></div>
-    <div class="prog-bar"><div class="prog-fill" id="p-fill" style="width:100%"></div></div>
-  </div>
-</div>
-
-<!-- 炸雞手機端 -->
-<div id="page-chicken">
-  <div class="m-icon" id="m-icon">⏳</div>
-  <div class="m-title" id="m-title">確認中...</div>
-  <div class="m-desc" id="m-desc">正在查詢，請稍候</div>
-  <div class="m-spin" id="m-spin"></div>
-  <div class="m-box" id="m-box" style="display:none"></div>
-  <button id="chicken-close-btn" style="display:none;margin-top:24px;padding:13px 40px;background:linear-gradient(45deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;min-width:200px;">✅ 確認完成，關閉</button>
-</div>
-
-<!-- 炸雞後骰子過渡 -->
-<div id="page-dice-intro" style="display:none;position:fixed;inset:0;z-index:15;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px;gap:20px;background:linear-gradient(135deg,#0a0a2a,#1a1a4e);">
-  <div style="font-size:3.5rem;margin-bottom:4px;">🎲</div>
-  <h2 style="font-size:1.8rem;font-weight:900;color:#60a5fa;">接下來玩骰子遊戲！</h2>
-  <p style="font-size:1rem;color:rgba(255,255,255,.6);line-height:1.8;">炸雞優惠已確認 🍗<br>現在可以開始骰子每日挑戰<br><span style="color:#f59e0b;font-weight:700;">每人每天限玩一次</span></p>
-  <button id="go-dice-btn" style="padding:14px 44px;background:linear-gradient(45deg,#4a6cf7,#10b981);color:#fff;border:none;border-radius:10px;font-size:1.1rem;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;min-width:220px;">🎲 開始骰子挑戰</button>
-</div>
-
-<!-- 骰子等待 -->
-<div id="page-dice-wait">
-  <div class="dice-container" style="max-width:500px;">
-    <h1 style="font-family:'Pixel',sans-serif;font-size:clamp(1.2rem,5vw,2rem);">骰子每日挑戰</h1>
-    <div id="dice-wait-inner" style="text-align:center;padding:30px 20px;background:rgba(0,0,0,.2);border-radius:15px;border:1px solid rgba(255,255,255,.2);">
-      <div style="font-size:3rem;margin-bottom:12px;">🎲</div>
-      <h2 style="font-size:1.4rem;margin-bottom:6px;color:#e2e8f0;">骰子每日挑戰</h2>
-      <div class="m-spin" style="margin:16px auto;width:36px;height:36px;border-width:3px;"></div>
-      <p style="font-size:.9rem;color:#94a3b8;">載入中，請稍候...</p>
-      <div id="dice-qr-err" style="display:none;margin-top:16px;color:#f87171;font-size:.9rem;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- 骰子遊戲主畫面 -->
-<div id="page-dice-game">
-  <div class="dice-sidebar" id="dice-sidebar"></div>
-  <div class="dice-container">
-    <button id="forfeit-btn" class="forfeit-btn">放棄比賽</button>
-    <div id="dice-mode-sel" style="display:flex;">
-      <h2>請選擇今日挑戰模式</h2>
-      <button class="mode-btn" data-mode="solo">個人組 (運氣挑戰)</button>
-      <button class="mode-btn" data-mode="competitive">挑戰組 (技巧對決)</button>
-      <button class="mode-btn" data-mode="vs">四骰對決 (比大小)</button>
-      <button class="mode-btn" data-mode="speed">急速連擲挑戰</button>
-      <button class="mode-btn" data-mode="risk">風險與獎勵</button>
-      <button class="mode-btn" data-mode="elimination">骰子消除戰</button>
-      <button class="mode-btn" data-mode="combo">組合連鎖</button>
-      <button class="mode-btn" data-mode="double">雙倍賭注</button>
-    </div>
-    <div id="c-solo" class="game-content"><h2>個人組</h2><div>第 <span id="solo-spin-no">1</span> / 8 次機會</div><div id="solo-best" class="combo-text" style="color:#34d399;">目前最佳: 無</div><div class="dice-area"><div id="dg-solo" class="dice-grid"></div><div id="ct-solo" class="combo-text"></div></div><button id="btn-solo" class="game-btn">擲骰子</button></div>
-    <div id="c-competitive" class="game-content"><h2>挑戰組</h2><div>第 <span id="comp-round-no">1</span> / 5 回合</div><div class="score-board">比分：<span class="player-score" id="comp-p-score">0</span> - <span class="computer-score" id="comp-c-score">0</span></div><div class="duel-area"><div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dg-comp-p" class="dice-grid"></div></div><div id="ct-comp-p" class="combo-text"></div></div><div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dg-comp-c" class="dice-grid"></div></div><div id="ct-comp-c" class="combo-text"></div></div></div><button id="btn-competitive" class="game-btn">擲骰子</button></div>
-    <div id="c-vs" class="game-content"><h2>四骰對決</h2><div>第 <span id="vs-round-no">1</span> / 5 回合</div><div class="score-board">比分：<span class="player-score" id="vs-p-score">0</span> - <span class="computer-score" id="vs-c-score">0</span></div><div class="duel-area"><div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dg-vs-p" class="dice-grid four-dice"></div></div><div id="ct-vs-p" class="combo-text"></div></div><div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dg-vs-c" class="dice-grid four-dice"></div></div><div id="ct-vs-c" class="combo-text"></div></div></div><button id="btn-vs" class="game-btn">擲骰子</button></div>
-    <div id="c-speed" class="game-content"><h2>急速連擲挑戰</h2><div>剩餘：<span id="speed-timer" style="font-size:1.5em;color:#ef4444;">90</span> 秒</div><div id="speed-best" class="combo-text" style="color:#34d399;line-height:1.5;">目前最佳: 無</div><div class="dice-area"><div id="dg-speed" class="dice-grid"></div><div id="ct-speed" class="combo-text"></div></div><button id="btn-speed" class="game-btn">擲骰子</button></div>
-    <div id="c-risk" class="game-content"><h2>風險與獎勵</h2><div>第 <span id="risk-round-no">1</span> / 5 回合</div><div id="risk-total" class="combo-text" style="font-size:1.2rem;">總分: 0</div><div class="dice-area"><div id="dg-risk" class="dice-grid eight-dice"></div><div id="ct-risk" class="combo-text"></div></div><div><button id="btn-risk-safe" class="game-btn" style="background:linear-gradient(45deg,#3b82f6,#10b981);">安全擲骰 (6顆)</button><button id="btn-risk-gamble" class="game-btn" style="background:linear-gradient(45deg,#f59e0b,#ef4444);">風險擲骰 (8顆)</button></div></div>
-    <div id="c-elimination" class="game-content"><h2>骰子消除戰</h2><div>第 <span id="elim-round-no">1</span> / 10 回合</div><div class="score-board">生命：<span class="player-score" id="elim-p-life">15</span> - <span class="computer-score" id="elim-c-life">15</span></div><div class="duel-area"><div class="competitor-zone"><h3>玩家</h3><div class="dice-area"><div id="dg-elim-p" class="dice-grid"></div></div><div id="ct-elim-p" class="combo-text"></div></div><div class="competitor-zone"><h3>電腦</h3><div class="dice-area"><div id="dg-elim-c" class="dice-grid"></div></div><div id="ct-elim-c" class="combo-text"></div></div></div><button id="btn-elimination" class="game-btn">擲骰對決</button></div>
-    <div id="c-combo" class="game-content"><h2>組合連鎖</h2><div>生命：<span id="combo-lives">3</span> ｜ 目標：<strong id="combo-target" style="color:#f59e0b;">對子</strong></div><div id="combo-prize" class="combo-text" style="color:#34d399;">目前獎勵: 無</div><div class="dice-area"><div id="dg-combo" class="dice-grid"></div><div id="ct-combo" class="combo-text"></div></div><button id="btn-combo" class="game-btn">擲骰子</button></div>
-    <div id="c-double" class="game-content"><h2>雙倍賭注</h2><div>剩餘機會：<span id="double-left">3</span></div><div id="double-prize" class="combo-text" style="font-size:1.2rem;">擲骰以獲得初始獎勵</div><div class="dice-area"><div id="dg-double" class="dice-grid"></div><div id="ct-double" class="combo-text"></div></div><div id="double-btns"><button id="btn-double-roll" class="game-btn">擲骰</button><button id="btn-double-claim" class="game-btn" style="display:none;background:linear-gradient(45deg,#10b981,#00b09b);">領取獎勵</button><button id="btn-double-gamble" class="game-btn" style="display:none;background:linear-gradient(45deg,#f59e0b,#ef4444);">雙倍賭注!</button></div></div>
-    <div id="dice-history-container"><h3>即時戰況紀錄</h3><ol id="dice-history-list"></ol></div>
-  </div>
-</div>
-
-<!-- ★ 後端驗證中畫面 -->
-<div id="syncing-overlay">
-  <div class="m-spin" style="width:52px;height:52px;border-width:5px;"></div>
-  <div style="font-size:1.2rem;font-weight:700;color:#e2e8f0;">正在驗證結果...</div>
-  <div style="font-size:.85rem;color:rgba(255,255,255,.45);">請稍候，系統正在與伺服器確認</div>
-</div>
-
-<div id="page-dice-result"></div>
-
-<div id="dice-rules-modal">
-  <div id="dice-rules-content">
-    <div id="dice-countdown">5</div>
-    <h3 style="text-align:center;margin-bottom:15px;font-family:'Pixel',sans-serif;font-size:1rem;">遊戲規則</h3>
-    <div style="font-family:'Noto Sans TC',sans-serif;font-size:.9rem;line-height:1.8;color:#cbd5e1;">
-      <p style="color:#f59e0b;font-weight:700;font-size:1rem;margin-bottom:12px;">🎮 選擇喜歡的模式，完成挑戰即可抽獎！</p>
-      <p>🎯 <strong>個人組</strong>：8次擲骰，享受骰出好牌型的樂趣</p>
-      <p>⚔️ <strong>挑戰組</strong>：5回合對決電腦，一決高下</p>
-      <p>🎲 <strong>四骰對決</strong>：4顆骰子比點數，看誰更強</p>
-      <p>⚡ <strong>急速連擲</strong>：90秒內盡情擲骰，挑戰手速</p>
-      <p>⚖️ <strong>風險與獎勵</strong>：5回合累積分數，膽大者勝</p>
-      <p>🛡️ <strong>骰子消除戰</strong>：10回合生命對決，撐到最後</p>
-      <p>🔗 <strong>組合連鎖</strong>：依序挑戰各種牌型組合</p>
-      <p>💎 <strong>雙倍賭注</strong>：獲得獎勵後，敢不敢再賭一把</p>
-      <br>
-      <p style="background:rgba(52,211,153,.15);border:1px solid #34d399;border-radius:8px;padding:10px;color:#34d399;font-weight:700;text-align:center;">
-        ✨ 完成遊戲後系統自動抽獎<br>
-        <span style="font-size:.85rem;font-weight:400;color:#94a3b8;">每人每天限參加一次</span>
-      </p>
-    </div>
-  </div>
-</div>
-
-<audio id="snd-click"   src="https://www.myinstants.com/media/sounds/mouse-click.mp3"                          preload="auto"></audio>
-<audio id="snd-roll"    src="https://assets.mixkit.co/sfx/preview/mixkit-game-dice-roll-2021.mp3"              preload="auto"></audio>
-<audio id="snd-win"     src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3"       preload="auto"></audio>
-<audio id="snd-lose"    src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.mp3"    preload="auto"></audio>
-<audio id="snd-jackpot" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"              preload="auto"></audio>
-<audio id="mus-main"    src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3"    loop preload="auto"></audio>
-<audio id="mus-battle"  src="https://assets.mixkit.co/music/preview/mixkit-epic-battle-cinematic-trailer-689.mp3" loop preload="auto"></audio>
-<audio id="mus-speed"   src="https://assets.mixkit.co/music/preview/mixkit-arcade-retro-background-219.mp3"        loop preload="auto"></audio>
 
 <script>
-'use strict';
-// ══════════════════════════════════════════════════════════════
-//  🔐 SECURITY LAYER  v1.1  (已調整管理台誤判問題)
-// ══════════════════════════════════════════════════════════════
+// ── 設定：填入你的 Apps Script 部署網址 ──
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwR5kwHVCDpYhOZmk37ft7NmLKkuYOtJHOjBmFAZ2VEuvj2ktpDnzwTfwAmq_n1TYTu/exec";
 
-/* [S1] Anti-iframe */
-;(function(){ if(window.self!==window.top){ try{window.top.location=window.self.location;}catch(e){document.body.innerHTML='';} } })();
-
-/* [S2] SCRIPT_URL */
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxYi6kfoelB_v5D1q0Kw8ZM-IrBQnsMm4Co5-oQjteOOVdwJ1nE2KxMCHvwg7kiaqdjBQ/exec';
-
-/* LIFF ID */
-const LIFF_ID = '2009772018-YA6NBDMf';
-/* GAS URL（早期用，LIFF init 前可用） */
-const GAS_URL_EARLY = SCRIPT_URL;
-
-/* [S3] Console 封鎖 */
-;(function(){
-  const n=()=>{};
-  ['log','warn','error','info','debug','table','dir','assert','count','time','timeEnd','trace','clear','group','groupEnd'].forEach(m=>{
-    try{ Object.defineProperty(console,m,{value:n,writable:false,configurable:false}); }catch(e){}
-  });
-})();
-
-/* 安全鎖定函數 */
-const _SEC={
-  locked:false,
-  lock(reason){
-    if(this.locked)return; this.locked=true;
-    stopMusic&&stopMusic();
-    document.body.innerHTML=`<div style="position:fixed;inset:0;background:#0a0a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ef4444;font-family:monospace;z-index:999999;text-align:center;padding:40px;"><div style="font-size:4rem;margin-bottom:20px;">🔒</div><div style="font-size:1.4rem;font-weight:bold;margin-bottom:12px;color:#fff;">安全警告</div><div style="font-size:.95rem;color:#f87171;line-height:1.9;max-width:360px;background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:12px;padding:20px;">偵測到異常操作。<br>此頁面已被鎖定以保護活動公平性。<br><br><span style="font-size:.8rem;color:rgba(255,255,255,.4);">如需重新參加，請重新掃描 QR 碼。</span></div></div>`;
-    setTimeout(()=>{try{window.close();}catch(e){}},5000);
-  }
+const ACTIVITY_INFO = {
+  chicken: { icon: "🍗", label: "炸雞活動" },
+  shake:   { icon: "🎲", label: "搖骰子" },
+  dice:    { icon: "🎮", label: "每日遊戲" }
 };
 
-/* [S4] DevTools 偵測 — 僅在客人手機端啟用，管理台不觸發 */
-// 判斷是否為客人端（有 type 參數）
-const _isClientMode = (new URLSearchParams(location.search)).has('type');
+let liffProfile = null;
+let activityType = "";
 
-if(_isClientMode){
-  // 方法 A：視窗寬度差值（手機沒有書籤列，閾值設 200 即可）
-  setInterval(()=>{
-    if((window.outerWidth-window.innerWidth>200)||(window.outerHeight-window.innerHeight>200))
-      _SEC.lock('devtools-size');
-  },1500);
+async function init() {
+  await liff.init({ liffId: "2009772018-YA6NBDMf" });
 
-  // 方法 B：執行計時（debugger 暫停偵測，手機端用 8000ms）
-  let _secLastTs=performance.now();
-  setInterval(()=>{
-    const now=performance.now();
-    if(now-_secLastTs>8000) _SEC.lock('debugger-pause');
-    _secLastTs=now;
-  },1500);
+  // 取得 ?type= 參數
+  const params = new URLSearchParams(liff.getDecodedIDToken ? window.location.search : "");
+  activityType = params.get("type") || new URL(location.href).searchParams.get("type") || "";
 
-  // 方法 D：Function.prototype.toString 竄改偵測
-  ;(function(){
-    const orig=Function.prototype.toString;
-    setInterval(()=>{
-      if(Function.prototype.toString!==orig) _SEC.lock('toString-tamper');
-    },3000);
-  })();
-
-  /* [S6] Anti-debugger 陷阱（僅客人端） */
-  ;(function adb(){
-    try{ (function(){})['constructor']('debugger')(); }catch(e){}
-    setTimeout(adb,2500+Math.random()*500);
-  })();
-  setInterval(function(){try{(function(){})['constructor']('debugger')();}catch(e){}},3700);
-}
-
-/* [S5] DS 竄改保護 */
-const _DS_RAW={
-  active:false, spinning:false, ending:false,
-  vid:null, ip:'', phone:null, visitCount:0,
-  mode:null, rollCount:0,
-  gameToken:'',
-  isHit:false,
-  soloSpins:0, soloBest:{prize:null,score:0},
-  compRounds:0, compWins:{p:0,c:0},
-  vsRounds:0,   vsWins:{p:0,c:0},
-  totalRounds:5,
-  speedLeft:90, speedTimer:null, speedBest:{prize:null,score:0,text:'無'},
-  riskRounds:0, riskScore:0,
-  elimRounds:0, elimPLife:15, elimCLife:15,
-  comboLevel:0, comboLives:3,
-  comboTargets:[{s:2000,t:'對子'},{s:3000,t:'三條'},{s:4000,t:'四條'},{s:5000,t:'五條'},{s:6000,t:'六條'}],
-  doubleLeft:3, doublePrize:{prize:null,score:0},
-  music:null
-};
-let _isHitWriteToken=false;
-let _gameTokenLocked=false;
-const DS=new Proxy(_DS_RAW,{
-  set(t,p,v){
-    if(p==='isHit'){
-      if(_isHitWriteToken){ _isHitWriteToken=false; t[p]=v; return true; }
-      _SEC.lock('isHit-tamper'); return false;
-    }
-    if(p==='gameToken'){
-      if(_gameTokenLocked&&v!==t.gameToken){ _SEC.lock('gameToken-tamper'); return false; }
-      if(v&&v!==''&&typeof v==='string') _gameTokenLocked=true;
-      t[p]=v; return true;
-    }
-    t[p]=v; return true;
-  },
-  get(t,p){ return t[p]; }
-});
-function _authorizeIsHit(){ _isHitWriteToken=true; }
-
-/* [S9] DOM 變異監控 */
-let _resultGuardActive=false;
-function startResultGuard(){
-  const el=document.getElementById('page-dice-result');
-  if(!el||!window.MutationObserver||_resultGuardActive) return;
-  _resultGuardActive=true;
-  let _allowWrite=false;
-  el._setAllowWrite=v=>{ _allowWrite=v; };
-  const obs=new MutationObserver(mutations=>{
-    for(const m of mutations){
-      if(!_allowWrite){
-        el.innerHTML='';
-        el.className='';
-        _SEC.lock('dom-tamper');
-        obs.disconnect();
-        return;
-      }
-    }
-  });
-  obs.observe(el,{childList:true,subtree:false,attributes:true,attributeFilter:['class']});
-}
-
-/* [S8] 動態確認碼 */
-function genConfirmCode(gameToken){
-  const sfx=(gameToken||'').slice(-10);
-  const min=Math.floor(Date.now()/60000);
-  let h=(min*2654435761)>>>0;
-  for(let i=0;i<sfx.length;i++){
-    h=Math.imul(h^sfx.charCodeAt(i),2246822519)>>>0;
-    h=Math.imul(h^(h>>>13),3266489917)>>>0;
-  }
-  h=(h^(h>>>16))>>>0;
-  return String(1000+(h%9000));
-}
-let _codeTimer=null;
-function startConfirmCodeRefresh(gameToken){
-  const update=()=>{
-    const el=document.getElementById('live-confirm-code');
-    if(el) el.textContent=genConfirmCode(gameToken);
-  };
-  update();
-  _codeTimer=setInterval(update,15000);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  設定 & API
-// ══════════════════════════════════════════════════════════════
-async function apiPost(action,params){
-  const payload=Object.assign({action},params);
-  const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(payload),redirect:'follow'});
-  return await res.json();
-}
-async function apiGet_read(action,params){
-  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
-  const res=await fetch(SCRIPT_URL+'?action='+action+'&'+qs+'&t='+Date.now(),{redirect:'follow'});
-  return await res.json();
-}
-function apiGet(action,params){
-  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
-  fetch(SCRIPT_URL+'?action='+action+'&'+qs+'&t='+Date.now(),{mode:'no-cors'}).catch(()=>{});
-}
-
-const PLAN={chicken:'🍗 炸雞第二份半價',dice:'🎲 骰子每日挑戰',shake:'🎲 手把手骰子盅'};
-const PRIZE_POOL='免費吃到堡或指定商品';
-
-const urlParams=new URLSearchParams(location.search);
-const ROUTE_TYPE=urlParams.get('type');
-const ROUTE_TOKEN=urlParams.get('token')||urlParams.get('vid')||'';
-
-// ── 啟動 ──────────────────────────────────────────────
-window.addEventListener('load', async ()=>{
-  const lo=document.getElementById('loading-overlay');
-  getIP(); setupVideoControls(); setupContentProtection();
-
-  if(ROUTE_TYPE==='chicken' || ROUTE_TYPE==='dice' || ROUTE_TYPE==='shake'){
-    document.getElementById('fs-overlay').style.display='none';
-    // ★ LIFF 初始化
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if(!liff.isLoggedIn()){
-        liff.login({ redirectUri: location.href });
-        return;
-      }
-      const profile = await liff.getProfile();
-      window._LINE_UID = profile.userId;
-      window._LINE_NAME = profile.displayName;
-
-      // ★ 自動簽到：綁定 LINE ID 寫入簽到簿
-      if(ROUTE_TYPE && ['chicken','shake','dice'].includes(ROUTE_TYPE)){
-        fetch(GAS_URL_EARLY + '?action=sign_in'
-          + '&lineuid=' + encodeURIComponent(profile.userId)
-          + '&displayName=' + encodeURIComponent(profile.displayName)
-          + '&type=' + ROUTE_TYPE
-          + '&t=' + Date.now()
-        ).catch(()=>{});
-      }
-    } catch(e) {
-      // 不在 Line 環境（例如電腦瀏覽器測試），降級用末4碼
-      window._LINE_UID = null;
-      window._LINE_NAME = null;
-    }
-    lo.style.opacity='0'; setTimeout(()=>lo.style.display='none',500);
-    initPlayerPage(ROUTE_TYPE);
-  } else {
-    lo.style.opacity='0'; setTimeout(()=>lo.style.display='none',500);
-    setupAdminFullscreen();
-  }
-});
-
-function setupVideoControls(){
-  const vid=document.getElementById('bg-video');
-  const mute=document.getElementById('vid-mute');
-  const pause=document.getElementById('vid-pause');
-  mute.addEventListener('click',()=>{ vid.muted=!vid.muted; mute.innerHTML=vid.muted?'<i class="fas fa-volume-mute"></i>':'<i class="fas fa-volume-up"></i>'; });
-  pause.addEventListener('click',()=>{ vid.paused?vid.play():vid.pause(); pause.innerHTML=vid.paused?'<i class="fas fa-play"></i>':'<i class="fas fa-pause"></i>'; });
-}
-
-function setupContentProtection(){
-  const showV=msg=>{ document.getElementById('ws-violation-msg').textContent=msg; document.getElementById('ws-violation').style.display='flex'; };
-  const hideV=()=>document.getElementById('ws-violation').style.display='none';
-  document.getElementById('ws-violation-ok').addEventListener('click',()=>{ document.documentElement.requestFullscreen().then(hideV).catch(hideV); });
-  document.addEventListener('contextmenu',e=>{ e.preventDefault(); showV('此操作已被禁止：內容受版權保護。'); });
-  document.addEventListener('keydown',e=>{
-    if(e.keyCode===123||(e.ctrlKey&&e.shiftKey&&(e.keyCode===73||e.keyCode===74))||(e.ctrlKey&&e.keyCode===85)){
-      e.preventDefault(); showV('此網頁內容受保護，無法使用開發者工具。');
-    }
-  });
-  document.body.onselectstart=()=>false;
-  document.body.oncopy=()=>false;
-  document.addEventListener('keyup',e=>{ if(e.keyCode===44) showV('截圖功能已被禁用。'); });
-}
-
-// ── 管理台 ────────────────────────────────────────────
-function setupAdminFullscreen(){
-  document.getElementById('fs-btn').addEventListener('click',()=>{
-    document.documentElement.requestFullscreen().then(()=>{
-      document.getElementById('fs-overlay').style.display='none';
-      document.getElementById('page-admin').classList.add('active');
-      runAdmin();
-      document.addEventListener('fullscreenchange',()=>{
-        if(!document.fullscreenElement){ document.getElementById('fs-overlay').style.display='flex'; document.getElementById('page-admin').classList.remove('active'); }
-      });
-    }).catch(()=>{
-      document.getElementById('fs-overlay').style.display='none';
-      document.getElementById('page-admin').classList.add('active');
-      runAdmin();
-    });
-  });
-}
-function runAdmin(){ buildQRCodes(); startAdminPolling(); startRefreshCountdown(); }
-
-
-// ══════════════════════════════════════════════════════════════
-//  ★ 玩家手機端：輸入末4碼 → PASS / 進遊戲（方案C）
-// ══════════════════════════════════════════════════════════════
-const GAS_URL = SCRIPT_URL;
-const INDEX_URL = (function(){
-  return location.href.split('?')[0].replace(/index.html$/, '') + 'index2.html';
-})();
-
-function showPage(id){
-  document.querySelectorAll('.player-page').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById(id);
-  if(el) el.classList.add('active');
-}
-
-function setMsg(elId, text, type){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  el.textContent = text;
-  el.className = 'p-msg ' + type + ' show';
-}
-
-// ── 數字小鍵盤（共用）──
-let _vkbTarget = null;
-let _vkbCallback = null;
-(function(){
-  const vkb = document.getElementById('app-vkb');
-  if(!vkb) return;
-  document.addEventListener('click', function(e){
-    if(!vkb.contains(e.target) && !e.target.classList.contains('p-input'))
-      vkb.classList.remove('show');
-  });
-  vkb.addEventListener('click', function(e){
-    const btn = e.target.closest('.vk');
-    if(!btn || !_vkbTarget) return;
-    const k = btn.dataset.k;
-    if(k === 'del'){
-      _vkbTarget.value = _vkbTarget.value.slice(0,-1);
-    } else if(k === 'ok'){
-      vkb.classList.remove('show');
-      if(_vkbCallback) _vkbCallback();
-    } else if(_vkbTarget.value.length < 4){
-      _vkbTarget.value += k;
-      if(_vkbTarget.value.length >= 4){
-        vkb.classList.remove('show');
-        setTimeout(function(){ if(_vkbCallback) _vkbCallback(); }, 150);
-      }
-    }
-  });
-})();
-
-function bindVkb(inputEl, callback){
-  _vkbTarget = inputEl;
-  _vkbCallback = callback;
-  inputEl.addEventListener('focus', function(){
-    document.getElementById('app-vkb').classList.add('show');
-  });
-  inputEl.addEventListener('click', function(){
-    document.getElementById('app-vkb').classList.add('show');
-  });
-}
-
-// ── 倒數到明天 ──
-function startDenyCountdown(){
-  const el = document.getElementById('deny-countdown');
-  function tick(){
-    const now = new Date();
-    const tom = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
-    const d = tom - now;
-    if(d <= 0){ el.textContent='00:00:00'; return; }
-    el.textContent =
-      String(Math.floor(d/36e5)).padStart(2,'0') + ':' +
-      String(Math.floor((d%36e5)/6e4)).padStart(2,'0') + ':' +
-      String(Math.floor((d%6e4)/1e3)).padStart(2,'0');
-  }
-  tick(); setInterval(tick, 1000);
-}
-
-// ── 主入口 ──
-function initPlayerPage(type){
-
-  // ★ 共用：用 Line UID 還是末4碼
-  // 有 UID → 自動驗證，不顯示輸入框
-  // 無 UID → 降級，顯示末4碼輸入框
-
-  async function checkWithId(uid, typeStr, onPass, onDeny, onError){
-    const param = uid
-      ? `lineuid=${encodeURIComponent(uid)}&type=${typeStr}`
-      : null;
-    if(!param){ onError('無法取得識別碼'); return; }
-    try{
-      const res = await fetch(GAS_URL+'?action=check_today&'+param+'&t='+Date.now());
-      const data = await res.json();
-      if(data.status === 'DENY') onDeny();
-      else onPass(uid);
-    } catch(e){ onError('網路錯誤，請再試'); }
-  }
-
-  function recordSlot(uid, typeStr){
-    fetch(GAS_URL+'?action=phone_player_slot&lineuid='+encodeURIComponent(uid)+'&type='+typeStr+'&t='+Date.now());
-  }
-
-  if(type === 'chicken'){
-    const uid = window._LINE_UID;
-    if(uid){
-      // 有 UID：顯示等待畫面直接驗證
-      showPage('page-chicken-input');
-      const inp = document.getElementById('ci-phone4');
-      inp.value = uid.slice(-4); // 顯示 UID 末4碼作提示（唯讀）
-      inp.disabled = true;
-      document.getElementById('ci-btn').style.display = 'none';
-      setMsg('ci-msg', '🔄 Line 帳號驗證中…', 'loading');
-      checkWithId(uid, 'chicken',
-        ()=>{ showPage('page-chicken-pass'); recordSlot(uid,'chicken'); },
-        ()=>{ document.getElementById('deny-title').textContent='炸雞今日額度已滿'; document.getElementById('deny-badge').textContent='您今日已領取過炸雞優惠'; showPage('page-deny'); startDenyCountdown(); },
-        (msg)=>{ setMsg('ci-msg', msg, 'error'); }
-      );
-    } else {
-      // 降級：手動輸入末4碼
-      showPage('page-chicken-input');
-      const inp = document.getElementById('ci-phone4');
-      const btn = document.getElementById('ci-btn');
-      bindVkb(inp, function(){ btn.click(); });
-      btn.addEventListener('click', async function(){
-        const p = inp.value.trim();
-        if(!/^\d{4}$/.test(p)){ setMsg('ci-msg','請輸入正確的4位數字','error'); return; }
-        setMsg('ci-msg','驗證中…','loading'); btn.disabled = true;
-        try{
-          const res = await fetch(GAS_URL+'?action=check_today&phone4='+p+'&type=chicken&t='+Date.now());
-          const data = await res.json();
-          if(data.status === 'DENY'){
-            document.getElementById('deny-title').textContent = '炸雞今日額度已滿';
-            document.getElementById('deny-badge').textContent = '此號碼今日已領取過炸雞優惠';
-            showPage('page-deny'); startDenyCountdown();
-          } else {
-            showPage('page-chicken-pass');
-            fetch(GAS_URL+'?action=phone_player_slot&phone4='+p+'&type=chicken&t='+Date.now());
-          }
-        } catch(e){ setMsg('ci-msg','網路錯誤，請再試','error'); btn.disabled=false; }
-      });
-    }
-    document.getElementById('chicken-ok-btn').addEventListener('click', function(){
-      window.close(); location.href='about:blank';
-    });
-
-  } else if(type === 'shake'){
-    const uid = window._LINE_UID;
-    if(uid){
-      showPage('page-shake-input');
-      const inp = document.getElementById('si-phone4');
-      inp.value = uid.slice(-4);
-      inp.disabled = true;
-      document.getElementById('si-btn').style.display = 'none';
-      setMsg('si-msg', '🔄 Line 帳號驗證中…', 'loading');
-      checkWithId(uid, 'shake',
-        async ()=>{
-          // ★ 取得固定4位識別碼
-          try {
-            const cres = await fetch(GAS_URL+'?action=get_code&lineuid='+encodeURIComponent(uid)+'&t='+Date.now());
-            const cdata = await cres.json();
-            document.getElementById('shake-confirm-code').textContent = cdata.code || uid.slice(-4);
-          } catch(e) {
-            document.getElementById('shake-confirm-code').textContent = uid.slice(-4);
-          }
-          recordSlot(uid,'shake');
-          showPage('page-shake-code');
-        },
-        ()=>{ document.getElementById('deny-title').textContent='搖骰子今日額度已滿'; document.getElementById('deny-badge').textContent='您今日已參加過搖骰子'; showPage('page-deny'); startDenyCountdown(); },
-        (msg)=>{ setMsg('si-msg', msg, 'error'); }
-      );
-    } else {
-      showPage('page-shake-input');
-      const inp = document.getElementById('si-phone4');
-      const btn = document.getElementById('si-btn');
-      bindVkb(inp, function(){ btn.click(); });
-      btn.addEventListener('click', async function(){
-        const p = inp.value.trim();
-        if(!/^\d{4}$/.test(p)){ setMsg('si-msg','請輸入正確的4位數字','error'); return; }
-        setMsg('si-msg','驗證中…','loading'); btn.disabled = true;
-        try{
-          const res = await fetch(GAS_URL+'?action=check_today&phone4='+p+'&type=shake&t='+Date.now());
-          const data = await res.json();
-          if(data.status === 'DENY'){
-            document.getElementById('deny-title').textContent = '搖骰子今日額度已滿';
-            document.getElementById('deny-badge').textContent = '此號碼今日已參加過搖骰子';
-            showPage('page-deny'); startDenyCountdown();
-          } else {
-            fetch(GAS_URL+'?action=phone_player_slot&phone4='+p+'&type=shake&t='+Date.now());
-            document.getElementById('shake-confirm-code').textContent = p;
-            showPage('page-shake-code');
-          }
-        } catch(e){ setMsg('si-msg','網路錯誤，請再試','error'); btn.disabled=false; }
-      });
-    }
-    document.getElementById('shake-ok-btn').addEventListener('click', function(){
-      window.close(); location.href='about:blank';
-    });
-    document.getElementById('shake-code-ok-btn').addEventListener('click', function(){
-      window.close(); location.href='about:blank';
-    });
-
-  } else if(type === 'dice'){
-    const uid = window._LINE_UID;
-    if(uid){
-      showPage('page-dice-input');
-      const inp = document.getElementById('di-phone4');
-      inp.value = uid.slice(-4);
-      inp.disabled = true;
-      document.getElementById('di-btn').style.display = 'none';
-      setMsg('di-msg', '🔄 Line 帳號驗證中…', 'loading');
-      checkWithId(uid, 'dice',
-        async ()=>{
-          // ★ 取得固定4位識別碼
-          let code = uid.slice(-4);
-          try {
-            const cres = await fetch(GAS_URL+'?action=get_code&lineuid='+encodeURIComponent(uid)+'&t='+Date.now());
-            const cdata = await cres.json();
-            if(cdata.code) code = cdata.code;
-          } catch(e) {}
-          document.getElementById('dice-confirm-code').textContent = code;
-          showPage('page-dice-confirm');
-          document.getElementById('dice-go-btn').onclick = function(){
-            window.location.href = INDEX_URL + '?phone4=' + encodeURIComponent(code) + '&lineuid=' + encodeURIComponent(uid);
-          };
-        },
-        ()=>{ document.getElementById('deny-title').textContent='遊戲今日額度已滿'; document.getElementById('deny-badge').textContent='您今日已參加過遊戲挑戰'; showPage('page-deny'); startDenyCountdown(); },
-        (msg)=>{ setMsg('di-msg', msg, 'error'); }
-      );
-    } else {
-      // 降級：末4碼
-      showPage('page-dice-input');
-      const inp = document.getElementById('di-phone4');
-      const btn = document.getElementById('di-btn');
-      bindVkb(inp, function(){ btn.click(); });
-      btn.addEventListener('click', async function(){
-        const p = inp.value.trim();
-        if(!/^\d{4}$/.test(p)){ setMsg('di-msg','請輸入正確的4位數字','error'); return; }
-        setMsg('di-msg','驗證中…','loading'); btn.disabled = true;
-        try{
-          const res = await fetch(GAS_URL+'?action=check_today&phone4='+p+'&type=dice&t='+Date.now());
-          const data = await res.json();
-          if(data.status === 'DENY'){
-            document.getElementById('deny-title').textContent = '遊戲今日額度已滿';
-            document.getElementById('deny-badge').textContent = '此號碼今日已參加過遊戲挑戰';
-            showPage('page-deny'); startDenyCountdown();
-          } else {
-            document.getElementById('dice-confirm-code').textContent = p;
-            showPage('page-dice-confirm');
-            document.getElementById('dice-go-btn').onclick = function(){
-              window.location.href = INDEX_URL + '?phone4=' + p;
-            };
-          }
-        } catch(e){ setMsg('di-msg','網路錯誤，請再試','error'); btn.disabled=false; }
-      });
-    }
-  }
-}
-
-let qrBuiltAt=0;
-function makeURL(type){
-  const token='v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-  const base=location.href.split('?')[0];
-  return `${base}?type=${type}&token=${token}`;
-}
-function buildQRCodes(){
-  ['chicken','dice','shake'].forEach(type=>{
-    const url=makeURL(type);
-    const el=document.getElementById(`qr-${type}`);
-    el.innerHTML='';
-    const size=el.offsetWidth-24;
-    new QRCode(el,{text:url,width:size,height:size,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-    const lb=document.getElementById(`link-${type}`);
-    if(lb) lb.href=url;
-  });
-  qrBuiltAt=Date.now();
-}
-setInterval(buildQRCodes,3600000);
-function startRefreshCountdown(){
-  setInterval(()=>{
-    const mins=Math.max(0,60-Math.floor((Date.now()-qrBuiltAt)/60000));
-    document.getElementById('chicken-cnt').textContent=mins;
-    document.getElementById('dice-cnt').textContent=mins;
-    document.getElementById('shake-cnt').textContent=mins;
-  },10000);
-}
-
-let _lastLogCount=0, adminPopTimer=null;
-function startAdminPolling(){ fetchAdminLog(); setInterval(fetchAdminLog,3000); }
-async function fetchAdminLog(){
-  const now=new Date().toLocaleTimeString('zh-TW');
-  try{
-    const res=await fetch(`${SCRIPT_URL}?action=getLog&t=${Date.now()}`,{redirect:'follow'});
-    const json=await res.json();
-    document.getElementById('sync-text').innerHTML=`最後同步：${now} <span style="color:var(--green)">● API 正常</span>`;
-    if(!json.rows||!Array.isArray(json.rows)) return;
-    const rows=json.rows;
-    if(rows.length<=_lastLogCount) return;
-    const newRows=rows.slice(_lastLogCount); _lastLogCount=rows.length;
-    newRows.forEach(r=>{ addAdminChip(r.type||'dice',r.result||'ok',r.time||''); showAdminPopup(r.type||'dice',r.result||'ok'); });
-  } catch(e){
-    document.getElementById('sync-text').innerHTML=`最後同步：${now} <span style="color:var(--red)">● 無法連線</span>`;
-  }
-}
-let adminChips=[],adminChipSeq=0;
-function addAdminChip(type,result,time){
-  adminChipSeq++;
-  const ok=document.getElementById('s-ok'),dn=document.getElementById('s-deny'),tot=document.getElementById('s-total');
-  if(result==='ok')   ok.textContent=+ok.textContent+1;
-  if(result==='deny') dn.textContent=+dn.textContent+1;
-  tot.textContent=+tot.textContent+1;
-  const strip=document.getElementById('b-log-strip');
-  const chip=document.createElement('div'); chip.className=`b-chip ${result}`;
-  const ts=time?(time.split(' ')[1]||time):'';
-  chip.textContent=`#${adminChipSeq} ${result==='ok'?'✓':'✗'} ${PLAN[type]||type} ${ts}`;
-  adminChips.unshift(chip); strip.prepend(chip);
-  if(adminChips.length>8) adminChips.pop().remove();
-  const ph=strip.querySelector('span'); if(ph) ph.remove();
-}
-function showAdminPopup(type,result){
-  const popup=document.getElementById('admin-popup');
-  popup.className=`popup ${result==='ok'?'ok-pop':'deny-pop'}`;
-  document.getElementById('p-icon').textContent=result==='ok'?'✅':'🚫';
-  document.getElementById('p-title').textContent=result==='ok'?'可以參加！':'今天已參加過';
-  document.getElementById('p-desc').textContent=result==='ok'?'這位客人今天尚未參加，請讓他參加！':'這位客人今天已參加過，明天再來！';
-  document.getElementById('p-plan').innerHTML=`方案：<strong>${PLAN[type]||type}</strong>`;
-  const overlay=document.getElementById('admin-overlay');
-  overlay.classList.add('show');
-  const fill=document.getElementById('p-fill');
-  fill.style.transition='none'; fill.style.width='100%';
-  setTimeout(()=>{ fill.style.transition='width 5s linear'; fill.style.width='0%'; },60);
-  if(adminPopTimer) clearTimeout(adminPopTimer);
-  adminPopTimer=setTimeout(()=>overlay.classList.remove('show'),5000);
-}
-document.getElementById('admin-overlay').addEventListener('click',function(e){ if(e.target===this){ this.classList.remove('show'); clearTimeout(adminPopTimer); } });
-
-// ── 炸雞手機端 ───────────────────────────────────────
-async function runChickenMobile(){
-  const did=getDeviceId();
-  if(hasPlayedToday('chicken')){ document.getElementById('m-spin').style.display='none'; setChickenUI('error','⏳','今日已使用過！','炸雞優惠今天已領取過了\n明天再來！',''); return; }
-  try{
-    const json=await apiPost('checkEntry',{did,type:'chicken'});
-    document.getElementById('m-spin').style.display='none';
-    if(json.status==='USED_TODAY'){ markPlayedToday('chicken'); setChickenUI('error','⏳','今日已使用過！','炸雞優惠今天已領取過了\n明天再來！',''); return; }
-    markPlayedToday('chicken');
-  } catch(e){ document.getElementById('m-spin').style.display='none'; markPlayedToday('chicken'); }
-  setChickenUI('ok','✅','可以參加！','歡迎參加活動\n請向店員出示此畫面',PLAN.chicken);
-  const cb=document.getElementById('chicken-close-btn');
-  cb.style.display='inline-block'; cb.onclick=()=>{ cb.disabled=true; cb.textContent='✅ 已確認'; };
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify({action:'updateStats',token:did,ip:getClientIP(),isWin:false,prize:'炸雞第二份半價',remark:'[chicken] 炸雞簽到',timestamp:new Date().toISOString()}),
-      mode:'no-cors'});
-  } catch(e){}
-}
-function setChickenUI(cls,icon,title,desc,boxText){
-  const p=document.getElementById('page-chicken'); p.className=`active m-${cls}`;
-  document.getElementById('m-icon').textContent=icon;
-  document.getElementById('m-title').textContent=title;
-  document.getElementById('m-desc').textContent=desc;
-  if(boxText){ const b=document.getElementById('m-box'); b.style.display='block'; b.innerHTML=`方案：<strong>${boxText}</strong>`; }
-}
-function showDiceIntro(){
-  document.getElementById('page-chicken').classList.remove('active');
-  const intro=document.getElementById('page-dice-intro');
-  intro.style.display='flex';
-  const gBtn=document.getElementById('go-dice-btn');
-  const fresh=gBtn.cloneNode(true); gBtn.parentNode.replaceChild(fresh,gBtn);
-  if(hasPlayedToday('dice')){
-    fresh.style.display='none';
-    intro.querySelector('p').innerHTML='炸雞優惠已確認 🍗<br>您今天已玩過骰子挑戰了<br><span style="color:#f87171;">明天再來挑戰吧！</span>';
-  } else {
-    fresh.addEventListener('click',()=>{
-      intro.style.display='none';
-      document.body.classList.add('dice-mode');
-      document.getElementById('page-dice-wait').classList.add('active');
-      DS.vid='C2D-'+Date.now().toString(36); DS.phone=DS.vid;
-      diceInit();
-    });
-  }
-}
-
-// ── 裝置 ID ──────────────────────────────────────────
-function getDeviceId(){
-  let id=localStorage.getItem('_did');
-  if(!id){ id='D-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem('_did',id); }
-  return id;
-}
-function todayKey(type){ const d=new Date(); return `play_${type}_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`; }
-function hasPlayedToday(type){ try{ return localStorage.getItem(todayKey(type))==='1'; }catch(e){ return false; } }
-function markPlayedToday(type){ try{ localStorage.setItem(todayKey(type),'1'); }catch(e){} }
-
-// ── 骰子初始化 ────────────────────────────────────────
-const DE={};
-const FA={1:{x:0,y:0},2:{x:0,y:-90},3:{x:0,y:180},4:{x:0,y:90},5:{x:-90,y:0},6:{x:90,y:0}};
-
-function makeDice(gridId,count){
-  const grid=document.getElementById(gridId); if(!grid) return [];
-  grid.innerHTML='';
-  return Array.from({length:count},()=>{
-    const sc=document.createElement('div'); sc.className='scene';
-    const dc=document.createElement('div'); dc.className='dice';
-    for(let f=1;f<=6;f++){
-      const face=document.createElement('div'); face.className=`face face${f}`;
-      for(let d=0;d<f;d++){ const dot=document.createElement('div'); dot.className='dot'; face.appendChild(dot); }
-      dc.appendChild(face);
-    }
-    sc.appendChild(dc); grid.appendChild(sc); return dc;
-  });
-}
-
-let _diceInited=false;
-function diceInit(){
-  if(_diceInited){ diceCheckQR(); return; } _diceInited=true;
-  DE.solo=makeDice('dg-solo',6); DE.compP=makeDice('dg-comp-p',6); DE.compC=makeDice('dg-comp-c',6);
-  DE.vsP=makeDice('dg-vs-p',4);  DE.vsC=makeDice('dg-vs-c',4);    DE.speed=makeDice('dg-speed',6);
-  DE.risk=makeDice('dg-risk',8); DE.elimP=makeDice('dg-elim-p',6); DE.elimC=makeDice('dg-elim-c',6);
-  DE.combo=makeDice('dg-combo',6); DE.double=makeDice('dg-double',6);
-  document.querySelectorAll('.mode-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ playSound('snd-click'); selectMode(btn.dataset.mode); });
-  });
-  document.getElementById('btn-solo').addEventListener('click',runSoloSpin);
-  document.getElementById('btn-competitive').addEventListener('click',runCompSpin);
-  document.getElementById('btn-vs').addEventListener('click',runVsSpin);
-  document.getElementById('btn-speed').addEventListener('click',runSpeedSpin);
-  document.getElementById('btn-risk-safe').addEventListener('click',()=>runRiskRound(false));
-  document.getElementById('btn-risk-gamble').addEventListener('click',()=>runRiskRound(true));
-  document.getElementById('btn-elimination').addEventListener('click',runElimRound);
-  document.getElementById('btn-combo').addEventListener('click',runComboSpin);
-  document.getElementById('btn-double-roll').addEventListener('click',runDoubleRoll);
-  document.getElementById('btn-double-claim').addEventListener('click',doubleClaim);
-  document.getElementById('btn-double-gamble').addEventListener('click',doubleGamble);
-  document.getElementById('forfeit-btn').addEventListener('click',handleForfeit);
-  document.addEventListener('fullscreenchange',()=>{
-    const fp=document.getElementById('fullscreen-prompt');
-    fp.classList.toggle('visible',!!document.fullscreenElement);
-    if(document.fullscreenElement) setTimeout(()=>fp.classList.remove('visible'),3000);
-  });
-  startResultGuard();
-  diceCheckQR();
-}
-
-function diceCheckQR(){ DS.vid=ROUTE_TOKEN; diceVerify(); }
-
-async function diceVerify(){
-  const did=getDeviceId(); DS.vid=did; DS.phone=did; DS.rollCount=0;
-  if(hasPlayedToday('dice')){ showDailyLock(); return; }
-  try{
-    const json=await apiPost('startGame',{did,ip:getClientIP()});
-    if(json.status==='USED_TODAY'){ markPlayedToday('dice'); showDailyLock(); return; }
-    if(json.status!=='OK'||!json.gameToken){ showDiceError('系統錯誤，請稍後再試：'+(json.message||'')); return; }
-    _authorizeIsHit();
-    DS.isHit=(json.isHit===true);
-    DS.gameToken=json.gameToken;
-    DS.visitCount=json.visitCount||1;
-    markPlayedToday('dice');
-  } catch(e){
-    showDiceError('網路連線失敗，請重新整理頁面再試。<br><small style="color:#94a3b8;">（後端未記錄，今日限制未扣除）</small>');
+  const info = ACTIVITY_INFO[activityType];
+  if (!info) {
+    showError("未知的活動類型，請重新掃描 QR Code");
     return;
   }
-  diceLoginPlayer();
+
+  // 取得用戶 Profile
+  if (!liff.isLoggedIn()) {
+    liff.login({ redirectUri: location.href });
+    return;
+  }
+
+  liffProfile = await liff.getProfile();
+
+  document.getElementById("activity-icon").textContent  = info.icon;
+  document.getElementById("activity-label").textContent = info.label;
+  document.getElementById("user-name").textContent      = "👤 " + liffProfile.displayName;
+
+  document.getElementById("loading-area").style.display = "none";
+  document.getElementById("main-area").style.display    = "block";
+
+  // 預先查詢是否已簽到
+  checkStatus();
 }
 
-function showDiceError(msg){
-  document.getElementById('dice-wait-inner').innerHTML=`
-    <div style="padding:20px;background:rgba(239,68,68,.15);border-radius:10px;border:1px solid #ef4444;color:#fca5a5;font-size:.95rem;line-height:1.7;">
-      ❌ ${msg}<br><br>
-      <button onclick="location.reload()" style="padding:10px 28px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;min-width:auto;">🔄 重新整理</button>
-    </div>`;
-}
-function diceLoginPlayer(){ markPlayedToday('dice'); tryEnterFullscreen(); document.getElementById('page-dice-wait').classList.remove('active'); showDiceRulesModal(); }
-function showDiceRulesModal(){
-  const modal=document.getElementById('dice-rules-modal'); modal.classList.add('visible');
-  let cd=5; document.getElementById('dice-countdown').textContent=cd;
-  const t=setInterval(()=>{
-    cd--; document.getElementById('dice-countdown').textContent=cd;
-    if(cd<=0){ clearInterval(t); modal.classList.remove('visible'); document.getElementById('dice-mode-sel').style.display='flex'; document.getElementById('page-dice-game').classList.add('visible'); playMusic('mus-main'); }
-  },1000);
-}
-function selectMode(mode){
-  DS.mode=mode; DS.ending=false;
-  document.getElementById('dice-mode-sel').style.display='none';
-  resetDS(); DS.active=true;
-  document.getElementById('forfeit-btn').style.display='block';
-  document.getElementById('dice-history-container').style.display='block';
-  const sb=document.getElementById('dice-sidebar');
-  if(window.innerWidth>640){ sb.style.display='flex'; updateSidebar(mode); } else { sb.style.display='none'; }
-  document.querySelectorAll('.game-content').forEach(el=>el.style.display='none');
-  const cm={solo:'c-solo',competitive:'c-competitive',vs:'c-vs',speed:'c-speed',risk:'c-risk',elimination:'c-elimination',combo:'c-combo',double:'c-double'};
-  const mm={solo:'mus-main',competitive:'mus-battle',vs:'mus-battle',speed:'mus-speed',risk:'mus-main',elimination:'mus-battle',combo:'mus-main',double:'mus-main'};
-  document.getElementById(cm[mode]).style.display='flex';
-  playMusic(mm[mode]);
-  if(mode==='speed') startSpeed();
-}
-function updateSidebar(mode){
-  const tips={solo:['在 8 次機會中擲出最佳牌型，以最高成績結算獎勵。'],competitive:['5 回合中贏得比電腦更多回合（至少3回合）即獲獎。'],vs:['4顆骰子比點數總和，5回合贏多者獲獎。'],speed:['90秒內快速擲骰，以最佳牌型結算獎勵。'],risk:['5回合累積最高分數，依總分決定獎勵等級。','安全(6顆)穩定得分，風險(8顆)可能乘1.5倍或0分。'],elimination:['10回合，每回合點數低者損失差值生命，生命較高者獲勝。'],combo:['依序達成：對子→三條→四條→五條→六條，共3次失敗機會。'],double:['先用3次機會擲出初始獎勵，再選擇領取或雙倍賭注。']};
-  document.getElementById('dice-sidebar').innerHTML=`<h3>即時說明</h3>${(tips[mode]||[]).map(t=>`<div class="step">${t}</div>`).join('')}`;
-}
-function handleForfeit(){
-  if(!DS.active||DS.ending) return;
-  playSound('snd-click');
-  if(confirm('確定要放棄比賽？放棄後無法獲得獎勵。')) endGame({remark:'玩家放棄比賽'});
+async function checkStatus() {
+  try {
+    const res = await fetch(`${GAS_URL}?userId=${liffProfile.userId}&type=${activityType}`);
+    const data = await res.json();
+    if (data.alreadyCheckedIn) {
+      showResult("warn", "你今天已經簽到過「" + data.activity + "」了！\n明天再來 🌟");
+      document.getElementById("checkin-btn").disabled = true;
+    }
+  } catch(e) {}
 }
 
-// ── 遊戲模式邏輯 ────────────────────────────
-async function runSoloSpin(){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; document.getElementById('btn-solo').disabled=true;
-  DS.soloSpins++; DS.rollCount++; document.getElementById('solo-spin-no').textContent=DS.soloSpins;
-  const vals=rollForced(6,DS.isHit);
-  await animateDice(DE.solo,vals,'ct-solo',getDiceCombo);
-  const {bestComboText}=getDiceCombo(vals);
-  addHistory(`第${DS.soloSpins}次：<strong>${bestComboText}</strong>`);
-  if(DS.soloSpins>=8) endGame({remark:`8次挑戰完成，最佳牌型：${bestComboText}`});
-  else { DS.spinning=false; document.getElementById('btn-solo').disabled=false; }
-}
-async function runCompSpin(){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; document.getElementById('btn-competitive').disabled=true;
-  DS.compRounds++; DS.rollCount++; document.getElementById('comp-round-no').textContent=DS.compRounds;
-  const pv=rollForced(6,DS.isHit),cv=rollComputer(6);
-  await Promise.all([animateDice(DE.compP,pv,'ct-comp-p',getDiceCombo),animateDice(DE.compC,cv,'ct-comp-c',getDiceCombo)]);
-  const pr=getDiceCombo(pv),cr=getDiceCombo(cv);
-  let w='平手';
-  if(pr.score>cr.score){DS.compWins.p++;w='玩家';playSound('snd-win');}else if(cr.score>pr.score){DS.compWins.c++;w='電腦';playSound('snd-lose');}
-  document.getElementById('comp-p-score').textContent=DS.compWins.p;
-  document.getElementById('comp-c-score').textContent=DS.compWins.c;
-  addHistory(`第${DS.compRounds}回合：玩家(${pr.bestComboText}) vs 電腦(${cr.bestComboText}) → <strong>${w}勝</strong>`);
-  if(DS.compRounds>=DS.totalRounds) endGame(DS.compWins.p>DS.compWins.c?{remark:`${DS.compWins.p}:${DS.compWins.c} 獲勝`}:{remark:`${DS.compWins.p}:${DS.compWins.c} 落敗`});
-  else { DS.spinning=false; document.getElementById('btn-competitive').disabled=false; }
-}
-async function runVsSpin(){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; document.getElementById('btn-vs').disabled=true;
-  DS.vsRounds++; DS.rollCount++; document.getElementById('vs-round-no').textContent=DS.vsRounds;
-  const pv=rollForced(4,DS.isHit),cv=rollComputer(4);
-  await Promise.all([animateDice(DE.vsP,pv,'ct-vs-p',getSumCombo),animateDice(DE.vsC,cv,'ct-vs-c',getSumCombo)]);
-  const ps=getSumCombo(pv).score,cs=getSumCombo(cv).score;
-  let w='平手';
-  if(ps>cs){DS.vsWins.p++;w='玩家';playSound('snd-win');}else if(cs>ps){DS.vsWins.c++;w='電腦';playSound('snd-lose');}
-  document.getElementById('vs-p-score').textContent=DS.vsWins.p;
-  document.getElementById('vs-c-score').textContent=DS.vsWins.c;
-  addHistory(`第${DS.vsRounds}回合：玩家(${ps}點) vs 電腦(${cs}點) → <strong>${w}勝</strong>`);
-  if(DS.vsRounds>=DS.totalRounds) endGame(DS.vsWins.p>DS.vsWins.c?{remark:`${DS.vsWins.p}:${DS.vsWins.c} 獲勝`}:{remark:`${DS.vsWins.p}:${DS.vsWins.c} 落敗`});
-  else { DS.spinning=false; document.getElementById('btn-vs').disabled=false; }
-}
-function startSpeed(){
-  DS.spinning=false; document.getElementById('btn-speed').disabled=false;
-  DS.speedTimer=setInterval(()=>{
-    DS.speedLeft--; document.getElementById('speed-timer').textContent=DS.speedLeft;
-    if(DS.speedLeft<=0){ clearInterval(DS.speedTimer); document.getElementById('btn-speed').disabled=true; if(!DS.ending) endGame({remark:`時間到！最佳牌型：${DS.speedBest.text||'無'}`}); }
-  },1000);
-}
-async function runSpeedSpin(){
-  if(!DS.active||DS.spinning||DS.speedLeft<=0) return;
-  DS.spinning=true; DS.rollCount++; document.getElementById('btn-speed').disabled=true;
-  const vals=rollForced(6,DS.isHit);
-  await animateDice(DE.speed,vals,'ct-speed',getDiceCombo);
-  const r=getDiceCombo(vals);
-  if(r.score>DS.speedBest.score){ DS.speedBest={score:r.score,text:r.bestComboText}; document.getElementById('speed-best').textContent=`目前最佳: ${r.bestComboText}`; playSound('snd-win'); }
-  DS.spinning=false;
-  if(DS.speedLeft>0&&!DS.ending) document.getElementById('btn-speed').disabled=false;
-}
-async function runRiskRound(isRisky){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; document.getElementById('btn-risk-safe').disabled=true; document.getElementById('btn-risk-gamble').disabled=true;
-  DS.riskRounds++; DS.rollCount++; document.getElementById('risk-round-no').textContent=DS.riskRounds;
-  const n=isRisky?8:6; DE.risk.forEach((d,i)=>d.parentElement.style.display=i<n?'block':'none');
-  const vals=rollForced(n,DS.isHit);
-  await animateDice(DE.risk.slice(0,n),vals,'ct-risk',getSumCombo);
-  const sc=getDiceCombo(vals),ss=getSumCombo(vals); let pts=0;
-  const ct=document.getElementById('ct-risk');
-  if(isRisky){ if(sc.score>=2000){pts=Math.floor(ss.score*1.5);ct.textContent+=` (成功! +${pts})`;playSound('snd-win');}else{pts=0;ct.textContent+=' (失敗! 0分)';playSound('snd-lose');} }
-  else pts=ss.score;
-  DS.riskScore+=pts; document.getElementById('risk-total').textContent=`總分: ${DS.riskScore}`;
-  if(DS.riskRounds>=5) endGame({remark:`風險挑戰完成，總分 ${DS.riskScore}`});
-  else { DS.spinning=false; document.getElementById('btn-risk-safe').disabled=false; document.getElementById('btn-risk-gamble').disabled=false; }
-}
-async function runElimRound(){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; document.getElementById('btn-elimination').disabled=true;
-  DS.elimRounds++; DS.rollCount++; document.getElementById('elim-round-no').textContent=DS.elimRounds;
-  const pv=rollForced(6,DS.isHit),cv=rollComputer(6);
-  await Promise.all([animateDice(DE.elimP,pv,'ct-elim-p',getSumCombo),animateDice(DE.elimC,cv,'ct-elim-c',getSumCombo)]);
-  const ps=getSumCombo(pv).score,cs=getSumCombo(cv).score,diff=Math.abs(ps-cs);
-  if(ps>cs){DS.elimCLife-=diff;playSound('snd-win');addHistory(`玩家(${ps})>電腦(${cs})，電腦-${diff}`);}
-  else if(cs>ps){DS.elimPLife-=diff;playSound('snd-lose');addHistory(`電腦(${cs})>玩家(${ps})，玩家-${diff}`);}
-  else addHistory(`平手(${ps})`);
-  document.getElementById('elim-p-life').textContent=Math.max(0,DS.elimPLife);
-  document.getElementById('elim-c-life').textContent=Math.max(0,DS.elimCLife);
-  if(DS.elimPLife<=0||DS.elimCLife<=0||DS.elimRounds>=10) endGame(DS.elimPLife>DS.elimCLife?{remark:`生命 ${Math.max(0,DS.elimPLife)} vs ${Math.max(0,DS.elimCLife)} 獲勝！`}:{remark:`生命 ${Math.max(0,DS.elimPLife)} vs ${Math.max(0,DS.elimCLife)} 落敗`});
-  else { DS.spinning=false; document.getElementById('btn-elimination').disabled=false; }
-}
-async function runComboSpin(){
-  if(!DS.active||DS.spinning) return;
-  DS.spinning=true; DS.rollCount++; document.getElementById('btn-combo').disabled=true;
-  const vals=rollForced(6,DS.isHit);
-  await animateDice(DE.combo,vals,'ct-combo',getDiceCombo);
-  const r=getDiceCombo(vals),target=DS.comboTargets[DS.comboLevel];
-  if(r.score>=target.s){ playSound('snd-win'); DS.comboLevel++; addHistory(`✅ 達成【${target.t}】！`); document.getElementById('combo-prize').textContent=`已達成: ${target.t}`; if(DS.comboLevel>=DS.comboTargets.length){endGame({remark:'完成所有組合連鎖！'});return;} document.getElementById('combo-target').textContent=DS.comboTargets[DS.comboLevel].t; }
-  else { playSound('snd-lose'); DS.comboLives--; document.getElementById('combo-lives').textContent=DS.comboLives; addHistory(`❌ 挑戰【${target.t}】失敗，剩餘 ${DS.comboLives} 命`); if(DS.comboLives<=0){endGame({remark:`最高達成【${DS.comboLevel>0?DS.comboTargets[DS.comboLevel-1].t:'無'}】`});return;} }
-  DS.spinning=false; document.getElementById('btn-combo').disabled=false;
-}
-async function runDoubleRoll(){
-  if(!DS.active||DS.spinning||DS.doubleLeft<=0) return;
-  DS.spinning=true; document.getElementById('btn-double-roll').disabled=true;
-  DS.doubleLeft--; DS.rollCount++; document.getElementById('double-left').textContent=DS.doubleLeft;
-  const vals=rollForced(6,DS.isHit);
-  await animateDice(DE.double,vals,'ct-double',getDiceCombo);
-  const {bestComboText,score}=getDiceCombo(vals);
-  if(score>DS.doublePrize.score){ DS.doublePrize={score}; document.getElementById('double-prize').textContent=`目前最佳: ${bestComboText}`; document.getElementById('btn-double-roll').style.display='none'; document.getElementById('btn-double-claim').style.display='inline-block'; document.getElementById('btn-double-gamble').style.display='inline-block'; }
-  if(DS.doublePrize.score===0&&DS.doubleLeft<=0){endGame({remark:'3次機會用完'});return;}
-  if(DS.doublePrize.score===0&&DS.doubleLeft>0) document.getElementById('btn-double-roll').disabled=false;
-  DS.spinning=false;
-}
-function doubleClaim(){ if(DS.ending) return; playSound('snd-click'); endGame({remark:'選擇領取當前成績'}); }
-async function doubleGamble(){
-  if(DS.ending||DS.spinning) return;
-  playSound('snd-click'); DS.spinning=true;
-  document.getElementById('btn-double-claim').disabled=true; document.getElementById('btn-double-gamble').disabled=true;
-  document.getElementById('ct-double').textContent='賭注中...';
-  const g=DS.isHit?(Math.floor(Math.random()*3)+4):(Math.floor(Math.random()*3)+1);
-  DE.double.forEach((d,i)=>d.parentElement.style.display=i===0?'block':'none');
-  await animateDice([DE.double[0]],[g],'ct-double',d=>({bestComboText:`賭注: ${d[0]}`}));
-  if(g>=4){playSound('snd-jackpot');endGame({remark:'賭注成功！'});}
-  else {playSound('snd-lose');endGame({remark:'賭注失敗。'});}
-}
+async function doCheckin() {
+  const btn = document.getElementById("checkin-btn");
+  btn.disabled = true;
+  btn.textContent = "簽到中...";
 
-// ── 骰子工具 ──────────────────────────────────────────
-function rollForced(n,shouldWin){
-  if(shouldWin){ const fv=Math.ceil(Math.random()*6),sc=Math.ceil(n*.65),r=[]; for(let i=0;i<sc;i++) r.push(fv); for(let i=sc;i<n;i++) r.push(Math.ceil(Math.random()*6)); for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
-  else { const b=[1,2,3,4,5,6],r=[]; for(let i=0;i<n;i++) r.push(b[i%6]); for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
-}
-function rollComputer(n){ return rollForced(n,!DS.isHit); }
-function getDiceCombo(dice){
-  const cnt={}; dice.forEach(n=>cnt[n]=(cnt[n]||0)+1);
-  const combos=Object.entries(cnt).map(([n,c])=>({n:+n,c})).filter(x=>x.c>=2).sort((a,b)=>b.c-a.c||b.n-a.n);
-  const sum=dice.reduce((a,b)=>a+b,0);
-  if(!combos.length) return {score:sum,bestComboText:'散牌'};
-  const b=combos[0]; const lbl={6:'六條',5:'五條',4:'四條',3:'三條',2:'對子'}; const base={6:6000,5:5000,4:4000,3:3000,2:2000};
-  return {score:(base[b.c]||2000)+b.n+(b.c===2?sum:0),bestComboText:`${lbl[b.c]||'對子'}(${b.n})`};
-}
-function getSumCombo(dice){ const s=dice.reduce((a,b)=>a+b,0); return {score:s,bestComboText:`總點數: ${s}`}; }
-async function animateDice(elements,values,comboId,comboFn){
-  playSound('snd-roll');
-  const ce=document.getElementById(comboId); if(ce) ce.textContent='...';
-  elements.forEach((d,i)=>d.className=`dice rolling-${i%6}`);
-  await new Promise(r=>setTimeout(r,1500));
-  elements.forEach((d,i)=>{ d.className='dice'; const v=values[i],ex=360*(Math.floor(Math.random()*2)+2),ey=360*(Math.floor(Math.random()*2)+2); d.style.transform=`rotateX(${FA[v].x+ex}deg) rotateY(${FA[v].y+ey}deg)`; });
-  if(ce&&comboFn) ce.textContent=comboFn(values).bestComboText;
-}
-function addHistory(msg){ const li=document.createElement('li'); li.innerHTML=msg; const l=document.getElementById('dice-history-list'); l.appendChild(li); l.scrollTop=l.scrollHeight; }
-
-// ══════════════════════════════════════════════════════════════
-//  ★ 安全版 endGame
-// ══════════════════════════════════════════════════════════════
-function endGame({remark=null}){
-  if(DS.ending) return;
-  DS.ending=true; DS.active=false;
-  clearDiceTimers(); stopMusic();
-  document.getElementById('forfeit-btn').style.display='none';
-  document.getElementById('dice-sidebar').style.display='none';
-  document.getElementById('page-dice-game').classList.remove('visible');
-  document.getElementById('syncing-overlay').classList.add('show');
-  remark=remark||(DS.isHit?'🎊 恭喜！您在本次挑戰中獲得獎勵！':'本次挑戰結束，再接再厲！下次好運！');
-  syncAndShow(remark);
-}
-
-async function syncAndShow(remark){
-  if(!DS.gameToken){ _SEC.lock('no-gameToken'); return; }
-  const did=getDeviceId(), mode=DS.mode||'N/A', ts=new Date().toISOString();
-  let backendIsWin=DS.isHit;
-  try{
-    const res=await fetch(SCRIPT_URL,{
-      method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:JSON.stringify({
-        action:'updateStats', gameToken:DS.gameToken, token:did, ip:DS.ip||'N/A',
-        isWin:DS.isHit, prize:DS.isHit?PRIZE_POOL:'無',
-        remark:`[${mode}] ${remark}`, timestamp:ts, playCount:DS.visitCount||1
-      }),
-      redirect:'follow'
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId:      liffProfile.userId,
+        displayName: liffProfile.displayName,
+        type:        activityType
+      })
     });
-    const result=await res.json();
-    if(typeof result.isWin==='boolean') backendIsWin=result.isWin;
-  } catch(e){
-    try{ await fetch(`${SCRIPT_URL}?action=markDiceDone&did=${encodeURIComponent(did)}&t=${Date.now()}`,{mode:'no-cors'}); }catch(e2){}
-  }
-  markPlayedToday('dice');
-  document.getElementById('syncing-overlay').classList.remove('show');
-  showFinalResult(backendIsWin, remark);
-}
+    const data = await res.json();
 
-function showFinalResult(isWin, remark){
-  const result=document.getElementById('page-dice-result');
-  if(result._setAllowWrite) result._setAllowWrite(true);
-  if(isWin){
-    result._isWinConfirmed=true;
-    const code=genConfirmCode(DS.gameToken);
-    result.innerHTML=`
-      <div class="dice-result-container jackpot">
-        <div class="result-icon">🎉</div>
-        <h2>恭喜！</h2>
-        <p style="font-size:1.1rem;line-height:1.6;">${remark}</p>
-        <p style="margin-top:6px;">您贏得了</p>
-        <div class="prize-highlight">${PRIZE_POOL}</div>
-        <div class="confirm-code-box">
-          <div class="confirm-code-label">店員確認碼</div>
-          <div class="confirm-code-value" id="live-confirm-code">${code}</div>
-          <div class="confirm-code-hint">每分鐘自動更新 · 截圖無效</div>
-        </div>
-        <p style="font-size:.85rem;color:#facc15;line-height:1.5;padding:10px;border:1px dashed #facc15;border-radius:8px;margin-top:14px;background:rgba(0,0,0,.2);">
-          ⚠️ 請勿關閉此頁面，請通知服務員確認確認碼。<br>
-          所有操作須由當事人親臨現場始算生效。
-        </p>
-      </div>`;
-    result.className='show jackpot';
-    if(result._setAllowWrite) result._setAllowWrite(false);
-    playSound('snd-jackpot');
-    if(typeof confetti==='function') confetti({particleCount:200,spread:120,origin:{x:.5,y:0},startVelocity:30});
-    startConfirmCodeRefresh(DS.gameToken);
-  } else {
-    result.innerHTML=`
-      <div class="dice-result-container" style="background:linear-gradient(135deg,#1e3a5f,#0f2744);border:2px solid #4a6cf7;border-radius:20px;padding:40px 28px;max-width:480px;width:100%;text-align:center;">
-        <div style="font-size:4rem;margin-bottom:16px;">🎲</div>
-        <h2 style="color:#60a5fa;font-size:clamp(1.6rem,5vw,2.2rem);font-weight:900;margin-bottom:12px;">再接再厲！</h2>
-        <p style="color:rgba(255,255,255,.75);font-size:1rem;margin-bottom:28px;line-height:1.7;">這次差一點點，下次一定行！</p>
-        <div style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(239,68,68,.15));border:2px solid #f59e0b;border-radius:16px;padding:20px 18px;margin-bottom:28px;">
-          <div style="font-size:2rem;margin-bottom:8px;">🏆</div>
-          <p style="color:#fbbf24;font-size:1.1rem;font-weight:900;margin-bottom:8px;">還有機會免費吃吃到堡！</p>
-          <p style="color:#fff;font-size:1rem;line-height:1.7;">告訴服務員<br><strong style="color:#f59e0b;font-size:1.05rem;">您要免費參加手把手免費吃吃到堡</strong></p>
-        </div>
-        <p style="font-size:.85rem;color:rgba(255,255,255,.35);margin-bottom:8px;">頁面將在 <strong id="close-cd" style="font-size:1.2rem;color:#f87171;">5:00</strong> 後自動關閉</p>
-        <div style="width:240px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin:0 auto;">
-          <div id="close-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#4a6cf7,#10b981);border-radius:2px;transition:width 300s linear;"></div>
-        </div>
-      </div>`;
-    result.className='show'; result.style.background='var(--bg2)';
-    if(result._setAllowWrite) result._setAllowWrite(false);
-    playSound('snd-lose');
-    setTimeout(()=>{ const b=document.getElementById('close-bar'); if(b) b.style.width='0%'; },60);
-    let cd=300;
-    const t=setInterval(()=>{
-      cd--; const el=document.getElementById('close-cd');
-      if(el){ const m=Math.floor(cd/60),s=cd%60; el.textContent=m+':'+String(s).padStart(2,'0'); }
-      if(cd<=0){ clearInterval(t); window.close(); setTimeout(()=>{ location.replace('about:blank'); },800); }
-    },1000);
+    if (data.success) {
+      showResult("success", "🎉 簽到成功！\n活動：" + data.activity + "\n時間：" + data.date + " " + data.time);
+      btn.textContent = "已簽到 ✓";
+    } else if (data.alreadyCheckedIn) {
+      showResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
+      btn.textContent = "今日已簽到";
+    } else {
+      showResult("error", "簽到失敗：" + data.message);
+      btn.disabled = false;
+      btn.textContent = "重試";
+    }
+  } catch(err) {
+    showResult("error", "連線錯誤，請稍後再試");
+    btn.disabled = false;
+    btn.textContent = "重試";
   }
 }
 
-function showDailyLock(){
-  document.getElementById('page-dice-wait').classList.remove('active');
-  const result=document.getElementById('page-dice-result');
-  if(result._setAllowWrite) result._setAllowWrite(true);
-  result.innerHTML=`
-    <div class="dice-result-container error">
-      <div class="result-icon">⏳</div>
-      <h2>您今日已挑戰過！</h2>
-      <p>下次開放倒數：</p>
-      <div id="daily-cd" style="font-size:2rem;margin:10px 0;">--:--:--</div>
-    </div>`;
-  result.className='show error';
-  if(result._setAllowWrite) result._setAllowWrite(false);
-  stopMusic();
-  setInterval(()=>{
-    const now=new Date(),tmr=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
-    const diff=tmr-now,el=document.getElementById('daily-cd');
-    if(!el||diff<0) return;
-    el.textContent=[Math.floor(diff/36e5),Math.floor((diff%36e5)/6e4),Math.floor((diff%6e4)/1e3)].map(n=>String(n).padStart(2,'0')).join(':');
-  },1000);
+function showResult(type, msg) {
+  const box = document.getElementById("result-box");
+  box.className = "result " + type;
+  box.textContent = msg;
+  box.style.display = "block";
 }
 
-function resetDS(){
-  clearDiceTimers();
-  Object.assign(_DS_RAW,{
-    spinning:false, rollCount:0,
-    soloSpins:0, soloBest:{prize:null,score:0},
-    compRounds:0, compWins:{p:0,c:0},
-    vsRounds:0,   vsWins:{p:0,c:0},
-    speedLeft:90, speedBest:{prize:null,score:0,text:'無'},
-    riskRounds:0, riskScore:0,
-    elimRounds:0, elimPLife:15, elimCLife:15,
-    comboLevel:0, comboLives:3,
-    doubleLeft:3, doublePrize:{prize:null,score:0}
-  });
-  document.getElementById('solo-spin-no').textContent='1'; document.getElementById('solo-best').textContent='目前最佳: 無';
-  document.getElementById('comp-round-no').textContent='1'; document.getElementById('comp-p-score').textContent='0'; document.getElementById('comp-c-score').textContent='0';
-  document.getElementById('vs-round-no').textContent='1';   document.getElementById('vs-p-score').textContent='0';   document.getElementById('vs-c-score').textContent='0';
-  document.getElementById('speed-timer').textContent='90';  document.getElementById('speed-best').textContent='目前最佳: 無';
-  document.getElementById('risk-round-no').textContent='1'; document.getElementById('risk-total').textContent='總分: 0';
-  document.getElementById('elim-round-no').textContent='1'; document.getElementById('elim-p-life').textContent='15'; document.getElementById('elim-c-life').textContent='15';
-  document.getElementById('combo-lives').textContent='3';   document.getElementById('combo-target').textContent='對子'; document.getElementById('combo-prize').textContent='目前獎勵: 無';
-  document.getElementById('double-left').textContent='3';   document.getElementById('double-prize').textContent='擲骰以獲得初始獎勵';
-  document.getElementById('btn-double-roll').style.display='block';
-  document.getElementById('btn-double-claim').style.display='none';
-  document.getElementById('btn-double-gamble').style.display='none';
-  document.getElementById('dice-history-list').innerHTML='';
-  document.querySelectorAll('.combo-text').forEach(el=>el.textContent='');
+function showError(msg) {
+  document.getElementById("loading-area").textContent = "⚠ " + msg;
 }
-function clearDiceTimers(){ if(DS.speedTimer){ clearInterval(DS.speedTimer); _DS_RAW.speedTimer=null; } }
 
-// ── 音效 & 全螢幕 ─────────────────────────────────────
-function playSound(id){ const s=document.getElementById(id); if(s){s.currentTime=0;s.play().catch(()=>{});} }
-function playMusic(id){ stopMusic(); const m=document.getElementById(id); if(m){m.currentTime=0;m.play().catch(()=>{});_DS_RAW.music=m;} }
-function stopMusic(){ if(DS.music){DS.music.pause();DS.music.currentTime=0;_DS_RAW.music=null;} }
-async function tryEnterFullscreen(){ try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){} }
-function tryExitFullscreen(){ if(document.exitFullscreen&&document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
-async function getIP(){ try{ const r=await fetch('https://api.ipify.org?format=json'); _DS_RAW.ip=(await r.json()).ip; }catch(e){ _DS_RAW.ip='N/A'; } }
-function getClientIP(){ return (typeof _DS_RAW!=='undefined'&&_DS_RAW.ip)?_DS_RAW.ip:'N/A'; }
-</script>
-
-<!-- 手把手骰子盅 -->
-<div id="page-shake" style="display:none;position:fixed;inset:0;z-index:10;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;gap:16px;background:linear-gradient(135deg,#0a0a2a,#1a1a4e);overflow-y:auto;">
-  <div class="m-spin" style="margin:0 auto 16px;"></div>
-  <p style="color:#cbd5e1;font-size:1rem;">載入中，請稍候...</p>
-</div>
-<style>#page-shake.active{display:flex !important;}</style>
-
-<script>
-function genTicketNo(){ const a='ABCDEFGHJKLMNPQRSTUVWXYZ'; return a[Math.floor(Math.random()*a.length)]+String(Math.floor(Math.random()*99)+1).padStart(2,'0'); }
-async function runShakeMobile(){
-  const page=document.getElementById('page-shake'), did=getDeviceId();
-  page.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><div style="font-size:2.5rem;">🎲</div><div class="m-spin"></div><p style="color:#cbd5e1;font-size:1rem;">驗證中，請稍候...</p></div>`;
-  if(hasPlayedToday('shake')){ page.innerHTML=shakeUI('deny','⏳','今日已挑戰過','您今天已參加過手把手骰子盅挑戰<br><span style="color:#94a3b8;font-size:.9rem;">明天再來！</span>',''); return; }
-  try{
-    const json=await apiPost('checkEntry',{did,type:'shake'});
-    if(json.status==='USED_TODAY'){ markPlayedToday('shake'); page.innerHTML=shakeUI('deny','⏳','今日已挑戰過','您今天已參加過手把手骰子盅挑戰<br><span style="color:#94a3b8;font-size:.9rem;">明天再來！</span>',''); return; }
-    markPlayedToday('shake');
-  } catch(e){ markPlayedToday('shake'); }
-  const ticketNo=genTicketNo();
-  try{ await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'updateStats',token:did,ip:getClientIP(),isWin:false,prize:'手把手參加',remark:'[shake] 手把手骰子盅簽到 #'+ticketNo,timestamp:new Date().toISOString(),winSeqIdx:-1,playCount:0}),mode:'no-cors'}); }catch(e){}
-  page.innerHTML=shakeUI('ok','🎲','資格確認！請向服務員出示','',ticketNo);
-}
-function shakeUI(cls,icon,title,msg,ticketNo){
-  const colors={ok:{border:'#f59e0b',title:'#fbbf24'},deny:{border:'#ef4444',title:'#f87171'}};
-  const c=colors[cls]||colors.ok;
-  const ticketBlock=ticketNo?`<div style="background:linear-gradient(135deg,#1e3a5f,#0f2744);border:3px solid #f59e0b;border-radius:16px;padding:16px 24px;margin-bottom:16px;width:100%;max-width:360px;"><p style="color:#94a3b8;font-size:.82rem;margin-bottom:4px;letter-spacing:2px;">候位號碼</p><div style="font-size:3rem;font-weight:900;color:#f59e0b;letter-spacing:6px;text-shadow:0 0 20px rgba(245,158,11,.5);">${ticketNo}</div><p style="color:#94a3b8;font-size:.78rem;margin-top:6px;">請向服務員報出此號碼</p></div>`:'';
-  const prizes=cls==='ok'?`<div style="width:100%;max-width:400px;margin-top:8px;"><div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;margin-bottom:12px;text-align:left;"><p style="color:#fbbf24;font-weight:700;margin-bottom:8px;font-size:.9rem;">📋 遊戲規則</p><p style="color:#cbd5e1;font-size:.88rem;line-height:1.9;">共 <strong style="color:#f59e0b;">6 組</strong>骰子盅，每盅內有 <strong style="color:#f59e0b;">6 個</strong>骰子<br>搖動後打開，達成以下任一條件即獲獎！</p></div><div style="display:flex;flex-direction:column;gap:8px;text-align:left;"><div style="background:linear-gradient(135deg,rgba(255,65,108,.2),rgba(244,63,94,.1));border:1px solid #ff416c;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="font-size:1.3rem;flex-shrink:0;">🎰</div><div><p style="color:#ff6b8a;font-weight:700;font-size:.8rem;margin-bottom:2px;">任一盅 6個同號（1~6點）</p><p style="color:#fff;font-size:.92rem;font-weight:700;">溶岩巧克力吃到堡套餐</p></div></div><div style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(239,68,68,.1));border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="font-size:1.3rem;flex-shrink:0;">🍗</div><div><p style="color:#fbbf24;font-weight:700;font-size:.8rem;margin-bottom:2px;">任一盅 5個同號（1~6點）</p><p style="color:#fff;font-size:.92rem;font-weight:700;">脆皮炸雞套餐</p></div></div><div style="background:linear-gradient(135deg,rgba(52,211,153,.2),rgba(16,185,129,.1));border:1px solid #34d399;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="font-size:1.3rem;flex-shrink:0;">🎲</div><div><p style="color:#34d399;font-weight:700;font-size:.8rem;margin-bottom:2px;">4盅各有3個同號（1~6點）</p><p style="color:#fff;font-size:.92rem;font-weight:700;">脆皮炸雞套餐</p></div></div><div style="background:linear-gradient(135deg,rgba(96,165,250,.2),rgba(59,130,246,.1));border:1px solid #60a5fa;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;"><div style="font-size:1.3rem;flex-shrink:0;">🍟</div><div><p style="color:#93c5fd;font-weight:700;font-size:.8rem;margin-bottom:2px;">3盅各有3個同號（4、5、6點）</p><p style="color:#fff;font-size:.92rem;font-weight:700;">黃金脆薯 + 炸雞</p></div></div></div><p style="color:#94a3b8;font-size:.82rem;margin-top:16px;line-height:1.7;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;">📍 請向服務員出示此畫面<br>由服務員協助搖動骰子盅</p></div>`:'';
-  const msgBlock=cls!=='ok'?`<p style="color:rgba(255,255,255,.7);font-size:1rem;line-height:1.8;background:rgba(0,0,0,.2);border-radius:10px;padding:14px 20px;max-width:360px;width:100%;">${msg}</p>`:'';
-  return `<div style="font-size:3rem;margin-bottom:8px;">${icon}</div><h2 style="color:${c.title};font-size:1.5rem;font-weight:900;margin-bottom:12px;">${title}</h2>${ticketBlock}${msgBlock}${prizes}`;
-}
+init().catch(e => showError("初始化失敗：" + e.message));
 </script>
 </body>
 </html>
