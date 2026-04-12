@@ -314,15 +314,15 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 <script>
 'use strict';
 
-// ★ 設定
+// ★ 設定（如需更換 GAS 網址或遊戲路徑，只改這裡）
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_DlLbU4mxYqjI0hD4Bldxlx5THVE2NNuj9C_gWegOw-jfD1_4F4P18tAPTGOkE7yOuw/exec';
 const GAME_URL   = 'file:///C:/gamechefbozo/index2.html';
 
 // ---- Clock ----
 (function(){
-  const el=document.getElementById('clock');
-  const t=()=>{el.textContent=new Date().toLocaleTimeString('zh-TW',{hour12:false});};
-  t(); setInterval(t,1000);
+  const el = document.getElementById('clock');
+  const t  = () => { el.textContent = new Date().toLocaleTimeString('zh-TW', {hour12:false}); };
+  t(); setInterval(t, 1000);
 })();
 
 // ---- Refs ----
@@ -333,17 +333,17 @@ const vkb       = document.getElementById('vkb');
 const shiftBtn  = document.getElementById('vk-shift');
 
 // ---- State ----
-let isUpperCase   = true;
-let strikes       = 0;
-let correctName   = '';
-let currentId4    = '';
+let isUpperCase    = true;
+let strikes        = 0;
+let correctName    = '';
+let currentId4     = '';
 let autoResetTimer = null;
-let choiceBlocked = false;  // prevent rapid double-tap
+let choiceBlocked  = false;
 
 // ---- Helpers ----
 function checkReady(){ verifyBtn.disabled = inpId.value.length !== 4; }
-function showMsg(t,tp){ msgEl.textContent=t; msgEl.className='show '+tp; }
-function hideMsg(){ msgEl.className=''; }
+function showMsg(t, tp){ msgEl.textContent = t; msgEl.className = 'show ' + tp; }
+function hideMsg(){ msgEl.className = ''; }
 
 // ============================================================
 // KEYBOARD — case toggle
@@ -351,7 +351,7 @@ function hideMsg(){ msgEl.className=''; }
 function setCase(upper){
   isUpperCase = upper;
   shiftBtn.classList.toggle('caps-on', upper);
-  vkb.querySelectorAll('.vk[data-k]').forEach(btn=>{
+  vkb.querySelectorAll('.vk[data-k]').forEach(btn => {
     const k = btn.dataset.k;
     if(k && /^[a-zA-Z]$/.test(k)){
       const nk = upper ? k.toUpperCase() : k.toLowerCase();
@@ -360,11 +360,11 @@ function setCase(upper){
     }
   });
 }
-// Start uppercase
+// 預設大寫
 setCase(true);
 
 function showVkb(){
-  vkb.classList.add('show','id-mode');
+  vkb.classList.add('show', 'id-mode');
   document.getElementById('vkb-mode-strip').textContent = 'LINE ID 末4碼';
   inpId.classList.add('active-field');
 }
@@ -376,8 +376,8 @@ function hideVkb(){
 // Tap field
 inpId.addEventListener('click', showVkb);
 inpId.addEventListener('focus', showVkb);
-document.addEventListener('click', e=>{
-  if(!vkb.contains(e.target) && e.target!==inpId) hideVkb();
+document.addEventListener('click', e => {
+  if(!vkb.contains(e.target) && e.target !== inpId) hideVkb();
 });
 
 // Key press
@@ -397,14 +397,15 @@ vkb.addEventListener('click', function(e){
     return;
   }
   if(k === 'del'){
-    inpId.value = inpId.value.slice(0,-1);
+    inpId.value = inpId.value.slice(0, -1);
     checkReady();
     return;
   }
-  // Symbols disabled in ID mode (CSS handles visually, JS guards)
+  // Symbols disabled in ID mode
   if(k === ' ' || k === '_' || k === '-' || k === '.') return;
 
   if(inpId.value.length < 4){
+    // ✅ 修正：直接存入 k，大小寫由 Shift 鍵決定（不再強制大寫）
     inpId.value += k;
     if(inpId.value.length === 4) hideVkb();
   }
@@ -418,39 +419,40 @@ verifyBtn.addEventListener('click', async function(){
   const id4 = inpId.value.trim();
   if(id4.length !== 4) return;
   hideVkb();
-  showMsg('查詢中… 請稍候','loading');
+  showMsg('查詢中… 請稍候', 'loading');
   verifyBtn.disabled = true;
 
   try{
-    const url = `${SCRIPT_URL}?action=staff_lookup&id4=${encodeURIComponent(id4)}&t=${Date.now()}`;
+    const url  = `${SCRIPT_URL}?action=staff_lookup&id4=${encodeURIComponent(id4)}&t=${Date.now()}`;
     const res  = await fetch(url, {redirect:'follow'});
     const data = await res.json();
     hideMsg();
 
     if(data.status === 'USED'){
-      showResult('used',{
-        id:id4, name:data.realName||'',
-        info:`此玩家<strong>今日已兌換過</strong>骰子遊戲<br>請勿重複放行`,
+      showResult('used', {
+        id   : id4,
+        name : data.realName || '',
+        info : `此玩家<strong>今日已兌換過</strong>骰子遊戲<br>請勿重複放行`,
         count: data.usedTime ? `兌換時間：${data.usedTime}` : ''
       });
     } else if(data.status === 'FOUND'){
-      currentId4  = id4;
-      correctName = data.realName;
-      strikes     = 0;
+      currentId4    = id4;
+      correctName   = data.realName;
+      strikes       = 0;
       choiceBlocked = false;
-      startNameChoice(id4, data.choices); // choices = 3 names shuffled
+      startNameChoice(id4, data.choices);
     } else if(data.status === 'DENY'){
-      showResult('fail',{
-        info:`查無末4碼 <strong>${id4}</strong> 的今日骰子簽到紀錄<br>
+      showResult('fail', {
+        info : `查無末4碼 <strong>${id4}</strong> 的今日骰子簽到紀錄<br>
           <span style="font-size:.8rem;color:rgba(255,255,255,.35)">請確認玩家已完成今日簽到</span>`
       });
     } else {
-      showMsg(data.message||'系統回應異常，請重試','error');
+      showMsg(data.message || '系統回應異常，請重試', 'error');
       verifyBtn.disabled = false;
     }
   } catch(e){
     hideMsg();
-    showMsg('⚠️ 網路錯誤，請確認連線後重試','error');
+    showMsg('⚠️ 網路錯誤，請確認連線後重試', 'error');
     verifyBtn.disabled = false;
   }
 });
@@ -469,11 +471,11 @@ function startNameChoice(id4, choices){
 
   const container = document.getElementById('nc-choices');
   container.innerHTML = '';
-  choices.forEach(name=>{
-    const btn = document.createElement('button');
+  choices.forEach(name => {
+    const btn       = document.createElement('button');
     btn.className   = 'nc-choice';
     btn.textContent = name;
-    btn.addEventListener('click', ()=>handleChoice(btn, name));
+    btn.addEventListener('click', () => handleChoice(btn, name));
     container.appendChild(btn);
   });
 
@@ -485,33 +487,31 @@ function handleChoice(btn, chosen){
   choiceBlocked = true;
 
   const allBtns = document.querySelectorAll('.nc-choice');
-  allBtns.forEach(b=>{ b.disabled = true; });
+  allBtns.forEach(b => { b.disabled = true; });
 
   if(chosen === correctName){
     btn.classList.add('correct-pick');
-    setTimeout(()=>{
+    setTimeout(() => {
       document.getElementById('name-overlay').classList.remove('show');
       commitVerification(currentId4, correctName);
     }, 650);
   } else {
     strikes++;
-    btn.classList.add('wrong-pick','shake');
+    btn.classList.add('wrong-pick', 'shake');
     updateStrikePips();
 
     if(strikes >= 2){
-      // All wrong — banned
-      setTimeout(()=>{
+      setTimeout(() => {
         document.getElementById('name-overlay').classList.remove('show');
-        showResult('banned',{
+        showResult('banned', {
           info:`連續選錯 2 次<br>今日兌換資格已喪失<br>
             <span style="font-size:.8rem;opacity:.5">如有疑問請洽服務人員</span>`
         });
       }, 900);
     } else {
-      // 1 strike — re-enable other buttons
-      setTimeout(()=>{
+      setTimeout(() => {
         btn.classList.remove('shake');
-        allBtns.forEach(b=>{
+        allBtns.forEach(b => {
           if(b !== btn){ b.disabled = false; }
         });
         choiceBlocked = false;
@@ -521,25 +521,27 @@ function handleChoice(btn, chosen){
 }
 
 // ============================================================
-// COMMIT — write 玩_骰子
+// COMMIT — 寫入兌換紀錄
 // ============================================================
 async function commitVerification(id4, name){
-  showMsg('驗證通過，寫入紀錄中…','loading');
+  showMsg('驗證通過，寫入紀錄中…', 'loading');
   try{
-    const url = `${SCRIPT_URL}?action=staff_commit&id4=${encodeURIComponent(id4)}&name=${encodeURIComponent(name)}&t=${Date.now()}`;
-    const res  = await fetch(url,{redirect:'follow'});
+    const url  = `${SCRIPT_URL}?action=staff_commit&id4=${encodeURIComponent(id4)}&name=${encodeURIComponent(name)}&t=${Date.now()}`;
+    const res  = await fetch(url, {redirect:'follow'});
     const data = await res.json();
     hideMsg();
-    showResult('pass',{
-      id:id4, name:name,
-      info:`驗證完成<br>今日簽到時間：<strong>${data.signTime||'已記錄'}</strong>`,
+    showResult('pass', {
+      id   : id4,
+      name : name,
+      info : `驗證完成<br>今日簽到時間：<strong>${data.signTime || '已記錄'}</strong>`,
       count: data.playCount ? `歷史第 ${data.playCount} 次玩骰子` : ''
     });
   } catch(e){
     hideMsg();
-    showResult('pass',{
-      id:id4, name:name,
-      info:`驗證通過<br>
+    showResult('pass', {
+      id   : id4,
+      name : name,
+      info : `驗證通過<br>
         <span style="color:#fcd34d;font-size:.8rem;">⚠️ 紀錄寫入失敗，請手動補填</span>`
     });
   }
@@ -551,50 +553,57 @@ async function commitVerification(id4, name){
 function showResult(type, data){
   const overlay = document.getElementById('result-overlay');
   const card    = document.getElementById('result-card');
-  overlay.className = 'show '+type;
-  card.className    = 'result-card '+type+'-card';
+  overlay.className = 'show ' + type;
+  card.className    = 'result-card ' + type + '-card';
 
-  const icons  = {pass:'✅',fail:'❌',used:'⏳',banned:'🚫'};
-  const titles = {pass:'驗證通過！',fail:'查無紀錄',used:'今日已兌換',banned:'資格喪失'};
-  document.getElementById('r-icon').textContent  = icons[type]||'❓';
-  document.getElementById('r-title').textContent = titles[type]||'';
-  document.getElementById('r-info').innerHTML    = data.info||'';
+  const icons  = {pass:'✅', fail:'❌', used:'⏳', banned:'🚫'};
+  const titles = {pass:'驗證通過！', fail:'查無紀錄', used:'今日已兌換', banned:'資格喪失'};
+  document.getElementById('r-icon').textContent  = icons[type]  || '❓';
+  document.getElementById('r-title').textContent = titles[type] || '';
+  document.getElementById('r-info').innerHTML    = data.info    || '';
 
   const pb = document.getElementById('r-player');
   if(data.id){
-    pb.style.display='block';
+    pb.style.display = 'block';
     document.getElementById('r-player-id').textContent   = data.id;
-    document.getElementById('r-player-name').textContent = data.name||'';
+    document.getElementById('r-player-name').textContent = data.name || '';
   } else {
-    pb.style.display='none';
+    pb.style.display = 'none';
   }
-  document.getElementById('r-count').textContent = data.count||'';
+  document.getElementById('r-count').textContent = data.count || '';
 
   const lb = document.getElementById('r-launch');
-  if(type==='pass'){
-    lb.style.display='block';
-    lb.onclick=()=>{ try{window.open(GAME_URL,'_blank');}catch(e){} };
+  if(type === 'pass'){
+    lb.style.display = 'block';
+    lb.onclick = () => { try{ window.open(GAME_URL, '_blank'); }catch(e){} };
   } else {
-    lb.style.display='none';
+    lb.style.display = 'none';
   }
 
-  const secs = type==='pass' ? 30 : 12;
+  const secs = type === 'pass' ? 30 : 12;
   const bar  = document.getElementById('r-bar');
-  bar.style.transition='none'; bar.style.width='100%';
-  setTimeout(()=>{ bar.style.transition=`width ${secs}s linear`; bar.style.width='0%'; },80);
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  setTimeout(() => {
+    bar.style.transition = `width ${secs}s linear`;
+    bar.style.width = '0%';
+  }, 80);
   if(autoResetTimer) clearTimeout(autoResetTimer);
-  autoResetTimer = setTimeout(resetAll, secs*1000);
+  autoResetTimer = setTimeout(resetAll, secs * 1000);
 }
 
 document.getElementById('r-back').addEventListener('click', resetAll);
 
 function resetAll(){
-  document.getElementById('result-overlay').className='';
+  document.getElementById('result-overlay').className = '';
   document.getElementById('name-overlay').classList.remove('show');
-  if(autoResetTimer){clearTimeout(autoResetTimer);autoResetTimer=null;}
+  if(autoResetTimer){ clearTimeout(autoResetTimer); autoResetTimer = null; }
   hideMsg();
-  inpId.value='';
-  strikes=0; correctName=''; currentId4=''; choiceBlocked=false;
+  inpId.value   = '';
+  strikes       = 0;
+  correctName   = '';
+  currentId4    = '';
+  choiceBlocked = false;
   checkReady();
   hideVkb();
   updateStrikePips();
@@ -602,8 +611,8 @@ function resetAll(){
 }
 
 // ---- Prevent zoom ----
-document.addEventListener('gesturestart',e=>e.preventDefault());
-document.addEventListener('dblclick',e=>e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick',     e => e.preventDefault());
 </script>
 </body>
 </html>
