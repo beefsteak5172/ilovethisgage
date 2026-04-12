@@ -315,7 +315,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 'use strict';
 
 // ★ 設定
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdKTR4mT7wo1ksu_9RSGXlmlHEtSgxiy2HUH7XdIcVQ9Z-ZOw4__GVrb8rsxoiYkqKKQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_DlLbU4mxYqjI0hD4Bldxlx5THVE2NNuj9C_gWegOw-jfD1_4F4P18tAPTGOkE7yOuw/exec';
 const GAME_URL   = 'file:///C:/gamechefbozo/index2.html';
 
 // ---- Clock ----
@@ -405,8 +405,7 @@ vkb.addEventListener('click', function(e){
   if(k === ' ' || k === '_' || k === '-' || k === '.') return;
 
   if(inpId.value.length < 4){
-    // Always store uppercase for ID
-    inpId.value += k.toUpperCase();
+    inpId.value += k;
     if(inpId.value.length === 4) hideVkb();
   }
   checkReady();
