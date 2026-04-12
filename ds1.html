@@ -190,7 +190,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 .vk-num{height:38px;font-size:.9rem;}
 .vk-del{background:#1e1520;}
 .vk-del:active{background:#ef4444 !important;color:#fff !important;}
-/* SHIFT — inactive = dim, active = lit */
 .vk-shift{background:#1a2540;border-color:rgba(99,130,247,.25);color:rgba(165,180,252,.6);}
 .vk-shift.caps-on{background:rgba(99,130,247,.3);border-color:#6366f1;color:#c7d2fe;
   box-shadow:0 0 8px rgba(99,130,247,.3);}
@@ -200,7 +199,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 .vk-ok:active{background:#d4920a !important;color:#000 !important;}
 .vk-wide{flex:2;}
 .vk-space{flex:3;font-size:.7rem;color:rgba(255,255,255,.35);letter-spacing:2px;}
-/* In ID mode, grey-out space & symbols */
 #vkb.id-mode .vk-sym{opacity:.22;pointer-events:none;}
 
 ::-webkit-scrollbar{display:none;}
@@ -268,7 +266,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 <!-- ===== KEYBOARD ===== -->
 <div id="vkb">
   <div id="vkb-mode-strip">LINE ID 末4碼</div>
-  <!-- Numbers -->
   <div class="vkb-row">
     <button class="vk vk-num" data-k="1">1</button><button class="vk vk-num" data-k="2">2</button>
     <button class="vk vk-num" data-k="3">3</button><button class="vk vk-num" data-k="4">4</button>
@@ -276,7 +273,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
     <button class="vk vk-num" data-k="7">7</button><button class="vk vk-num" data-k="8">8</button>
     <button class="vk vk-num" data-k="9">9</button><button class="vk vk-num" data-k="0">0</button>
   </div>
-  <!-- Q-P -->
   <div class="vkb-row" id="row-qp">
     <button class="vk" data-k="Q">Q</button><button class="vk" data-k="W">W</button>
     <button class="vk" data-k="E">E</button><button class="vk" data-k="R">R</button>
@@ -284,7 +280,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
     <button class="vk" data-k="U">U</button><button class="vk" data-k="I">I</button>
     <button class="vk" data-k="O">O</button><button class="vk" data-k="P">P</button>
   </div>
-  <!-- A-L -->
   <div class="vkb-row" id="row-al">
     <button class="vk" data-k="A">A</button><button class="vk" data-k="S">S</button>
     <button class="vk" data-k="D">D</button><button class="vk" data-k="F">F</button>
@@ -292,7 +287,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
     <button class="vk" data-k="J">J</button><button class="vk" data-k="K">K</button>
     <button class="vk" data-k="L">L</button>
   </div>
-  <!-- Shift + Z-M + Del -->
   <div class="vkb-row" id="row-zm">
     <button class="vk vk-shift caps-on" id="vk-shift" data-k="shift">⇧</button>
     <button class="vk" data-k="Z">Z</button><button class="vk" data-k="X">X</button>
@@ -301,7 +295,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
     <button class="vk" data-k="M">M</button>
     <button class="vk vk-del vk-wide" data-k="del">⌫</button>
   </div>
-  <!-- Bottom: symbols + space + confirm -->
   <div class="vkb-row">
     <button class="vk vk-sym" data-k="_">_</button>
     <button class="vk vk-sym" data-k=".">.</button>
@@ -314,8 +307,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans TC',sans
 <script>
 'use strict';
 
-// ★ 設定（如需更換 GAS 網址或遊戲路徑，只改這裡）
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyb6UDYHCOehAQlgk-rwcfEdiB-5QwXmb6-UXioyTGy8HmYCdzUMvnaWdPqaOWdnLL8zQ/exec';
+// ★ v7.4 — 更新 GAS 網址
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfMxv0zBG-SSkkCLj9EoTdbI30Owgt9vUzONCnD3dYmXGyw8EkPo9N3wE1DRV8lqJg/exec';
 const GAME_URL   = 'file:///C:/gamechefbozo/index2.html';
 
 // ---- Clock ----
@@ -346,7 +339,7 @@ function showMsg(t, tp){ msgEl.textContent = t; msgEl.className = 'show ' + tp; 
 function hideMsg(){ msgEl.className = ''; }
 
 // ============================================================
-// KEYBOARD — case toggle
+// KEYBOARD
 // ============================================================
 function setCase(upper){
   isUpperCase = upper;
@@ -360,7 +353,6 @@ function setCase(upper){
     }
   });
 }
-// 預設大寫
 setCase(true);
 
 function showVkb(){
@@ -373,14 +365,12 @@ function hideVkb(){
   inpId.classList.remove('active-field');
 }
 
-// Tap field
 inpId.addEventListener('click', showVkb);
 inpId.addEventListener('focus', showVkb);
 document.addEventListener('click', e => {
   if(!vkb.contains(e.target) && e.target !== inpId) hideVkb();
 });
 
-// Key press
 vkb.addEventListener('click', function(e){
   const btn = e.target.closest('.vk');
   if(!btn) return;
@@ -401,12 +391,11 @@ vkb.addEventListener('click', function(e){
     checkReady();
     return;
   }
-  // Symbols disabled in ID mode
   if(k === ' ' || k === '_' || k === '-' || k === '.') return;
 
   if(inpId.value.length < 4){
-    // ✅ 修正：直接存入 k，大小寫由 Shift 鍵決定（不再強制大寫）
-    inpId.value += k;
+    // ★ 修正：強制大寫存入，確保比對一致
+    inpId.value += k.toUpperCase();
     if(inpId.value.length === 4) hideVkb();
   }
   checkReady();
@@ -416,7 +405,8 @@ vkb.addEventListener('click', function(e){
 // STEP 1 — LOOKUP
 // ============================================================
 verifyBtn.addEventListener('click', async function(){
-  const id4 = inpId.value.trim();
+  // ★ 修正：送出前強制大寫
+  const id4 = inpId.value.trim().toUpperCase();
   if(id4.length !== 4) return;
   hideVkb();
   showMsg('查詢中… 請稍候', 'loading');
