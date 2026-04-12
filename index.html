@@ -88,9 +88,9 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-//  ★ 設定區：兩個值必須正確
+//  ★ 設定區
 // ══════════════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx2uD5sl7VTYbzUmSi6A3awLqA48XlM5HVHdbnraUqB9I9eh13ZzqoCfXJ8K6z63K2fGg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzdKTR4mT7wo1ksu_9RSGXlmlHEtSgxiy2HUH7XdIcVQ9Z-ZOw4__GVrb8rsxoiYkqKKQ/exec";
 const LIFF_ID = "2009772018-YA6NBDMf";
 // ══════════════════════════════════════════════════════
 
@@ -130,7 +130,6 @@ async function init() {
   checkStatus();
 }
 
-// 預先查詢今日是否已簽到
 function checkStatus() {
   const url = GAS_URL
     + "?action=check_today"
@@ -156,7 +155,6 @@ async function doCheckin() {
   btn.textContent = "簽到中...";
 
   try {
-    // ★ GET + action=sign_in + lineuid（修正原本 POST + userId 的錯誤）
     const params = new URLSearchParams({
       action:      "sign_in",
       lineuid:     liffProfile.userId,
@@ -168,13 +166,14 @@ async function doCheckin() {
     const data = await res.json();
 
     if (data.status === "OK") {
-      const today     = new Date();
-      const dateStr   = today.getFullYear() + "-"
-                      + String(today.getMonth()+1).padStart(2,"0") + "-"
-                      + String(today.getDate()).padStart(2,"0");
+      const today   = new Date();
+      const dateStr = today.getFullYear() + "-"
+                    + String(today.getMonth()+1).padStart(2,"0") + "-"
+                    + String(today.getDate()).padStart(2,"0");
       const timesText = data.isFirstEver
         ? "🌟 首次參加！歡迎加入！"
         : "📅 第 " + data.visitCount + " 次參加此活動";
+
       showResult("success",
         "🎉 簽到成功！\n" +
         "活動：" + ACTIVITY_INFO[activityType].label + "\n" +
