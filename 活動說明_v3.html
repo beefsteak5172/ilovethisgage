@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>骰子搖搖樂 × 零元 GOAT｜活動說明</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Anton&display=swap" rel="stylesheet">
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --gold:#f0c040; --gold-dark:#b8900a;
+    --bg:#0e0e0e; --card:#181818;
+    --border:rgba(240,192,64,0.22);
+    --muted:rgba(255,255,255,0.5);
+  }
+  body{ background:var(--bg); color:#fff; font-family:'Noto Sans TC',sans-serif; min-height:100vh; padding-bottom:48px; }
+
+  /* HERO */
+  .hero{ background:linear-gradient(160deg,#0e0e0e 0%,#1c1400 55%,#0e0e0e 100%); padding:48px 24px 36px; text-align:center; position:relative; overflow:hidden; }
+  .hero::before{ content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(240,192,64,0.07) 1px,transparent 1px); background-size:34px 34px; pointer-events:none; }
+  .hero-badge{ display:inline-block; background:var(--gold); color:#0e0e0e; font-weight:900; font-size:11px; letter-spacing:4px; padding:5px 20px; border-radius:20px; margin-bottom:18px; }
+  .hero-title{ font-family:'Anton',sans-serif; font-size:clamp(52px,14vw,88px); color:var(--gold); letter-spacing:-2px; line-height:1; }
+  .hero-sub{ font-size:clamp(18px,5vw,26px); font-weight:900; color:#fff; margin-top:6px; letter-spacing:6px; }
+  .hero-free{ display:inline-block; margin-top:16px; background:rgba(240,192,64,0.12); border:1.5px solid var(--gold); color:var(--gold); font-weight:900; font-size:clamp(14px,4vw,18px); letter-spacing:3px; padding:8px 28px; border-radius:8px; }
+  .dice-row{ display:flex; justify-content:center; gap:10px; margin-top:22px; }
+  .die{ width:42px; height:42px; background:#fff; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 4px 14px rgba(0,0,0,0.5); animation:dfl 3s ease-in-out infinite; }
+  .die:nth-child(2){animation-delay:.25s;background:var(--gold)}
+  .die:nth-child(3){animation-delay:.5s}
+  .die:nth-child(4){animation-delay:.75s;background:var(--gold)}
+  .die:nth-child(5){animation-delay:1s}
+  .die:nth-child(6){animation-delay:1.25s}
+  @keyframes dfl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  /* LAYOUT */
+  .wrap{ max-width:520px; margin:0 auto; padding:0 16px; }
+  .section{ padding:28px 0 0; }
+  .sec-head{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .sec-num{ width:28px; height:28px; border-radius:50%; background:var(--gold); color:#0e0e0e; font-family:'Anton',sans-serif; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sec-title{ font-size:17px; font-weight:900; color:var(--gold); letter-spacing:3px; }
+  .sec-title::after{ content:''; display:block; height:1px; background:var(--border); margin-top:6px; }
+
+  /* STEPS */
+  .steps{ display:flex; flex-direction:column; gap:12px; }
+  .step{ display:flex; gap:14px; align-items:flex-start; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .step-num{ width:32px; height:32px; border-radius:50%; background:var(--gold); color:#0e0e0e; font-family:'Anton',sans-serif; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .step h3{ font-size:15px; font-weight:900; color:#fff; margin-bottom:5px; }
+  .step p{ font-size:13px; color:var(--muted); line-height:1.85; }
+  .step .chip{ display:inline-block; background:rgba(240,192,64,0.15); color:var(--gold); font-size:11px; font-weight:700; letter-spacing:2px; padding:2px 10px; border-radius:20px; margin-top:7px; }
+  .step .chip-red{ display:inline-block; background:rgba(255,80,80,0.12); color:#ff9999; font-size:11px; font-weight:700; letter-spacing:1px; padding:2px 10px; border-radius:20px; margin-top:7px; }
+
+  /* LINE LINKS */
+  .line-links{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .line-link{ display:flex; align-items:center; gap:10px; background:#0f2a1a; border:1px solid rgba(0,200,80,0.25); border-radius:8px; padding:10px 14px; }
+  .line-link-icon{ font-size:20px; flex-shrink:0; }
+  .line-link-name{ font-size:13px; font-weight:900; color:#4dffa0; }
+  .line-link-desc{ font-size:12px; color:rgba(255,255,255,0.5); margin-top:2px; }
+
+  /* PRIZES */
+  .prizes{ display:flex; flex-direction:column; gap:10px; }
+  .prize{ display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .prize-icon{ font-size:26px; text-align:center; }
+  .prize-name{ font-size:14px; font-weight:900; color:#fff; }
+  .prize-cond{ font-size:12px; color:var(--muted); margin-top:3px; line-height:1.6; }
+  .prize-reward{ font-size:13px; font-weight:900; color:var(--gold); text-align:right; white-space:nowrap; }
+  .prize.tier2{ border-color:rgba(240,192,64,0.4); background:rgba(240,192,64,0.04); }
+  .prize.tier3{ border-color:rgba(240,192,64,0.55); background:rgba(240,192,64,0.07); }
+  .prize.legend{ border-color:var(--gold); background:rgba(240,192,64,0.10); }
+
+  /* RULES */
+  .rules{ display:flex; flex-direction:column; gap:10px; }
+  .rule{ display:flex; gap:12px; align-items:flex-start; padding:13px 15px; border-left:3px solid var(--gold-dark); background:var(--card); border-radius:0 10px 10px 0; }
+  .rule-icon{ font-size:17px; flex-shrink:0; margin-top:1px; }
+  .rule-text{ font-size:13px; color:rgba(255,255,255,0.72); line-height:1.85; }
+  .rule-text strong{ color:#fff; }
+
+  /* ANTI-DISPUTE */
+  .dispute{ background:#110a0a; border:1.5px solid rgba(200,60,60,0.35); border-radius:12px; padding:18px; }
+  .dispute-title{ font-size:14px; font-weight:900; color:#ff8888; letter-spacing:2px; margin-bottom:12px; }
+  .dispute ul{ list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .dispute li{ font-size:12.5px; color:rgba(255,200,200,0.82); line-height:1.85; padding-left:18px; position:relative; }
+  .dispute li::before{ content:'▸'; position:absolute; left:0; color:#cc4444; }
+  .dispute li strong{ color:#ffbbbb; }
+
+  .divider{ height:1px; background:var(--border); margin:0; }
+
+  /* FOOTER */
+  .footer{ text-align:center; padding:36px 20px 20px; }
+  .footer-logo{ font-family:'Anton',sans-serif; font-size:30px; color:var(--gold); letter-spacing:5px; }
+  .footer-sub{ font-size:11px; color:rgba(255,255,255,0.2); letter-spacing:3px; margin-top:6px; }
+  .version{ font-size:10px; color:rgba(255,255,255,0.12); margin-top:12px; letter-spacing:2px; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">LIMITED EVENT · 期間限定</div>
+  <div class="hero-title">DICE × GOAT</div>
+  <div class="hero-sub">骰子搖搖樂</div>
+  <div class="hero-free">✦ 免費參加・不需消費 ✦</div>
+  <div class="dice-row">
+    <div class="die">⚀</div><div class="die">⚁</div><div class="die">⚂</div>
+    <div class="die">⚃</div><div class="die">⚄</div><div class="die">⚅</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="wrap">
+
+  <!-- 參加步驟 -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-num">1</div>
+      <div class="sec-title">參加方式</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">①</div>
+        <div>
+          <h3>掃碼加入 LINE 好友</h3>
+          <p>掃描門口 QR Code，加入本店 LINE 官方帳號。加入後聊天室會自動出現三個活動連結。</p>
+          <span class="chip">免費・不需消費</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">②</div>
+        <div>
+          <h3>在聊天室選擇要參加的活動</h3>
+          <p>聊天室內有三個連結，每個項目每天都可以參加一次：</p>
+          <div class="line-links">
+            <div class="line-link">
+              <div class="line-link-icon">🍗</div>
+              <div>
+                <div class="line-link-name">炸雞活動</div>
+                <div class="line-link-desc">點擊連結即完成簽到，享活動優惠</div>
+              </div>
+            </div>
+            <div class="line-link">
+              <div class="line-link-icon">🎲</div>
+              <div>
+                <div class="line-link-name">骰子搖搖樂（本活動）</div>
+                <div class="line-link-desc">點擊連結 → 輸入 LINE 末 4 碼驗證身份 → 進入遊戲大廳</div>
+              </div>
+            </div>
+            <div class="line-link">
+              <div class="line-link-icon">🤝</div>
+              <div>
+                <div class="line-link-name">手把手活動</div>
+                <div class="line-link-desc">點擊連結即完成簽到，享活動優惠</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">③</div>
+        <div>
+          <h3>骰子遊戲：身份驗證</h3>
+          <p>點擊骰子連結後，輸入您的 <strong style="color:#fff">LINE 末 4 碼</strong>，系統會顯示三個名字讓您選擇。</p>
+          <p style="margin-top:6px">選出您自己的名字後，即驗證成功，進入遊戲大廳。</p>
+          <span class="chip-red">⚠ 請確認輸入正確的末 4 碼，選錯名字將無法進入</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">④</div>
+        <div>
+          <h3>搖骰子・店員掀蓋確認</h3>
+          <p>進入遊戲後，由<strong style="color:#fff">客人自行搖動骰子盅</strong>，搖完後由<strong style="color:#fff">店員掀開盅蓋確認結果</strong>，對照獎項表決定是否中獎。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">⑤</div>
+        <div>
+          <h3>告知店員末 4 碼・領取獎品</h3>
+          <p>中獎後告知店員您的 LINE 末 4 碼，店員系統確認後即給予對應外帶獎品，完成兌獎。</p>
+          <span class="chip">當場兌換・全部外帶</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:24px;"><div class="divider"></div></div>
+
+  <!-- 獎項一覽 -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-num">2</div>
+      <div class="sec-title">獎項一覽</div>
+    </div>
+    <div class="prizes">
+
+      <div class="prize">
+        <div class="prize-icon">🎲</div>
+        <div>
+          <div class="prize-name">4 盅獎</div>
+          <div class="prize-cond">6 盅中 4 盅各有同一點數</div>
+        </div>
+        <div><div class="prize-reward">任選飲品</div><div style="font-size:11px;color:var(--muted);text-align:right">外帶一杯</div></div>
+      </div>
+
+      <div class="prize tier2">
+        <div class="prize-icon">🍗</div>
+        <div>
+          <div class="prize-name">5 盅獎</div>
+          <div class="prize-cond">6 盅中 5 盅各有同一點數</div>
+        </div>
+        <div><div class="prize-reward" style="font-size:12px">脆薯＋奶酪</div><div class="prize-reward" style="font-size:12px">＋炸雞</div></div>
+      </div>
+
+      <div class="prize tier2">
+        <div class="prize-icon">🍔</div>
+        <div>
+          <div class="prize-name">6 盅獎</div>
+          <div class="prize-cond">6 盅全中（任意點數）</div>
+        </div>
+        <div><div class="prize-reward">免費套餐</div><div style="font-size:11px;color:var(--muted);text-align:right">外帶一份</div></div>
+      </div>
+
+      <div class="prize tier3">
+        <div class="prize-icon">🏆</div>
+        <div>
+          <div class="prize-name">金牌獎</div>
+          <div class="prize-cond">任一盅內 6 顆全是 6 點</div>
+        </div>
+        <div><div class="prize-reward" style="font-size:12px">套餐兩份</div><div style="font-size:11px;color:var(--muted);text-align:right">外帶</div></div>
+      </div>
+
+      <div class="prize legend">
+        <div class="prize-icon">👑</div>
+        <div>
+          <div class="prize-name" style="color:var(--gold)">傳說獎・零元 GOAT</div>
+          <div class="prize-cond">6 盅每盅都有 6 點，且某盅 6 顆全是 6 點<br><span style="color:#ffcc44;font-weight:700">⚠ 須當日於本店內用餐方具備得獎資格</span></div>
+        </div>
+        <div><div class="prize-reward" style="font-size:11px;color:var(--gold)">免費吃</div><div class="prize-reward" style="font-size:11px;color:var(--gold)">一整年</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:24px;"><div class="divider"></div></div>
+
+  <!-- 活動規則 -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-num">3</div>
+      <div class="sec-title">活動規則</div>
+    </div>
+    <div class="rules">
+      <div class="rule">
+        <div class="rule-icon">✅</div>
+        <div class="rule-text"><strong>免費參加，不需消費</strong>——任何人掃碼加入 LINE 後即可參加，無最低消費門檻。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">📱</div>
+        <div class="rule-text">身份識別以 <strong>LINE 帳號末 4 碼</strong>為準，請確保輸入正確，系統紀錄一經建立不得修改。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">📅</div>
+        <div class="rule-text">每個活動項目（炸雞、骰子、手把手）<strong>每人每日各限參加一次</strong>，系統自動擋重複，不接受人工例外。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">🎲</div>
+        <div class="rule-text">骰子由<strong>客人自行搖擲</strong>，搖完後由<strong>店員掀開盅蓋確認結果</strong>，最終結果以店員確認為準，現場判定即為定案。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">🎁</div>
+        <div class="rule-text">所有獎品均為<strong>外帶形式</strong>兌換，不可折換現金、折扣或其他品項，亦不可累積或轉移。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">⏰</div>
+        <div class="rule-text">獎品須<strong>當場兌換</strong>，離店後恕不補發；兌獎紀錄一經系統寫入即作廢，不可重複兌換。</div>
+      </div>
+      <div class="rule">
+        <div class="rule-icon">👑</div>
+        <div class="rule-text"><strong>傳說獎（免費吃一整年）</strong>：僅限<strong>當日於本店內用餐之顧客</strong>方具備得獎資格；每月憑電子券兌換一次，限本人使用，不可轉讓。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:24px;"><div class="divider"></div></div>
+
+  <!-- 避免糾紛 -->
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-num">4</div>
+      <div class="sec-title">重要說明</div>
+    </div>
+    <div class="dispute">
+      <div class="dispute-title">⚠ 參加前請詳細閱讀</div>
+      <ul>
+        <li>骰子結果及中獎判斷<strong>全程由店員確認為準</strong>，不接受事後申訴或重搖要求。</li>
+        <li>系統顯示「今日已參加」時，表示當日次數已用完，<strong>系統紀錄為唯一憑據</strong>，無需爭議。</li>
+        <li>身份驗證名字選錯，或末 4 碼輸入錯誤，<strong>系統判定結果不予更改</strong>，請在操作前確認清楚。</li>
+        <li>傳說獎須為<strong>當日用餐顧客</strong>方具資格，無用餐紀錄者即使骰出結果亦不予兌換。</li>
+        <li>傳說獎每月兌換券須於<strong>有效期限內</strong>使用，逾期失效，不予補發或延期。</li>
+        <li>獎品兌換後若發生遺失，本店<strong>不予補發</strong>，請妥善保管。</li>
+        <li>本店保留活動隨時修改、暫停或終止之權利，如有調整將於店內公告，<strong>不另行個別通知</strong>。</li>
+        <li>參加本活動即表示同意上述所有規則，<strong>本店對活動保有最終解釋權</strong>。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">零元 GOAT</div>
+    <div class="footer-sub">GREATEST OF ALL TIME · 不花一毛錢</div>
+    <div class="version">v7.4 · 2026-04 · 如有疑問請洽現場店員</div>
+  </div>
+
+</div>
+</body>
+</html>
