@@ -67,16 +67,50 @@
   .loading { color: #888; font-size: 14px; margin-top: 16px; }
   .user-info { font-size: 12px; color: #aaa; margin-top: 16px; }
   .icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── 集點專用樣式 ── */
+  .points-wrap {
+    background: #F1F8E9;
+    border: 1.5px solid #A5D6A7;
+    border-radius: 14px;
+    padding: 18px 16px 14px;
+    margin: 16px 0 20px;
+  }
+  .points-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .points-row span { font-size: 13px; color: #666; }
+  .points-num { font-size: 32px; font-weight: 900; color: #1B5E20; }
+  .points-unit { font-size: 13px; color: #888; }
+  .bar-bg {
+    height: 10px; background: #ddd;
+    border-radius: 99px; overflow: hidden; margin-bottom: 6px;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, #2E7D32, #66BB6A);
+    width: 0%;
+    transition: width 0.9s cubic-bezier(.4,0,.2,1);
+  }
+  .bar-hint { font-size: 11px; color: #888; text-align: right; }
+  .prize-ready {
+    background: #E8F5E9; border: 1.5px solid #66BB6A;
+    border-radius: 10px; padding: 12px;
+    font-size: 13px; color: #1B5E20; font-weight: 700;
+    margin-bottom: 16px; display: none;
+  }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="logo">🥩</div>
   <div class="title">無名牛排</div>
-  <div class="subtitle">每日簽到 · 天天好康</div>
+  <div class="subtitle" id="page-subtitle">每日簽到 · 天天好康</div>
 
   <div id="loading-area" class="loading">載入中...</div>
 
+  <!-- 簽到介面（原本） -->
   <div id="main-area" style="display:none;">
     <div class="icon" id="activity-icon"></div>
     <div class="activity-badge" id="activity-label"></div>
@@ -84,14 +118,34 @@
     <button class="btn" id="checkin-btn" onclick="doCheckin()">立即簽到 ✓</button>
     <div class="result" id="result-box"></div>
   </div>
+
+  <!-- 集點介面（新增） -->
+  <div id="points-area" style="display:none;">
+    <div class="activity-badge">🎁 消費集點</div>
+    <div id="points-user" class="user-info" style="margin-bottom:16px;"></div>
+    <div class="points-wrap">
+      <div class="points-row">
+        <span>累積點數</span>
+        <div>
+          <span class="points-num" id="pts-total">0</span>
+          <span class="points-unit"> / 5 點</span>
+        </div>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" id="pts-bar"></div></div>
+      <div class="bar-hint" id="pts-hint">計算中…</div>
+    </div>
+    <div class="prize-ready" id="prize-ready">🎉 點數已集滿！請向店員出示此頁面兌換獎品</div>
+    <div class="result" id="points-result-box"></div>
+  </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════
 //  ★ 設定區
 // ══════════════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzdKTR4mT7wo1ksu_9RSGXlmlHEtSgxiy2HUH7XdIcVQ9Z-ZOw4__GVrb8rsxoiYkqKKQ/exec";
-const LIFF_ID = "2009772018-YA6NBDMf";
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbzGeTPpho9V6a5UzTPH6wzFvrEuPVX7_lzNX1cX9Vc_FEV8rmTLv0K4IMJiXpmx4_NB5A/exec";
+const LIFF_ID   = "2009772018-YA6NBDMf";
+const GOAL_PTS  = 5;   // 幾點可兌換
 // ══════════════════════════════════════════════════════
 
 const ACTIVITY_INFO = {
@@ -106,19 +160,34 @@ let activityType = "";
 async function init() {
   await liff.init({ liffId: LIFF_ID });
 
-  activityType = new URL(location.href).searchParams.get("type") || "";
-  const info = ACTIVITY_INFO[activityType];
-  if (!info) {
-    showError("未知的活動類型，請重新掃描 QR Code");
-    return;
-  }
-
   if (!liff.isLoggedIn()) {
     liff.login({ redirectUri: location.href });
     return;
   }
 
   liffProfile = await liff.getProfile();
+
+  const params     = new URL(location.href).searchParams;
+  const pointsParam = params.get("points");
+  const orderParam  = params.get("orderId");
+
+  // ── 集點模式：有 points 參數 ──
+  if (pointsParam && orderParam) {
+    document.getElementById("page-subtitle").textContent = "消費集點 · 感謝惠顧";
+    document.getElementById("loading-area").style.display = "none";
+    document.getElementById("points-area").style.display  = "block";
+    document.getElementById("points-user").textContent    = "👤 " + liffProfile.displayName;
+    await doAddPoints(liffProfile.userId, parseInt(pointsParam) || 1, orderParam);
+    return;
+  }
+
+  // ── 簽到模式（原本邏輯不變）──
+  activityType = params.get("type") || "";
+  const info = ACTIVITY_INFO[activityType];
+  if (!info) {
+    showError("未知的活動類型，請重新掃描 QR Code");
+    return;
+  }
 
   document.getElementById("activity-icon").textContent  = info.icon;
   document.getElementById("activity-label").textContent = info.label;
@@ -130,6 +199,60 @@ async function init() {
   checkStatus();
 }
 
+// ══════════════════════════════════════════════════════
+//  集點流程
+// ══════════════════════════════════════════════════════
+async function doAddPoints(lineUid, points, orderId) {
+  showPointsResult('', '');  // 清空
+
+  try {
+    const url = GAS_URL
+      + "?action=add_points"
+      + "&lineuid=" + encodeURIComponent(lineUid)
+      + "&points="  + points
+      + "&spent=0";
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === "OK") {
+      updateBar(data.newTotal || points);
+      showPointsResult("success",
+        (data.isNew ? "🌟 歡迎首次集點！\n" : "✅ 集點成功！\n") +
+        "本次 +" + points + " 點\n累積：" + (data.newTotal || points) + " 點"
+      );
+    } else {
+      showPointsResult("error", "集點失敗：" + (data.message || "請向店員確認"));
+    }
+  } catch(e) {
+    showPointsResult("error", "網路錯誤，請向店員確認");
+  }
+}
+
+function updateBar(total) {
+  const capped = Math.min(total, GOAL_PTS);
+  document.getElementById("pts-bar").style.width   = (capped / GOAL_PTS * 100) + "%";
+  document.getElementById("pts-total").textContent = total;
+  const left = Math.max(0, GOAL_PTS - total);
+  if (total >= GOAL_PTS) {
+    document.getElementById("pts-hint").textContent   = "🎉 點數已集滿！";
+    document.getElementById("prize-ready").style.display = "block";
+  } else {
+    document.getElementById("pts-hint").textContent = "再集 " + left + " 點可兌換獎品";
+  }
+}
+
+function showPointsResult(type, msg) {
+  const box = document.getElementById("points-result-box");
+  if (!type) { box.style.display = "none"; return; }
+  box.className = "result " + type;
+  box.textContent = msg;
+  box.style.display = "block";
+}
+
+// ══════════════════════════════════════════════════════
+//  簽到流程（原本不變）
+// ══════════════════════════════════════════════════════
 function checkStatus() {
   const url = GAS_URL
     + "?action=check_today"
