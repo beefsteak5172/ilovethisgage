@@ -213,10 +213,6 @@ body {
     載入中，請稍候…
   </div>
 
-  <!-- ══════════════════════════════════════
-       集點模式
-  ══════════════════════════════════════ -->
-
   <!-- PT-1：確認集點 -->
   <div class="scn" id="pt-confirm">
     <div class="hdr">
@@ -260,7 +256,7 @@ body {
     </div>
   </div>
 
-  <!-- PT-2：集點 API 呼叫中 -->
+  <!-- PT-2：集點中 -->
   <div class="scn" id="pt-collecting">
     <div class="hdr">
       <div class="hdr-icon">⭐</div>
@@ -356,10 +352,7 @@ body {
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════
-       簽到模式（原功能保留）
-  ══════════════════════════════════════ -->
-
+  <!-- 簽到模式 -->
   <div class="scn" id="si-main">
     <div class="hdr">
       <div class="hdr-icon" id="si-icon">🎮</div>
@@ -380,13 +373,11 @@ body {
 // ═══════════════════════════════════════════════
 //  ★ 設定區
 // ═══════════════════════════════════════════════
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz1F6oMLdGiCnKNMUInFGM17CZD-3GS_Pm-ozxgyc8zpy1DwgToQUzhO7Lq_6QFFKs7CQ/exec";
-const LIFF_ID = "2009772018-M8WxXgeO";
+const GAS_URL  = "https://script.google.com/macros/s/AKfycbyFOkrWbKKJBjX_uaVQwCxKznFEFCAzx_s04TLBgpSC7YUKvGGq7Jstt34h5o-smgBSwA/exec";
+const LIFF_ID  = "2009772018-M8WxXgeO";
 const LIFF_URL = "https://liff.line.me/2009772018-M8WxXgeO";
-const GOAL_PTS = 5;  // 幾點可參加抽獎
+const GOAL_PTS = 5;
 
-// ── 獎池（可自由調整）──
-// disc < 1 = 折扣；extra = 贈品；next = 下次使用
 const PRIZES = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",       disc: 0.85 },
   { icon:"🎟", name:"9 折優惠",   desc:"本次消費享 9 折，現場折抵",        disc: 0.90 },
@@ -400,9 +391,6 @@ const SIGNIN_INFO = {
   dice:    { icon:"🎮", label:"每日遊戲"  }
 };
 
-// ═══════════════════════════════════════════════
-//  全域狀態
-// ═══════════════════════════════════════════════
 let profile    = null;
 let earnPts    = 0;
 let curPts     = 0;
@@ -417,12 +405,7 @@ let drawTimer  = null;
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
-
-    if (!liff.isLoggedIn()) {
-      liff.login({ redirectUri: location.href });
-      return;
-    }
-
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
     profile = await liff.getProfile();
 
     const params     = new URL(location.href).searchParams;
@@ -431,11 +414,9 @@ async function init() {
     const typeParam  = params.get("type");
 
     if (ptsParam && orderParam) {
-      // ── 集點模式 ──
       earnPts = Math.max(0, parseInt(ptsParam) || 0);
       await startPointsFlow();
     } else if (typeParam && SIGNIN_INFO[typeParam]) {
-      // ── 簽到模式 ──
       startSigninFlow(typeParam);
     } else {
       showFatalError("未知的進入方式，請重新掃描 QR Code");
@@ -450,79 +431,51 @@ async function init() {
 // ═══════════════════════════════════════════════
 async function startPointsFlow() {
   hideLoading();
-
-  // 查詢既有點數
   curPts = 0;
   try {
     const res  = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
     const data = await res.json();
     if (data.status === "OK") curPts = data.currentPoints || 0;
-    // status === "NEW" → 新客人，curPts = 0
   } catch (_) {}
 
   newTotal = curPts + earnPts;
-
-  document.getElementById("pt-cur-show").textContent   = curPts + " 點";
-  document.getElementById("pt-earn-show").textContent  = "+" + earnPts + " 點";
-  document.getElementById("pt-after-show").textContent = newTotal + " 點";
-  document.getElementById("pt-earn-badge").textContent = "本次 +" + earnPts + " 點";
+  document.getElementById("pt-cur-show").textContent    = curPts + " 點";
+  document.getElementById("pt-earn-show").textContent   = "+" + earnPts + " 點";
+  document.getElementById("pt-after-show").textContent  = newTotal + " 點";
+  document.getElementById("pt-earn-badge").textContent  = "本次 +" + earnPts + " 點";
   document.getElementById("pt-confirm-sub").textContent = "本次可獲得 " + earnPts + " 點";
-  document.getElementById("pt-user-info").textContent  = "👤 " + profile.displayName;
-
+  document.getElementById("pt-user-info").textContent   = "👤 " + profile.displayName;
   goScreen("pt-confirm");
 }
 
-// 確認集點
 async function confirmCollect() {
   goScreen("pt-collecting");
   try {
-    const url  = GAS_URL
-      + "?action=add_points"
-      + "&lineuid=" + encodeURIComponent(profile.userId)
-      + "&points="  + earnPts
-      + "&spent=0";
+    const url  = GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0";
     const res  = await fetch(url);
     const data = await res.json();
-
-    if (data.status === "OK") {
-      newTotal = data.newTotal || newTotal;
-      showBalance();
-    } else {
-      showError("集點失敗：" + (data.message || "請向店員確認"));
-    }
-  } catch (_) {
-    showError("網路錯誤，請向店員確認");
-  }
+    if (data.status === "OK") { newTotal = data.newTotal || newTotal; showBalance(); }
+    else showError("集點失敗：" + (data.message || "請向店員確認"));
+  } catch (_) { showError("網路錯誤，請向店員確認"); }
 }
 
-// 跳過集點
-function skipCollect() {
-  goScreen("pt-skip");
-}
+function skipCollect() { goScreen("pt-skip"); }
 
-// 顯示餘額畫面
 function showBalance() {
   document.getElementById("bal-num").textContent = newTotal;
-
-  // 星星（最多顯示 5 顆）
   const starsEl = document.getElementById("bal-stars");
   starsEl.innerHTML = "";
   for (let i = 1; i <= GOAL_PTS; i++) {
     const s = document.createElement("div");
-    s.className   = "star";
+    s.className = "star";
     s.textContent = i <= newTotal ? "★" : "☆";
     s.style.color = i <= newTotal ? "#fff" : "#bbb";
-    if (i <= newTotal) {
-      setTimeout(() => { s.classList.add("filled"); }, i * 80);
-    }
+    if (i <= newTotal) setTimeout(() => { s.classList.add("filled"); }, i * 80);
     starsEl.appendChild(s);
   }
-
-  // 進度條
   const pct = newTotal >= GOAL_PTS ? 100 : (newTotal / GOAL_PTS * 100);
   setTimeout(() => { document.getElementById("bal-bar").style.width = pct + "%"; }, 100);
 
-  // 動作按鈕區
   const action = document.getElementById("bal-action");
   if (newTotal >= GOAL_PTS) {
     const remain = newTotal - GOAL_PTS;
@@ -530,10 +483,7 @@ function showBalance() {
       '<div style="padding:0 20px;margin-bottom:16px;">' +
         '<div class="redeem-box">' +
           '<p>🎰 已集滿 ' + GOAL_PTS + ' 點！可以參加抽獎</p>' +
-          '<small>' +
-            '使用 ' + GOAL_PTS + ' 點抽獎 → 剩 ' + remain + ' 點<br>' +
-            '不抽獎 → 繼續累積，共 ' + newTotal + ' 點' +
-          '</small>' +
+          '<small>使用 ' + GOAL_PTS + ' 點抽獎 → 剩 ' + remain + ' 點<br>不抽獎 → 繼續累積，共 ' + newTotal + ' 點</small>' +
         '</div>' +
         '<div class="use-btns">' +
           '<button class="use-yes" onclick="goDraw()">🎰 參加抽獎</button>' +
@@ -548,68 +498,36 @@ function showBalance() {
         '<button class="btn-main" style="margin:0;" onclick="ptDone()">完成結帳 ✓</button>' +
       '</div>';
   }
-
   goScreen("pt-balance");
 }
 
-// 前往抽獎
-function goDraw() {
-  goScreen("pt-draw");
-  resetDrum();
-}
-
-// 不抽獎，直接結束
-function skipDraw() {
-  finalPts = newTotal;
-  renderDone();
-  goScreen("pt-done");
-}
-
-// 完成按鈕（點數不足 5 點時）
-function ptDone() {
-  finalPts = newTotal;
-  renderDone();
-  goScreen("pt-done");
-}
+function goDraw()   { goScreen("pt-draw"); resetDrum(); }
+function skipDraw() { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
+function ptDone()   { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
 
 function renderDone() {
   document.getElementById("done-pts").textContent     = finalPts + " 點";
   document.getElementById("done-pts-sub").textContent =
-    finalPts >= GOAL_PTS
-      ? "已可參加下次抽獎 🎰"
-      : "再集 " + (GOAL_PTS - finalPts) + " 點可參加抽獎";
+    finalPts >= GOAL_PTS ? "已可參加下次抽獎 🎰" : "再集 " + (GOAL_PTS - finalPts) + " 點可參加抽獎";
 }
 
-// ── 抽獎鼓 ──
 function resetDrum() {
-  clearInterval(drawTimer);
-  drawTimer  = null;
-  drawnPrize = null;
-  const face  = document.getElementById("drum-face");
-  face.textContent = "?";
-  face.classList.remove("spinning");
+  clearInterval(drawTimer); drawTimer = null; drawnPrize = null;
+  const face = document.getElementById("drum-face");
+  face.textContent = "?"; face.classList.remove("spinning");
   document.getElementById("draw-hint").textContent = "";
   const btn = document.getElementById("draw-btn");
-  btn.disabled    = false;
-  btn.textContent = "開始抽獎";
-  btn.onclick     = startDraw;
+  btn.disabled = false; btn.textContent = "開始抽獎"; btn.onclick = startDraw;
 }
 
 function startDraw() {
-  const btn   = document.getElementById("draw-btn");
-  btn.disabled    = true;
-  btn.textContent = "抽獎中…";
-
+  const btn = document.getElementById("draw-btn");
+  btn.disabled = true; btn.textContent = "抽獎中…";
   const face   = document.getElementById("drum-face");
   const emojis = ["🎫","🎟","🍰","🎁","✨","🎊","🎈","🌟"];
-  let count    = 0;
+  let count = 0;
   face.classList.add("spinning");
-
-  drawTimer = setInterval(() => {
-    face.textContent = emojis[count % emojis.length];
-    count++;
-  }, 100);
-
+  drawTimer  = setInterval(() => { face.textContent = emojis[count % emojis.length]; count++; }, 100);
   drawnPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
 
   setTimeout(async () => {
@@ -617,47 +535,27 @@ function startDraw() {
     face.classList.remove("spinning");
     face.textContent = drawnPrize.icon;
     document.getElementById("draw-hint").textContent = "🎉 " + drawnPrize.name + "！";
-
-    // 扣除 5 點
     try {
-      const url  = GAS_URL
-        + "?action=add_points"
-        + "&lineuid=" + encodeURIComponent(profile.userId)
-        + "&points=-" + GOAL_PTS;
+      const url  = GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=-" + GOAL_PTS;
       const res  = await fetch(url);
       const data = await res.json();
       finalPts = (data.status === "OK") ? (data.newTotal || 0) : Math.max(0, newTotal - GOAL_PTS);
-    } catch (_) {
-      finalPts = Math.max(0, newTotal - GOAL_PTS);
-    }
-
-    btn.disabled    = false;
-    btn.textContent = "查看獎品";
-    btn.onclick     = showPrize;
+    } catch (_) { finalPts = Math.max(0, newTotal - GOAL_PTS); }
+    btn.disabled = false; btn.textContent = "查看獎品"; btn.onclick = showPrize;
   }, 2800);
 }
 
 function showPrize() {
   if (!drawnPrize) return;
-
   document.getElementById("prize-icon").textContent = drawnPrize.icon;
   document.getElementById("prize-name").textContent = drawnPrize.name;
   document.getElementById("prize-desc").textContent = drawnPrize.desc;
-
   let html = "";
-  if (drawnPrize.disc < 1) {
-    html += row("折扣優惠", '<span style="color:#E65100;">' + drawnPrize.name + '</span>');
-    html += row("套用方式", "現場直接折抵");
-  } else if (drawnPrize.extra) {
-    html += row("贈品", '<span style="color:#1B5E20;">' + drawnPrize.extra + ' 🍰</span>');
-    html += row("套用方式", "向店員領取");
-  } else {
-    html += row("優惠", '<span style="color:#1B5E20;">' + drawnPrize.name + '</span>');
-    html += row("套用方式", "下次到店使用");
-  }
+  if      (drawnPrize.disc < 1)   { html += row("折扣優惠", '<span style="color:#E65100;">' + drawnPrize.name + '</span>'); html += row("套用方式", "現場直接折抵"); }
+  else if (drawnPrize.extra)       { html += row("贈品", '<span style="color:#1B5E20;">' + drawnPrize.extra + ' 🍰</span>'); html += row("套用方式", "向店員領取"); }
+  else                             { html += row("優惠", '<span style="color:#1B5E20;">' + drawnPrize.name + '</span>'); html += row("套用方式", "下次到店使用"); }
   html += row("扣除點數", '<span style="color:#888;">−' + GOAL_PTS + ' 點</span>');
   html += row("剩餘點數", '<span style="color:#1B5E20;">' + finalPts + ' 點</span>');
-
   document.getElementById("prize-bill").innerHTML = html;
   goScreen("pt-prize");
 }
@@ -667,7 +565,7 @@ function row(label, val) {
 }
 
 // ═══════════════════════════════════════════════
-//  簽到流程（原功能）
+//  簽到流程
 // ═══════════════════════════════════════════════
 function startSigninFlow(type) {
   hideLoading();
@@ -675,72 +573,50 @@ function startSigninFlow(type) {
   document.getElementById("si-label").textContent = SIGNIN_INFO[type].label;
   document.getElementById("si-user").textContent  = "👤 " + profile.displayName;
   goScreen("si-main");
-
-  // 檢查今日是否已簽到
   fetch(GAS_URL + "?action=check_today&lineuid=" + encodeURIComponent(profile.userId) + "&type=" + encodeURIComponent(type))
     .then(r => r.json())
     .then(data => {
       if (data.status === "DENY") {
         showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
         const btn = document.getElementById("si-btn");
-        btn.disabled    = true;
-        btn.textContent = "今日已簽到";
+        btn.disabled = true; btn.textContent = "今日已簽到";
       }
-    })
-    .catch(() => {});
+    }).catch(() => {});
 }
 
 async function doCheckin() {
   const type = new URL(location.href).searchParams.get("type") || "";
   const btn  = document.getElementById("si-btn");
-  btn.disabled    = true;
-  btn.textContent = "簽到中...";
-
+  btn.disabled = true; btn.textContent = "簽到中...";
   try {
-    const params = new URLSearchParams({
-      action:      "sign_in",
-      lineuid:     profile.userId,
-      displayName: profile.displayName,
-      type
-    });
-
-    const res  = await fetch(GAS_URL + "?" + params.toString());
-    const data = await res.json();
-
+    const params = new URLSearchParams({ action:"sign_in", lineuid:profile.userId, displayName:profile.displayName, type });
+    const res    = await fetch(GAS_URL + "?" + params.toString());
+    const data   = await res.json();
     if (data.status === "OK") {
       const today   = new Date();
-      const dateStr = today.getFullYear() + "-"
-                    + String(today.getMonth()+1).padStart(2,"0") + "-"
-                    + String(today.getDate()).padStart(2,"0");
+      const dateStr = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0") + "-" + String(today.getDate()).padStart(2,"0");
       showSiResult("success",
-        "🎉 簽到成功！\n" +
-        "活動：" + SIGNIN_INFO[type].label + "\n" +
-        "日期：" + dateStr + "\n" +
-        "玩家編號：" + (data.uid4 || "----") + "\n" +
-        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "📅 第 " + data.visitCount + " 次參加此活動") + "\n\n" +
-        "⚠️ 請勿關閉此視窗\n店員確認後方可離開"
-      );
+        "🎉 簽到成功！\n活動：" + SIGNIN_INFO[type].label + "\n日期：" + dateStr +
+        "\n玩家編號：" + (data.uid4 || "----") + "\n" +
+        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "📅 第 " + data.visitCount + " 次參加此活動") +
+        "\n\n⚠️ 請勿關閉此視窗\n店員確認後方可離開");
       btn.textContent = "已簽到 ✓";
     } else if (data.status === "DENY") {
       showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
       btn.textContent = "今日已簽到";
     } else {
       showSiResult("error", "簽到失敗：" + (data.message || "未知錯誤"));
-      btn.disabled    = false;
-      btn.textContent = "重試";
+      btn.disabled = false; btn.textContent = "重試";
     }
   } catch (_) {
     showSiResult("error", "連線錯誤，請稍後再試");
-    btn.disabled    = false;
-    btn.textContent = "重試";
+    btn.disabled = false; btn.textContent = "重試";
   }
 }
 
 function showSiResult(type, msg) {
-  const box     = document.getElementById("si-result");
-  box.className = "result " + type;
-  box.textContent   = msg;
-  box.style.display = "block";
+  const box = document.getElementById("si-result");
+  box.className = "result " + type; box.textContent = msg; box.style.display = "block";
 }
 
 // ═══════════════════════════════════════════════
@@ -762,17 +638,13 @@ function showError(msg) {
   hideLoading();
   document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
   const div = document.createElement("div");
-  div.className = "loading";
-  div.style.color = "#B71C1C";
+  div.className = "loading"; div.style.color = "#B71C1C";
   div.innerHTML = "<div style='font-size:28px;margin-bottom:12px;'>⚠️</div>" + msg;
   document.getElementById("app").appendChild(div);
 }
 
 function showFatalError(msg) { showError(msg); }
 
-// ═══════════════════════════════════════════════
-//  啟動
-// ═══════════════════════════════════════════════
 init().catch(err => showFatalError("啟動失敗：" + err.message));
 </script>
 </body>
