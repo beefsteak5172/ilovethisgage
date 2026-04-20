@@ -22,35 +22,38 @@ body {
 .hdr p  { font-size: 12px; opacity: 0.8; margin: 0; }
 .scn { display: none; flex-direction: column; padding-bottom: 28px; }
 .scn.active { display: flex; }
-.body { padding: 20px 20px 0; flex: 1; }
+.loading { color: #888; font-size: 14px; text-align: center; padding: 32px 20px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #2E7D32;
+  border-radius: 50%; animation: rotate .7s linear infinite; margin: 0 auto 10px; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+.user-info { font-size: 12px; color: #aaa; text-align: center; margin-top: 12px; }
+.done-wrap { padding: 48px 24px 28px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; }
+.done-icon  { font-size: 52px; margin-bottom: 16px; }
+.done-title { font-size: 20px; font-weight: 800; color: #1B5E20; margin-bottom: 8px; }
+.done-sub   { font-size: 13px; color: #888; margin-bottom: 24px; }
+.pulse-dot { display: inline-block; width: 8px; height: 8px; background: #2E7D32;
+  border-radius: 50%; margin-right: 6px; animation: pulse-anim 1.2s ease-in-out infinite; }
+@keyframes pulse-anim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+.info-box { margin: 16px 20px 0; padding: 16px;
+  background: #F1F8E9; border: 1.5px solid #A5D6A7; border-radius: 14px; }
+.info-row { display: flex; justify-content: space-between;
+  padding: 7px 0; border-bottom: .5px solid #C8E6C9; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #666; } .info-val { font-weight: 700; color: #1B5E20; }
+.activity-badge { display: inline-block; background: #E8F5E9; color: #2E7D32;
+  border: 1.5px solid #A5D6A7; border-radius: 30px;
+  font-size: 14px; font-weight: 600; padding: 7px 22px; margin: 16px 0 8px; }
 .btn-main { display: block; width: calc(100% - 40px); margin: 16px 20px 0; padding: 15px;
   background: #2E7D32; color: #fff; border: none; border-radius: 12px;
-  font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; transition: opacity .15s; }
-.btn-main:disabled { background: #ccc; cursor: not-allowed; }
-.btn-main:active   { opacity: .88; }
-.choice-wrap { display: flex; flex-direction: column; gap: 10px; padding: 0 20px; }
-.choice-btn { padding: 14px 16px; border-radius: 14px; border: 2px solid transparent;
-  cursor: pointer; text-align: left; background: #fff; }
-.choice-btn.yes      { border-color: #2E7D32; background: #E8F5E9; }
-.choice-btn.yes2     { border-color: #1565C0; background: #E3F2FD; }
-.choice-btn.yes-both { border-color: #6A1B9A; background: #F3E5F5; }
-.choice-btn.yes-future { border-color: #E65100; background: #FFF3E0; }
-.choice-btn.tier     { border-color: #E65100; background: #FFF3E0; }
-.choice-btn.no       { border-color: #ddd;    background: #fafafa; }
-.choice-btn .cb-title { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 3px; }
-.choice-btn .cb-sub   { font-size: 12px; color: #888; }
-.choice-btn.yes .cb-title      { color: #1B5E20; }
-.choice-btn.yes2 .cb-title     { color: #1565C0; }
-.choice-btn.yes-both .cb-title { color: #6A1B9A; }
-.choice-btn.yes-future .cb-title { color: #BF360C; }
-.choice-btn.tier .cb-title     { color: #BF360C; }
+  font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; }
+/* 簽到 */
 .result { margin: 16px 20px 0; padding: 16px; border-radius: 12px;
   font-size: 14px; font-weight: 500; display: none; white-space: pre-line; }
 .result.success { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
 .result.warn    { background: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
 .result.error   { background: #FFEBEE; color: #B71C1C; border: 1px solid #FFCDD2; }
-.loading { color: #888; font-size: 14px; text-align: center; padding: 32px 20px; }
-.user-info { font-size: 12px; color: #aaa; text-align: center; margin-top: 12px; }
+/* 集點畫面 */
 .pts-display { text-align: center; padding: 24px 20px 16px; }
 .pts-big-num   { font-size: 56px; font-weight: 900; color: #1B5E20; line-height: 1; }
 .pts-big-label { font-size: 13px; color: #888; margin-top: 4px; }
@@ -58,22 +61,13 @@ body {
 .star { width: 34px; height: 34px; border-radius: 50%; background: #eee;
   display: flex; align-items: center; justify-content: center;
   font-size: 15px; transition: background .3s, transform .3s; }
-.star.filled { background: #2E7D32; transform: scale(1.1); }
+.star.filled { background: #2E7D32; transform: scale(1.1); color: #fff; }
 .bar-wrap { padding: 0 20px; margin-bottom: 8px; }
 .bar-bg { height: 10px; background: #eee; border-radius: 99px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 99px;
   background: linear-gradient(90deg, #1B5E20, #4CAF50);
   width: 0%; transition: width 1s cubic-bezier(.4,0,.2,1); }
 .bar-row { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-top: 4px; }
-.redeem-box { margin: 0 20px 4px; padding: 14px;
-  background: #FFF8E1; border: 1.5px solid #FFE082; border-radius: 12px; text-align: center; }
-.redeem-box p     { font-size: 13px; color: #E65100; font-weight: 700; margin-bottom: 4px; }
-.redeem-box small { font-size: 11px; color: #888; display: block; line-height: 1.6; }
-.use-btns { display: flex; gap: 10px; padding: 12px 20px 0; }
-.use-btns button { flex: 1; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; }
-.use-yes  { background: #2E7D32; color: #fff; }
-.use-yes2 { background: #1565C0; color: #fff; }
-.use-no   { background: #f5f5f5; color: #666; }
 .draw-wrap { padding: 24px 20px; text-align: center; }
 .drum { width: 200px; height: 120px; margin: 0 auto 14px; background: #1B5E20;
   border-radius: 16px; display: flex; align-items: center; justify-content: center; }
@@ -86,137 +80,69 @@ body {
 .prize-name { font-size: 24px; font-weight: 900; color: #1B5E20; margin-bottom: 4px; }
 .prize-desc { font-size: 13px; color: #666; }
 .bill-detail { padding: 0 20px; }
-.info-row { display: flex; justify-content: space-between;
-  padding: 9px 0; border-bottom: .5px solid #eee; font-size: 13px; }
-.info-row:last-child { border-bottom: none; }
-.info-label { color: #999; } .info-val { font-weight: 700; color: #222; }
-.done-wrap { padding: 48px 24px 28px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; }
-.done-icon  { font-size: 52px; margin-bottom: 16px; }
-.done-title { font-size: 20px; font-weight: 800; color: #1B5E20; margin-bottom: 8px; }
-.done-sub   { font-size: 13px; color: #888; margin-bottom: 24px; }
 .done-pts-box { background: #E8F5E9; border: 1.5px solid #A5D6A7;
   border-radius: 12px; padding: 16px 24px; width: 100%; }
 .done-pts-box .label { font-size: 12px; color: #666; margin-bottom: 4px; }
 .done-pts-box .num   { font-size: 34px; font-weight: 900; color: #1B5E20; }
 .done-pts-box .sub   { font-size: 11px; color: #888; margin-top: 2px; }
-.activity-badge { display: inline-block; background: #E8F5E9; color: #2E7D32;
-  border: 1.5px solid #A5D6A7; border-radius: 30px;
-  font-size: 14px; font-weight: 600; padding: 7px 22px; margin: 16px 0 8px; }
-.spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #2E7D32;
-  border-radius: 50%; animation: rotate .7s linear infinite; margin: 0 auto 10px; }
-@keyframes rotate { to { transform: rotate(360deg); } }
+.redeem-box { margin: 0 20px 4px; padding: 14px;
+  background: #FFF8E1; border: 1.5px solid #FFE082; border-radius: 12px; text-align: center; }
+.redeem-box p     { font-size: 13px; color: #E65100; font-weight: 700; margin-bottom: 4px; }
+.redeem-box small { font-size: 11px; color: #888; display: block; line-height: 1.6; }
+.use-btns { display: flex; gap: 10px; padding: 12px 20px 0; }
+.use-btns button { flex: 1; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; }
+.use-yes  { background: #2E7D32; color: #fff; }
+.use-no   { background: #f5f5f5; color: #666; }
 .anim-in { animation: fadeUp .4s ease both; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-.checkout-pts-box { margin: 16px 20px 0; background: #F1F8E9;
-  border: 1.5px solid #A5D6A7; border-radius: 14px;
-  padding: 18px 16px; font-size: 13px; line-height: 2; color: #444; }
-.checkout-pts-box .row { display: flex; justify-content: space-between; align-items: center; }
-.checkout-pts-box .divider { height: .5px; background: #cde8c5; margin: 6px 0; }
-.checkout-pts-big { text-align: center; padding: 20px 20px 8px; }
-.checkout-pts-big .num   { font-size: 52px; font-weight: 900; color: #1B5E20; line-height: 1; }
-.checkout-pts-big .label { font-size: 13px; color: #888; margin-top: 4px; }
-.checkout-sent-box { margin: 16px 20px 0; padding: 18px; background: #E8F5E9;
-  border: 1.5px solid #A5D6A7; border-radius: 14px; text-align: center; }
-.checkout-sent-box .icon  { font-size: 36px; margin-bottom: 8px; }
-.checkout-sent-box .title { font-size: 16px; font-weight: 700; color: #1B5E20; margin-bottom: 4px; }
-.checkout-sent-box .sub   { font-size: 12px; color: #666; line-height: 1.6; }
-.pulse-dot { display: inline-block; width: 8px; height: 8px; background: #2E7D32;
-  border-radius: 50%; margin-right: 6px; animation: pulse-anim 1.2s ease-in-out infinite; }
-@keyframes pulse-anim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-.redeem-highlight { margin: 12px 20px 0; padding: 14px 16px;
-  background: #EDE7F6; border: 1.5px solid #CE93D8; border-radius: 12px; text-align: center; }
-.redeem-highlight p     { font-size: 14px; font-weight: 700; color: #6A1B9A; margin-bottom: 4px; }
-.redeem-highlight small { font-size: 11px; color: #888; display: block; line-height: 1.6; }
-.tiers-label { text-align:center; font-size:12px; color:#aaa; margin:10px 20px 6px; }
-.tier-btn {
-  display:block; width:calc(100% - 40px); margin:6px 20px 0; padding:14px 16px;
-  border-radius:14px; border:2px solid #E65100; background:#FFF3E0;
-  cursor:pointer; text-align:left;
-}
-.tier-btn .tb-title { font-size:15px; font-weight:700; color:#BF360C; margin-bottom:3px; }
-.tier-btn .tb-sub   { font-size:12px; color:#888; }
-.tier-btn:active { opacity:.85; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
-
   <div class="loading" id="global-loading">
     <div class="spinner"></div>
     載入中，請稍候…
   </div>
 
-  <!-- CO-1：查詢點數中 -->
-  <div class="scn" id="co-loading">
+  <!-- ★ 結帳模式：自動送出中 -->
+  <div class="scn" id="co-auto-sending">
+    <div class="hdr"><div class="hdr-icon">📡</div><h2>連線中</h2><p>正在確認身分…</p></div>
+    <div class="loading" style="padding:48px 20px;">
+      <div class="spinner"></div>正在連線，請稍候…
+    </div>
+  </div>
+
+  <!-- ★ 結帳模式：等待店員選擇促銷 -->
+  <div class="scn" id="co-waiting">
+    <div class="hdr">
+      <div class="hdr-icon">✅</div><h2>掃描成功！</h2><p>請等候店員完成結帳</p>
+    </div>
+    <div class="done-wrap" style="padding:32px 24px 20px;">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">已連線成功</div>
+      <div class="done-sub">店員正在為您選擇優惠<br>請稍候，勿關閉此頁面</div>
+      <div style="margin-top:16px;font-size:13px;color:#888;">
+        <span class="pulse-dot"></span>收銀台正在處理中…
+      </div>
+      <div id="co-user-info" class="user-info" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- 集點流程：CO-1 查詢點數中 -->
+  <div class="scn" id="pt-loading">
     <div class="hdr"><div class="hdr-icon">💳</div><h2>查詢點數中</h2><p>請稍候…</p></div>
     <div class="loading" style="padding:48px 20px;">
       <div class="spinner"></div>正在查詢您的點數紀錄…
     </div>
   </div>
 
-  <!-- CO-2：確認是否使用點數 -->
-  <div class="scn" id="co-confirm">
-    <div class="hdr">
-      <div class="hdr-icon">⭐</div>
-      <h2>結帳前確認</h2>
-      <p id="co-confirm-sub">您有可用點數</p>
-    </div>
-    <div class="checkout-pts-big anim-in">
-      <div class="num" id="co-pts-num">0</div>
-      <div class="label">目前累積點數</div>
-    </div>
-    <div class="checkout-pts-box">
-      <div class="row">
-        <span>目前點數</span>
-        <strong id="co-cur-pts" style="color:#1B5E20;">0 點</strong>
-      </div>
-      <div class="divider"></div>
-      <div class="row">
-        <span>本次消費後可得</span>
-        <strong id="co-earn-pts" style="color:#E65100;">+0 點</strong>
-      </div>
-    </div>
-    <div id="co-user-info" class="user-info" style="margin-top:8px;"></div>
-    <div style="text-align:center;font-size:12px;color:#bbb;margin:10px 20px 0;">
-      請選擇本次結帳方式
-    </div>
-    <div id="co-btns-wrap" style="margin-top:12px;"></div>
-  </div>
-
-  <!-- CO-3：傳送中 -->
-  <div class="scn" id="co-sending">
-    <div class="hdr"><div class="hdr-icon">📡</div><h2>傳送決定中</h2><p>請稍候…</p></div>
-    <div class="loading" style="padding:48px 20px;">
-      <div class="spinner"></div>正在通知收銀台…
-    </div>
-  </div>
-
-  <!-- CO-4：等待收銀台 -->
-  <div class="scn" id="co-waiting">
-    <div class="hdr">
-      <div class="hdr-icon">⏳</div><h2>等待結帳</h2><p>收銀台正在處理您的結帳</p>
-    </div>
-    <div style="padding:20px 20px 0;">
-      <div class="checkout-sent-box">
-        <div class="icon"  id="co-wait-icon">✅</div>
-        <div class="title" id="co-wait-title">決定已送出</div>
-        <div class="sub"   id="co-wait-sub">請等候店員完成結帳</div>
-      </div>
-      <div style="text-align:center;margin-top:20px;font-size:13px;color:#888;">
-        <span class="pulse-dot"></span>收銀台已收到您的選擇
-      </div>
-      <div id="co-user-info2" class="user-info" style="margin-top:8px;"></div>
-    </div>
-  </div>
-
-  <!-- PT-1：確認集點 -->
+  <!-- 集點流程：PT-1 確認集點 -->
   <div class="scn" id="pt-confirm">
     <div class="hdr">
       <div class="hdr-icon">🎁</div><h2>消費集點</h2>
       <p id="pt-confirm-sub">本次可獲得點數</p>
     </div>
-    <div class="body">
+    <div style="padding:20px 20px 0;">
       <div style="text-align:center;margin-bottom:14px;">
         <span class="activity-badge" id="pt-earn-badge">本次 +0 點</span>
       </div>
@@ -235,19 +161,19 @@ body {
       </div>
       <div id="pt-user-info" class="user-info"></div>
     </div>
-    <div class="choice-wrap" style="margin-top:18px;">
-      <div class="choice-btn yes" onclick="confirmCollect()">
-        <div class="cb-title">✅ 是，幫我集點</div>
-        <div class="cb-sub">累積點數，集滿門檻可折抵</div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:18px 20px 0;">
+      <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="confirmCollect()">
+        <div style="font-size:15px;font-weight:700;color:#1B5E20;margin-bottom:3px;">✅ 是，幫我集點</div>
+        <div style="font-size:12px;color:#888;">累積點數，集滿門檻可折抵</div>
       </div>
-      <div class="choice-btn no" onclick="skipCollect()">
-        <div class="cb-title">✗ 不用，直接結帳</div>
-        <div class="cb-sub">跳過集點，直接付款結束</div>
+      <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="skipCollect()">
+        <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 不用，直接結帳</div>
+        <div style="font-size:12px;color:#888;">跳過集點，直接付款結束</div>
       </div>
     </div>
   </div>
 
-  <!-- PT-2：集點中 -->
+  <!-- 集點流程：PT-2 集點中 -->
   <div class="scn" id="pt-collecting">
     <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點中…</h2><p>正在寫入點數，請稍候</p></div>
     <div class="loading" style="padding:48px 20px;">
@@ -255,7 +181,7 @@ body {
     </div>
   </div>
 
-  <!-- PT-3：點數餘額 -->
+  <!-- 集點流程：PT-3 點數餘額 -->
   <div class="scn" id="pt-balance">
     <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點成功！</h2><p>點數已更新</p></div>
     <div class="pts-display anim-in">
@@ -270,7 +196,7 @@ body {
     <div id="bal-action"></div>
   </div>
 
-  <!-- PT-4：抽獎 -->
+  <!-- 集點流程：PT-4 抽獎 -->
   <div class="scn" id="pt-draw">
     <div class="hdr">
       <div class="hdr-icon">🎰</div><h2>幸運抽獎！</h2>
@@ -285,7 +211,7 @@ body {
     </div>
   </div>
 
-  <!-- PT-5：獎品結果 -->
+  <!-- 集點流程：PT-5 獎品結果 -->
   <div class="scn" id="pt-prize">
     <div class="hdr">
       <div class="hdr-icon">🎉</div><h2>恭喜獲獎！</h2>
@@ -302,7 +228,7 @@ body {
     <button class="btn-main" onclick="ptDone()">完成結帳 ✓</button>
   </div>
 
-  <!-- PT-6：完成 -->
+  <!-- 集點流程：PT-6 完成 -->
   <div class="scn" id="pt-done">
     <div class="done-wrap">
       <div class="done-icon">✅</div>
@@ -316,7 +242,7 @@ body {
     </div>
   </div>
 
-  <!-- PT-7：跳過 -->
+  <!-- 集點流程：PT-7 跳過 -->
   <div class="scn" id="pt-skip">
     <div class="hdr"><div class="hdr-icon">💳</div><h2>結帳完成</h2><p>感謝您的光臨</p></div>
     <div class="done-wrap" style="padding:36px 24px 20px;">
@@ -332,19 +258,16 @@ body {
       <div class="hdr-icon" id="si-icon">🎮</div>
       <h2>無名牛排</h2><p>每日簽到 · 天天好康</p>
     </div>
-    <div class="body" style="text-align:center;">
+    <div style="padding:20px 20px 0;text-align:center;">
       <div class="activity-badge" id="si-label">活動名稱</div>
       <div id="si-user" class="user-info"></div>
     </div>
     <button class="btn-main" id="si-btn" onclick="doCheckin()">立即簽到 ✓</button>
     <div class="result" id="si-result"></div>
   </div>
-
 </div>
+
 <script>
-// ═══════════════════════════════════════
-//  設定區
-// ═══════════════════════════════════════
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzpRZJB3-PMIVKHK482wey0z8BRVEnvsAU7sCmHHFVMgYGGJ9U9LgNSKNOyWEtHHo_D5w/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
@@ -371,9 +294,6 @@ let goalThreshold = 5;
 let redeemDisc    = 50;
 let redeemTiers   = [];
 
-// ═══════════════════════════════════════
-//  初始化
-// ═══════════════════════════════════════
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -407,9 +327,10 @@ async function init() {
     const typeParam  = p.get("type");
 
     if (skParam && !ptsParam) {
+      // ★ 結帳模式：直接自動送出，讓 POS 端顯示三選一
       sessionKey = skParam;
       earnPts = Math.max(0, parseInt(p.get("earn") || "0") || 0);
-      await startCheckoutFlow();
+      await startCheckoutAutoFlow();
     } else if (ptsParam && orderParam) {
       earnPts = Math.max(0, parseInt(ptsParam) || 0);
       await startPointsFlow();
@@ -421,168 +342,35 @@ async function init() {
   } catch (err) { showFatalError("初始化失敗：" + err.message); }
 }
 
-// ═══════════════════════════════════════
-//  結帳前流程
-// ═══════════════════════════════════════
-async function startCheckoutFlow() {
+// ★ 結帳模式：自動送出 "use" 決定，不讓客人選擇
+// 促銷三選一改由 POS 端（店員）操作
+async function startCheckoutAutoFlow() {
   hideLoading();
-  goScreen("co-loading");
-  curPts = 0;
-  try {
-    const res  = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
-    const data = await res.json();
-    if (data.status === "OK") curPts = data.currentPoints || 0;
-  } catch (_) {}
-
-  document.getElementById("co-pts-num").textContent  = curPts;
-  document.getElementById("co-cur-pts").textContent  = curPts + " 點";
-  document.getElementById("co-earn-pts").textContent = earnPts > 0 ? "+" + earnPts + " 點" : "—";
-  document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
-  document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
-
-  // 目前已達標的檔位
-  const eligibleTiers = redeemTiers.filter(t => curPts >= t.threshold);
-  const canRedeem = eligibleTiers.length > 0;
-
-  // ★ 集點後才會達標的檔位（目前未達標，但 curPts + earnPts >= threshold）
-  const futureEligibleTiers = earnPts > 0
-    ? redeemTiers.filter(t => (curPts + earnPts) >= t.threshold && curPts < t.threshold)
-    : [];
-
-  if (canRedeem) {
-    document.getElementById("co-confirm-sub").textContent =
-      "可折抵 " + eligibleTiers.map(t => "NT$" + t.discount).join(" / ");
-  } else if (futureEligibleTiers.length > 0) {
-    document.getElementById("co-confirm-sub").textContent =
-      "集點後可立即折抵 " + futureEligibleTiers.map(t => "NT$" + t.discount).join(" / ");
-  } else {
-    const lowestTier = redeemTiers[0];
-    const left = lowestTier ? lowestTier.threshold - curPts : 0;
-    document.getElementById("co-confirm-sub").textContent = "目前累積 " + curPts + " 點，再集 " + left + " 點可折抵";
-  }
-
-  _renderCoButtons(canRedeem, eligibleTiers, futureEligibleTiers);
-  goScreen("co-confirm");
-}
-
-// ★ v8.3 多檔位按鈕（含集點後達標檔位）
-function _renderCoButtons(canRedeem, eligibleTiers, futureEligibleTiers) {
-  const w = document.getElementById("co-btns-wrap");
-  let html = '<div class="choice-wrap">';
-
-  if (canRedeem) {
-    if (earnPts > 0) {
-      // 已達標：集點 + 折抵
-      eligibleTiers.forEach(tier => {
-        html +=
-          '<div class="choice-btn yes-both" onclick="coDecide(\'earn+redeem\',' + tier.threshold + ',' + tier.discount + ')">' +
-            '<div class="cb-title">🎰 集點 ＋ 折抵 NT$' + tier.discount + '</div>' +
-            '<div class="cb-sub">累積 ' + earnPts + ' 點，同時折抵 NT$' + tier.discount + '（扣 ' + tier.threshold + ' 點）</div>' +
-          '</div>';
-      });
-      // 只折抵
-      eligibleTiers.forEach(tier => {
-        html +=
-          '<div class="choice-btn yes2" onclick="coDecide(\'redeem\',' + tier.threshold + ',' + tier.discount + ')">' +
-            '<div class="cb-title">💰 只折抵 NT$' + tier.discount + '</div>' +
-            '<div class="cb-sub">本次不集點，僅折抵（扣 ' + tier.threshold + ' 點）</div>' +
-          '</div>';
-      });
-      // 只集點
-      html +=
-        '<div class="choice-btn yes" onclick="coDecide(\'use\',0,0)">' +
-          '<div class="cb-title">⭐ 只集點（不折抵）</div>' +
-          '<div class="cb-sub">累積 ' + earnPts + ' 點，留著下次折抵</div>' +
-        '</div>';
-    } else {
-      // 無集點，只顯示可折抵檔位
-      eligibleTiers.forEach(tier => {
-        html +=
-          '<div class="choice-btn yes2" onclick="coDecide(\'redeem\',' + tier.threshold + ',' + tier.discount + ')">' +
-            '<div class="cb-title">💰 折抵 NT$' + tier.discount + '</div>' +
-            '<div class="cb-sub">扣除 ' + tier.threshold + ' 點，折抵 NT$' + tier.discount + '</div>' +
-          '</div>';
-      });
-    }
-  } else {
-    // 尚未達標
-    if (futureEligibleTiers.length > 0) {
-      // ★ 集點後才達標：顯示「集點並立即折抵」選項
-      futureEligibleTiers.forEach(tier => {
-        html +=
-          '<div class="choice-btn yes-future" onclick="coDecide(\'earn+redeem\',' + tier.threshold + ',' + tier.discount + ')">' +
-            '<div class="cb-title">🎰 集點後立即折抵 NT$' + tier.discount + '</div>' +
-            '<div class="cb-sub">集滿 ' + tier.threshold + ' 點達標，同時折抵 NT$' + tier.discount + '</div>' +
-          '</div>';
-      });
-      // 只集點（不折）
-      html +=
-        '<div class="choice-btn yes" onclick="coDecide(\'use\',0,0)">' +
-          '<div class="cb-title">⭐ 只集點（留著下次用）</div>' +
-          '<div class="cb-sub">累積 ' + earnPts + ' 點，下次到店再折抵</div>' +
-        '</div>';
-    } else if (earnPts > 0) {
-      html +=
-        '<div class="choice-btn yes" onclick="coDecide(\'use\',0,0)">' +
-          '<div class="cb-title">✅ 要，幫我集點</div>' +
-          '<div class="cb-sub">累積 ' + earnPts + ' 點</div>' +
-        '</div>';
-    }
-  }
-
-  // 略過按鈕永遠顯示
-  html +=
-    '<div class="choice-btn no" onclick="coDecide(\'skip\',0,0)">' +
-      '<div class="cb-title">✗ 略過</div>' +
-      '<div class="cb-sub">不集點也不折抵</div>' +
-    '</div>';
-
-  html += '</div>';
-  w.innerHTML = html;
-}
-
-// ★ v8.2 coDecide
-async function coDecide(decision, tierPoints, tierDisc) {
-  goScreen("co-sending");
+  goScreen("co-auto-sending");
+  document.getElementById("co-user-info").textContent = "👤 " + profile.displayName;
   try {
     const url = GAS_URL
       + "?action=set_decision"
-      + "&sessionKey="  + encodeURIComponent(sessionKey)
-      + "&lineuid="     + encodeURIComponent(profile.userId)
-      + "&decision="    + encodeURIComponent(decision)
-      + "&tierPoints="  + encodeURIComponent(tierPoints || 0)
-      + "&tierDisc="    + encodeURIComponent(tierDisc   || 0);
+      + "&sessionKey=" + encodeURIComponent(sessionKey)
+      + "&lineuid="    + encodeURIComponent(profile.userId)
+      + "&decision=use"
+      + "&tierPoints=0&tierDisc=0";
     const res  = await fetch(url);
     const data = await res.json();
-    if (data.status === "OK") { showCoWaiting(decision, tierPoints, tierDisc); }
-    else { showFatalError("決定送出失敗：" + (data.message || "請通知店員")); }
-  } catch (_) { showFatalError("網路錯誤，請通知店員手動處理"); }
+    if (data.status === "OK") {
+      goScreen("co-waiting");
+    } else {
+      showFatalError("連線失敗：" + (data.message || "請告知店員"));
+    }
+  } catch (_) {
+    showFatalError("網路錯誤，請告知店員");
+  }
 }
 
-function showCoWaiting(decision, tierPoints, tierDisc) {
-  const discStr = tierDisc > 0 ? "NT$" + tierDisc : "";
-  const map = {
-    "earn+redeem": { icon:"🎰", title:"已選擇：集點 ＋ 折抵" + (discStr ? " " + discStr : ""),
-      sub:"店員確認後將累積點數並折抵\n請稍候完成結帳" },
-    "redeem":      { icon:"💰", title:"已選擇：折抵" + (discStr ? " " + discStr : ""),
-      sub:"店員確認後將為您折抵優惠\n請稍候完成結帳" },
-    "use":         { icon:"✅", title:"已選擇：結帳後集點",
-      sub:"店員確認後將為您累積點數\n請稍候完成結帳" },
-    "skip":        { icon:"👋", title:"已選擇：略過集點",
-      sub:"感謝光臨，歡迎下次再來集點！" }
-  };
-  const m = map[decision] || map["skip"];
-  document.getElementById("co-wait-icon").textContent  = m.icon;
-  document.getElementById("co-wait-title").textContent = m.title;
-  document.getElementById("co-wait-sub").textContent   = m.sub;
-  goScreen("co-waiting");
-}
-
-// ═══════════════════════════════════════
-//  集點流程（原有）
-// ═══════════════════════════════════════
+// ─── 集點流程（原有，ptsParam + orderParam 模式）───
 async function startPointsFlow() {
   hideLoading();
+  goScreen("pt-loading");
   curPts = 0;
   try {
     const res  = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
@@ -720,12 +508,10 @@ function showPrize() {
 }
 
 function row(label, val) {
-  return '<div class="info-row"><span class="info-label">'+label+'</span><span class="info-val">'+val+'</span></div>';
+  return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:.5px solid #eee;font-size:13px;"><span style="color:#999;">'+label+'</span><span style="font-weight:700;color:#222;">'+val+'</span></div>';
 }
 
-// ═══════════════════════════════════════
-//  簽到流程
-// ═══════════════════════════════════════
+// ─── 簽到流程 ───
 function startSigninFlow(type) {
   hideLoading();
   document.getElementById("si-icon").textContent  = SIGNIN_INFO[type].icon;
@@ -778,9 +564,6 @@ function showSiResult(type, msg) {
   box.className = "result " + type; box.textContent = msg; box.style.display = "block";
 }
 
-// ═══════════════════════════════════════
-//  工具
-// ═══════════════════════════════════════
 function goScreen(id) {
   document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
   const el = document.getElementById(id);
