@@ -117,12 +117,79 @@ body {
 .coupon-card .detail { font-size: 11px; color: #6D28D9; line-height: 1.6; }
 
 
+/* 隱藏 LIFF SDK 自帶的載入浮層 */
+#liff-spinner, .liff-spinner, [class*="liff-loading"], [id*="liff-loading"] { display: none !important; }
+/* 使用規則頁 */
+.terms-body { padding: 14px 16px 0; max-height: 56vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.terms-section { margin-bottom: 12px; }
+.terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20; border-left: 4px solid #2E7D32; padding-left: 8px; margin-bottom: 5px; }
+.terms-item { font-size: 12px; color: #444; line-height: 1.8; padding-left: 4px; }
+.terms-item li { margin-bottom: 2px; list-style: none; padding-left: 12px; text-indent: -12px; }
+.terms-item li::before { content: "• "; color: #2E7D32; font-weight: 700; }
+.terms-tag { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 6px; margin-right: 4px; vertical-align: middle; }
+.tag-red { background:#FFEBEE; color:#B71C1C; }
+.tag-grn { background:#E8F5E9; color:#1B5E20; }
+.tag-blu { background:#E3F2FD; color:#0D47A1; }
+.tag-org { background:#FFF3E0; color:#E65100; }
+.terms-footer { padding: 10px 14px 4px; border-top: 1px solid #eee; }
+.terms-agree-btn { display:block; width:100%; padding:14px; border-radius:12px; background:#15803d; color:#fff; border:none; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; }
+.terms-disagree-btn { display:block; width:100%; padding:12px; border-radius:12px; background:#f5f5f5; color:#666; border:1.5px solid #ddd; font-size:14px; font-weight:600; cursor:pointer; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
 
-    <div class="spinner"></div>載入中，請稍候…
+  <!-- ══ 使用規則畫面 ══ -->
+  <div class="scn" id="terms-screen">
+    <div class="hdr">
+      <div class="hdr-icon">📋</div>
+      <h2>會員優惠使用規則</h2>
+      <p>請詳閱後選擇同意或不同意</p>
+    </div>
+    <div class="terms-body">
+      <div class="terms-section">
+        <div class="terms-section-title">一、總則</div>
+        <ul class="terms-item">
+          <li>本優惠專屬已加入無名牛排 LINE 官方帳號之會員。</li>
+          <li>所有優惠 <span class="terms-tag tag-red">不得折換現金</span>，不得找零，不得轉讓。</li>
+          <li>各項優惠 <span class="terms-tag tag-red">不可與其他優惠同時併用</span>，每次限擇一。</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-section-title">二、累積點數</div>
+        <ul class="terms-item">
+          <li>集滿門檻可參加抽獎，點數 <span class="terms-tag tag-red">不得折換現金</span>。</li>
+          <li><span class="terms-tag tag-org">30 天內</span> 無消費紀錄，點數將自動歸零。</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-section-title">三、外帶第二件半價</div>
+        <ul class="terms-item">
+          <li>適用 <span class="terms-tag tag-blu">外帶訂單</span>，每人每次限用一次。</li>
+          <li>需至少點 <strong>2 件主餐</strong>，折抵最低價套餐半價。</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-section-title">四、內用回購半價券</div>
+        <ul class="terms-item">
+          <li>結帳時可選擇領取，<span class="terms-tag tag-org">限下次內用</span>使用。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">14 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>需至少點 <strong>2 件主餐</strong>，折抵最低價套餐半價。</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <div class="terms-section-title">五、第二件半價券</div>
+        <ul class="terms-item">
+          <li>每人限持一張，使用後才可重新領取。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">10 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>適用 <span class="terms-tag tag-grn">內用</span><span class="terms-tag tag-blu">外帶</span>，需至少點 <strong>2 件主餐</strong>。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="terms-footer">
+      <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
+      <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
+    </div>
   </div>
 
   <div class="scn" id="co-checking">
@@ -140,7 +207,7 @@ body {
     </div>
     <div style="padding: 16px 16px 0;" id="promo-options-container"></div>
     <div style="padding: 8px 16px 0;">
-      <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">請先選擇一個優惠</button>
+      <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">👆 點選優惠後，再點一次確認</button>
     </div>
     <div id="co-user-info" class="user-info"></div>
   </div>
@@ -368,20 +435,39 @@ async function init() {
     const typeParam  = p.get("type");
 
     hideLoading();
+
+    // 判斷流程類型，先顯示使用規則
     if (skParam && !ptsParam) {
       sessionKey = skParam;
       earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
-      await startCheckoutPromoFlow();
+      window._pendingFlow = "checkout";
     } else if (ptsParam && orderParam) {
       earnPts = Math.max(0, parseInt(ptsParam)||0);
-      await startPointsFlow();
+      window._pendingFlow = "points";
     } else if (typeParam && SIGNIN_INFO[typeParam]) {
-      startSigninFlow(typeParam);
+      window._pendingFlow = "signin_" + typeParam;
     } else {
       showFatalError("未知的進入方式，請重新掃描 QR Code");
+      return;
     }
+    goScreen("terms-screen");
 
   } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
+}
+
+async function agreeTerms() {
+  const f = window._pendingFlow || '';
+  if (f === "checkout") {
+    await startCheckoutPromoFlow();
+  } else if (f === "points") {
+    await startPointsFlow();
+  } else if (f.startsWith("signin_")) {
+    startSigninFlow(f.replace("signin_", ""));
+  }
+}
+
+function disagreeTerms() {
+  goScreen("pt-skip");
 }
 
 async function startCheckoutPromoFlow() {
@@ -591,7 +677,14 @@ function selectPromo(key) {
   const el = document.getElementById("opt-" + key);
   if (!el || el.classList.contains("dis")) return;
 
-  promoSelected = (promoSelected === key) ? null : key;
+  if (promoSelected === key) {
+    // 第二次點同一個 → 直接送出
+    confirmPromo();
+    return;
+  }
+
+  // 第一次點 → 選中並高亮
+  promoSelected = key;
 
   document.querySelectorAll(".opt").forEach(e => {
     const k = e.id.replace("opt-", "");
@@ -603,25 +696,23 @@ function selectPromo(key) {
     }
   });
 
+  // 更新確認按鈕文字（備用，主要靠雙擊）
   const btn = document.getElementById("btn-confirm");
-  if (promoSelected) {
+  if (btn) {
     btn.className = "btn-confirm active";
-    let label = "✅ 確認選擇";
-    if      (promoSelected === 'redeem')       label = "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
-    else if (promoSelected === 'carryout')     label = "✅ 確認：外帶第二件半價";
-    else if (promoSelected === 'indoor')       label = "✅ 確認：內用回購半價券";
-    else if (promoSelected === 'half_redeem')  label = "✅ 確認：使用第二件半價券";
-    else if (promoSelected === 'half_issue')   label = "✅ 確認：領取第二件半價券（本次原價）";
-    else if (promoSelected === 'half_keep')    label = "✅ 確認：保留券，本次只集點";
-    else if (promoSelected === 'points')       label = "✅ 確認：只集點";
+    let label = "✅ 再點一次確認";
+    if      (promoSelected === 'redeem')       label = "✅ 再點一次：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
+    else if (promoSelected === 'carryout')     label = "✅ 再點一次：外帶第二件半價";
+    else if (promoSelected === 'indoor')       label = "✅ 再點一次：內用回購半價券";
+    else if (promoSelected === 'half_redeem')  label = "✅ 再點一次：使用第二件半價券";
+    else if (promoSelected === 'half_issue')   label = "✅ 再點一次：領取第二件半價券";
+    else if (promoSelected === 'half_keep')    label = "✅ 再點一次：保留券，只集點";
+    else if (promoSelected === 'points')       label = "✅ 再點一次：只集點";
     else {
       const cp = customPromos.find(c => c.key === promoSelected);
-      if (cp) label = "✅ 確認：" + cp.label;
+      if (cp) label = "✅ 再點一次：" + cp.label;
     }
     btn.textContent = label;
-  } else {
-    btn.className = "btn-confirm disabled";
-    btn.textContent = "請先選擇一個優惠";
   }
 }
 
