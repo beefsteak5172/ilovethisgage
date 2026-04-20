@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>店員核銷券｜無名牛排</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "PingFang TC", Arial, sans-serif;
+  background: linear-gradient(135deg, #1B5E20, #388E3C);
+  min-height: 100vh; display: flex; align-items: flex-start;
+  justify-content: center; padding: 20px;
+}
+.card { background: #fff; border-radius: 20px; max-width: 400px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2); overflow: hidden; margin: auto; }
+.hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32);
+  padding: 20px; text-align: center; color: #fff; }
+.hdr-icon { font-size: 32px; margin-bottom: 4px; }
+.hdr h2 { font-size: 16px; font-weight: 700; margin: 0; }
+.hdr p  { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+.body { padding: 20px; }
+.tab-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab { flex: 1; padding: 10px; border-radius: 10px; border: 2px solid #e2e8f0;
+  font-size: 13px; font-weight: 700; cursor: pointer; text-align: center;
+  background: #f8fafc; color: #64748b; transition: all .15s; }
+.tab.active { background: #1B5E20; color: #fff; border-color: #1B5E20; }
+.input-group { margin-bottom: 14px; }
+.input-group label { display: block; font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px; }
+.input-group input, .input-group select {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 2px solid #e2e8f0; font-size: 15px; outline: none;
+  transition: border-color .15s; letter-spacing: 2px; }
+.input-group input:focus, .input-group select:focus { border-color: #2E7D32; }
+.btn { display: block; width: 100%; padding: 14px; border-radius: 12px; border: none;
+  font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.btn-query { background: #2E7D32; color: #fff; margin-bottom: 10px; }
+.btn-query:disabled { background: #cbd5e1; cursor: not-allowed; }
+.btn-redeem { background: #B45309; color: #fff; }
+.btn-redeem:disabled { background: #cbd5e1; cursor: not-allowed; }
+.result-box { border-radius: 12px; padding: 16px; margin: 14px 0;
+  display: none; font-size: 13px; line-height: 1.9; }
+.result-box.ok      { background: #E8F5E9; border: 1.5px solid #A5D6A7; }
+.result-box.error   { background: #FFEBEE; border: 1.5px solid #FFCDD2; color: #B71C1C; }
+.result-box.warn    { background: #FFF8E1; border: 1.5px solid #FFE082; color: #E65100; }
+.result-box.none    { background: #F1F5F9; border: 1.5px solid #CBD5E1; color: #64748b; }
+.info-row { display: flex; justify-content: space-between; padding: 6px 0;
+  border-bottom: .5px solid rgba(0,0,0,0.06); font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #888; } .info-val { font-weight: 700; color: #222; }
+.status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; }
+.badge-active   { background: #DCFCE7; color: #166534; }
+.badge-used     { background: #F3F4F6; color: #6B7280; }
+.badge-expired  { background: #FEE2E2; color: #991B1B; }
+.badge-none     { background: #F1F5F9; color: #64748b; }
+.spinner { width: 24px; height: 24px; border: 3px solid #eee; border-top-color: #2E7D32;
+  border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.staff-row { display: flex; gap: 8px; align-items: flex-end; }
+.staff-row .input-group { flex: 1; margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hdr">
+    <div class="hdr-icon">🎫</div>
+    <h2>店員核銷券系統</h2>
+    <p>無名牛排｜輸入客人末4碼查詢</p>
+  </div>
+
+  <div class="body">
+
+    <!-- 券種切換 -->
+    <div class="tab-row">
+      <div class="tab active" id="tab-half"   onclick="switchTab('half')">🥩 第二件半價券</div>
+      <div class="tab"        id="tab-indoor" onclick="switchTab('indoor')">🪑 內用回購券</div>
+    </div>
+
+    <!-- 查詢輸入 -->
+    <div class="input-group">
+      <label>客人 LINE ID 末4碼</label>
+      <input type="text" id="inp-id4" maxlength="4" placeholder="例：A8B2"
+        oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')queryCoupon()">
+    </div>
+
+    <div class="staff-row">
+      <div class="input-group">
+        <label>店員姓名（核銷用）</label>
+        <input type="text" id="inp-staff" placeholder="例：小美" style="letter-spacing:0;">
+      </div>
+    </div>
+    <div style="height:12px;"></div>
+
+    <button class="btn btn-query" id="btn-query" onclick="queryCoupon()">🔍 查詢券狀態</button>
+
+    <!-- 查詢結果 -->
+    <div class="result-box" id="result-box"></div>
+
+    <!-- 核銷按鈕 -->
+    <button class="btn btn-redeem" id="btn-redeem" onclick="redeemCoupon()" style="display:none;" disabled>
+      ✅ 確認核銷
+    </button>
+
+  </div>
+</div>
+
+<script>
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbzNhivPJ4xv_l2AX88dSd7N6qM5PigxdmwIGP_Wp3nf6sK-sJ0B9BX-Nf4viUNe48oDpw/exec";
+let currentTab  = 'half';
+let queryResult = null;
+
+function switchTab(type) {
+  currentTab = type;
+  document.getElementById('tab-half').classList.toggle('active',   type === 'half');
+  document.getElementById('tab-indoor').classList.toggle('active', type === 'indoor');
+  resetResult();
+}
+
+function resetResult() {
+  queryResult = null;
+  const rb = document.getElementById('result-box');
+  rb.style.display = 'none'; rb.className = 'result-box';
+  const btn = document.getElementById('btn-redeem');
+  btn.style.display = 'none'; btn.disabled = true;
+}
+
+async function queryCoupon() {
+  const id4   = (document.getElementById('inp-id4').value || '').trim().toUpperCase();
+  const staff = (document.getElementById('inp-staff').value || '').trim();
+  if (id4.length !== 4) { showResult('error', '⚠️ 請輸入4碼末尾 ID'); return; }
+
+  const btn = document.getElementById('btn-query');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>查詢中…';
+  resetResult();
+
+  try {
+    const url  = GAS_URL + '?action=staff_check_coupon&id4=' + id4 + '&type=' + currentTab;
+    const res  = await fetch(url);
+    const data = await res.json();
+    queryResult = data;
+    renderResult(data, id4);
+  } catch(err) {
+    showResult('error', '❌ 網路錯誤，請稍後再試\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔍 查詢券狀態';
+  }
+}
+
+function renderResult(data, id4) {
+  const typeName = currentTab === 'half' ? '第二件半價券' : '內用回購券';
+  const rb       = document.getElementById('result-box');
+  const redeemBtn = document.getElementById('btn-redeem');
+
+  if (data.status === 'NONE') {
+    rb.className = 'result-box none'; rb.style.display = 'block';
+    rb.innerHTML = '🔍 查無末4碼 <strong>' + id4 + '</strong> 的' + typeName + '<br><span style="font-size:11px;color:#aaa;">客人可能尚未領取，或末4碼輸入有誤</span>';
+    redeemBtn.style.display = 'none';
+    return;
+  }
+
+  if (data.status === 'ERROR') {
+    showResult('error', '❌ ' + (data.message || '查詢失敗'));
+    return;
+  }
+
+  // status === 'OK'
+  const st = data.status === 'OK' ? data.status : 'OK';
+  const couponSt   = data.status === 'OK' ? data.status : data.couponStatus;
+  const actualSt   = data.status === 'OK' ? (data.status || 'active') : 'error';
+
+  const stLabel = {
+    active  : '<span class="status-badge badge-active">✅ 有效</span>',
+    redeemed: '<span class="status-badge badge-used">已核銷</span>',
+    used    : '<span class="status-badge badge-used">已使用</span>',
+    expired : '<span class="status-badge badge-expired">已過期</span>',
+  }[data.status] || '<span class="status-badge badge-none">未知</span>';
+
+  let html = '';
+  html += row('券種',     typeName);
+  html += row('末4碼',    id4);
+  html += row('券號',     data.couponId || '—');
+  html += row('有效至',   data.expiry   || '—');
+  html += row('狀態',     stLabel);
+  if (data.usedAt) html += row('使用時間', data.usedAt);
+
+  const canRedeem = (data.status === 'active') || (currentTab==='half' && data.couponStatus === 'active');
+
+  // 判斷實際可核銷
+  const isActive = data.status === 'active';
+
+  rb.style.display = 'block';
+  rb.className = 'result-box ' + (isActive ? 'ok' : (data.status === 'redeemed' || data.status === 'used' ? 'warn' : 'error'));
+  rb.innerHTML = html;
+
+  if (isActive) {
+    redeemBtn.style.display = 'block';
+    redeemBtn.disabled = false;
+    redeemBtn.innerHTML = '✅ 確認核銷 — ' + typeName;
+  } else {
+    redeemBtn.style.display = 'none';
+  }
+}
+
+async function redeemCoupon() {
+  const id4   = (document.getElementById('inp-id4').value || '').trim().toUpperCase();
+  const staff = (document.getElementById('inp-staff').value || '').trim() || '未填';
+  if (id4.length !== 4) { showResult('error', '請輸入4碼末尾 ID'); return; }
+
+  const btn = document.getElementById('btn-redeem');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>核銷中…';
+
+  try {
+    const url  = GAS_URL + '?action=staff_redeem_coupon&id4=' + id4 + '&type=' + currentTab + '&staffName=' + encodeURIComponent(staff);
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'OK') {
+      const typeName = currentTab === 'half' ? '第二件半價券' : '內用回購券';
+      const rb = document.getElementById('result-box');
+      rb.className = 'result-box ok'; rb.style.display = 'block';
+      rb.innerHTML =
+        '<div style="font-size:24px;text-align:center;margin-bottom:10px;">🎉</div>' +
+        '<div style="font-size:15px;font-weight:800;color:#1B5E20;text-align:center;margin-bottom:12px;">核銷成功！</div>' +
+        row('券種',   typeName) +
+        row('券號',   data.couponId || '—') +
+        row('核銷時間', data.usedAt || '—') +
+        row('店員',   staff) +
+        '<div style="margin-top:10px;padding:10px;background:#F0FFF4;border-radius:8px;font-size:12px;color:#166534;text-align:center;">' +
+        (currentTab === 'half' ? '💡 第二件（較便宜者）半價折抵' : '💡 最低價套餐半價折抵') + '</div>';
+      btn.style.display = 'none';
+    } else {
+      showResult('error', '❌ 核銷失敗：' + (data.message || '請重新查詢'));
+      btn.disabled = false; btn.innerHTML = '✅ 確認核銷';
+    }
+  } catch(err) {
+    showResult('error', '❌ 網路錯誤：' + err.message);
+    btn.disabled = false; btn.innerHTML = '✅ 確認核銷';
+  }
+}
+
+function showResult(type, msg) {
+  const rb = document.getElementById('result-box');
+  rb.className = 'result-box ' + type; rb.style.display = 'block';
+  rb.textContent = msg;
+}
+
+function row(label, val) {
+  return '<div class="info-row"><span class="info-label">' + label + '</span><span class="info-val">' + val + '</span></div>';
+}
+</script>
+</body>
+</html>
