@@ -371,7 +371,7 @@ async function init() {
     } else {
       showFatalError("未知的進入方式，請重新掃描 QR Code");
     }
-  } catch (err) { showFatalError("初始化失敗：" + err.message); }
+  } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
 }
 
 // ★ 結帳模式：查詢促銷資格 → 顯示三選一
@@ -389,8 +389,11 @@ async function startCheckoutPromoFlow() {
   goScreen("co-checking");
   try {
     const res  = await fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId));
-    const data = await res.json();
-    promoElig = (data.status === 'OK') ? data : {};
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      promoElig = (data.status === 'OK') ? data : {};
+    } catch(_) { promoElig = {}; }
   } catch(_) { promoElig = {}; }
 
   renderPromoOptions();
@@ -491,7 +494,9 @@ async function submitPromoChoice(promoKey) {
       + "&tierPoints=0&tierDisc=0"
       + "&promoChoice="  + encodeURIComponent(promoKey);
     const res  = await fetch(url);
-    const data = await res.json();
+    const text = await res.text();
+    let data = {};
+    try { data = JSON.parse(text); } catch(_) {}
     if (data.status === "OK") {
       const subMap = {
         carryout     : "已選擇：外帶第二件半價\n最低價套餐半價折抵",
@@ -676,9 +681,14 @@ function goScreen(id) {
 }
 function hideLoading() { const el = document.getElementById("global-loading"); if (el) el.style.display = "none"; }
 function showError(msg) {
-  hideLoading(); document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
-  const div = document.createElement("div"); div.className = "loading"; div.style.color = "#B71C1C";
-  div.innerHTML = "<div style='font-size:28px;margin-bottom:12px;'>⚠️</div>" + msg;
+  hideLoading();
+  document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
+  // 移除舊的錯誤訊息
+  document.querySelectorAll(".err-block").forEach(e => e.remove());
+  const div = document.createElement("div");
+  div.className = "err-block";
+  div.style.cssText = "color:#B71C1C;font-size:14px;text-align:center;padding:40px 24px;line-height:1.8;";
+  div.innerHTML = "<div style='font-size:36px;margin-bottom:14px;'>⚠️</div><div style='font-weight:700;margin-bottom:8px;'>發生錯誤</div><div style='font-size:13px;color:#888;white-space:pre-line;'>" + msg + "</div>";
   document.getElementById("app").appendChild(div);
 }
 function showFatalError(msg) { showError(msg); }
