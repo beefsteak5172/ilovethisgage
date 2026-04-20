@@ -33,19 +33,25 @@ body {
 .opt.dis  { opacity: 0.4; cursor: not-allowed; }
 .opt.redeem-opt { border-color: #B45309; background: #FFFBEB; }
 .opt.redeem-opt.sel { border-color: #92400E; background: #FEF3C7; }
+.opt.half-opt { border-color: #7C3AED; background: #F5F3FF; }
+.opt.half-opt.sel { border-color: #5B21B6; background: #EDE9FE; }
+.opt.half-issue { border-color: #0369A1; background: #F0F9FF; }
+.opt.half-issue.sel { border-color: #075985; background: #E0F2FE; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
 .opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .opt.sel .opt-title { color: #15803d; }
-.opt.redeem-opt .opt-title { color: #92400E; }
-.opt.redeem-opt.sel .opt-title { color: #78350F; }
+.opt.half-opt .opt-title { color: #5B21B6; }
+.opt.half-opt.sel .opt-title { color: #4C1D95; }
+.opt.half-issue .opt-title { color: #0369A1; }
+.opt.half-issue.sel .opt-title { color: #075985; }
 .opt-sub   { font-size: 12px; color: #64748b; line-height: 1.5; }
 .opt-check { margin-left: auto; flex-shrink: 0; font-size: 18px; display: none; }
-.redeem-badge { display: inline-block; background: #B45309; color: #fff;
-  font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 6px;
-  margin-left: 6px; vertical-align: middle; }
+.notice-box { margin: 0 0 10px; padding: 10px 12px;
+  background: #FFF7ED; border: 1.5px solid #FED7AA; border-radius: 10px;
+  font-size: 11px; color: #9A3412; line-height: 1.7; }
+.notice-box strong { display: block; font-size: 12px; margin-bottom: 3px; color: #7C2D12; }
 .btn-confirm { display: block; width: 100%; padding: 15px; border-radius: 12px;
-  border: none; font-size: 15px; font-weight: 700; cursor: pointer;
-  transition: background .2s; }
+  border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s; }
 .btn-confirm.active { background: #15803d; color: #fff; }
 .btn-confirm.disabled { background: #cbd5e1; color: #fff; cursor: not-allowed; }
 .done-wrap { padding: 40px 24px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; }
@@ -104,6 +110,11 @@ body {
 .anim-in { animation: fadeUp .4s ease both; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 .user-info { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
+.coupon-card { margin: 0 0 10px; padding: 12px 14px;
+  background: linear-gradient(135deg, #EDE9FE, #F5F3FF);
+  border: 2px dashed #7C3AED; border-radius: 12px; }
+.coupon-card .title { font-size: 14px; font-weight: 800; color: #5B21B6; margin-bottom: 4px; }
+.coupon-card .detail { font-size: 11px; color: #6D28D9; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -126,9 +137,7 @@ body {
       <h2>請選擇本次優惠</h2>
       <p id="co-promo-sub">選擇後即完成確認</p>
     </div>
-    <div style="padding: 16px 16px 0;" id="promo-options-container">
-      <!-- 動態產生 -->
-    </div>
+    <div style="padding: 16px 16px 0;" id="promo-options-container"></div>
     <div style="padding: 8px 16px 0;">
       <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">請先選擇一個優惠</button>
     </div>
@@ -287,6 +296,17 @@ const SIGNIN_INFO = {
   dice:    { icon:"🎮", label:"每日遊戲"  }
 };
 
+// ══════════════════════════════════════════════
+// 第二件半價券使用說明
+// ══════════════════════════════════════════════
+const HALF_PRICE_RULES = [
+  '📌 每位會員限持一張，使用後才可再領取',
+  '⏰ 券有效期限為領取後 10 天，逾期自動失效',
+  '🍽️ 使用當次需至少點 2 件主餐，折抵第二件（較便宜者）半價',
+  '🚫 本券不可與其他優惠併用',
+  '👤 僅限本人 LINE 帳號使用，不可轉讓'
+].join('\n');
+
 let profile = null, earnPts = 0, curPts = 0, newTotal = 0, finalPts = 0;
 let drawnPrize = null, drawTimer = null;
 let sessionKey = null, goalThreshold = 5, redeemDisc = 50, redeemTiers = [];
@@ -294,11 +314,10 @@ let promoElig = null, promoSelected = null;
 let promoCarryoutOn = true, promoIndoorOn = true;
 let indoorExpDays = 14;
 let redeemEligible = false, redeemTierPoints = 0, redeemTierDisc = 0;
-
-// ★ 自訂促銷活動陣列（從 URL 參數 customPromos 解析）
-// 格式：[{ key, label, icon, desc, type }]
-// type: 'carryout'(外帶第二件半價) | 'indoor'(內用回購半價券) | 'custom'(自訂，送 decision=use)
 let customPromos = [];
+
+// ★ 第二件半價券狀態
+let halfCouponStatus = null; // null | { status:'none'|'active'|'expired'|'used', expiry:'', couponId:'' }
 
 async function init() {
   try {
@@ -323,10 +342,6 @@ async function init() {
     promoIndoorOn   = p.get("promoIndoor")   !== "0";
     indoorExpDays   = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
 
-    // ★ 解析自訂促銷活動
-    // URL 參數格式：customPromos=JSON encoded array
-    // 例：[{"key":"custom_55","label":"新促銷活動55","icon":"🎉","desc":"55555","type":"carryout"}]
-    // 管理介面產生 URL 時應把促銷活動序列化並 encodeURIComponent 後放入此參數
     const cpParam = p.get("customPromos");
     if (cpParam) {
       try {
@@ -369,11 +384,14 @@ async function startCheckoutPromoFlow() {
   document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
   goScreen("co-checking");
 
-  const [promoResult, ptsResult] = await Promise.allSettled([
+  // ★ 同時查詢：促銷資格、點數、第二件半價券狀態
+  const [promoResult, ptsResult, halfResult] = await Promise.allSettled([
     fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId))
       .then(r => r.json()).catch(() => ({})),
     fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId))
-      .then(r => r.json()).catch(() => ({}))
+      .then(r => r.json()).catch(() => ({})),
+    fetch(GAS_URL + "?action=check_half_coupon&lineuid=" + encodeURIComponent(profile.userId))
+      .then(r => r.json()).catch(() => ({ status: 'ERROR' }))
   ]);
 
   promoElig = (promoResult.status === 'fulfilled' && promoResult.value.status === 'OK')
@@ -381,6 +399,13 @@ async function startCheckoutPromoFlow() {
 
   if (ptsResult.status === 'fulfilled' && ptsResult.value.status === 'OK') {
     curPts = ptsResult.value.currentPoints || 0;
+  }
+
+  // ★ 解析第二件半價券狀態
+  if (halfResult.status === 'fulfilled') {
+    halfCouponStatus = halfResult.value;
+  } else {
+    halfCouponStatus = { couponStatus: 'none' };
   }
 
   const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
@@ -395,27 +420,44 @@ async function startCheckoutPromoFlow() {
   goScreen("co-promo");
 }
 
-// ★ 動態建立所有促銷選項 HTML
+// ★ 動態建立所有促銷選項
 function buildPromoOptions() {
   const container = document.getElementById("promo-options-container");
   container.innerHTML = "";
-
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
-  // 1. 點數折抵
+  const cs = halfCouponStatus || {};
+  const couponSt = cs.couponStatus || 'none'; // 'none' | 'active' | 'expired' | 'used'
+  const couponExp = cs.expiry || '';
+  const couponId  = cs.couponId || '';
+
+  // ── 1. 點數折抵 ──
   if (redeemEligible) {
     container.appendChild(makeOpt({
       id    : 'opt-redeem',
       key   : 'redeem',
       cls   : 'redeem-opt',
       icon  : '💰',
-      title : '點數折抵現金 <span class="redeem-badge">−' + redeemTierPoints + '點</span>',
+      title : '點數折抵現金',
       sub   : '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（目前累積 ' + curPts + ' 點）',
       dis   : false
     }));
   }
 
-  // 2. 外帶第二件半價（內建）
+  // ── 2. 第二件半價券：使用（有有效券）──
+  if (couponSt === 'active') {
+    container.appendChild(makeOpt({
+      id   : 'opt-half-redeem',
+      key  : 'half_redeem',
+      cls  : 'half-opt',
+      icon : '🥩',
+      title: '使用第二件半價券',
+      sub  : '有效至 ' + couponExp + '｜第二件（較便宜者）半價折抵\n📋 券號：' + couponId,
+      dis  : false
+    }));
+  }
+
+  // ── 3. 外帶第二件半價（當下折，內建）──
   if (promoCarryoutOn) {
     const used = promoElig.carryOut_Status === 'used';
     container.appendChild(makeOpt({
@@ -428,7 +470,7 @@ function buildPromoOptions() {
     }));
   }
 
-  // 3. 內用回購券（內建）
+  // ── 4. 內用回購券（內建）──
   if (promoIndoorOn) {
     const indoorStatus  = promoElig.indoor_Status || 'unused';
     const indoorExpiry  = promoElig.indoor_Expiry || '';
@@ -451,7 +493,47 @@ function buildPromoOptions() {
     container.appendChild(makeOpt({ id:'opt-indoor', key:'indoor', icon:'🪑', title:indoorTitle, sub:indoorSub, dis:indoorDis }));
   }
 
-  // 4. ★ 自訂促銷活動（動態）
+  // ── 5. 第二件半價券：領取（沒有券 or 已過期/已使用）──
+  const canIssue = (couponSt === 'none' || couponSt === 'expired' || couponSt === 'used');
+  if (canIssue) {
+    const expiredNote = couponSt === 'expired' ? '（上一張已過期，可重新領取）' :
+                        couponSt === 'used'    ? '（上一張已使用，可重新領取）' : '';
+    // 說明區塊
+    const noticeDiv = document.createElement('div');
+    noticeDiv.className = 'notice-box';
+    noticeDiv.innerHTML =
+      '<strong>📋 第二件半價券使用說明</strong>' +
+      '• 每位會員限持一張，使用後才可再領取<br>' +
+      '• 券有效期限：領取後 10 天，逾期自動失效<br>' +
+      '• 使用時需至少點 2 件主餐，折抵第二件（較便宜者）半價<br>' +
+      '• 本券不可與其他優惠併用<br>' +
+      '• 僅限本人使用，不可轉讓';
+    container.appendChild(noticeDiv);
+
+    container.appendChild(makeOpt({
+      id   : 'opt-half-issue',
+      key  : 'half_issue',
+      cls  : 'half-issue',
+      icon : '🎫',
+      title: '領取第二件半價券' + (expiredNote ? ' ' + expiredNote : ''),
+      sub  : '本次照原價結帳，下次到店出示此券享第二件半價',
+      dis  : false
+    }));
+  }
+
+  // ── 6. 有券但不想用（保留）──
+  if (couponSt === 'active') {
+    container.appendChild(makeOpt({
+      id   : 'opt-half-keep',
+      key  : 'half_keep',
+      icon : '💼',
+      title: '保留第二件半價券（不使用）',
+      sub  : '本次不使用，券繼續保留至 ' + couponExp,
+      dis  : false
+    }));
+  }
+
+  // ── 7. 自訂促銷 ──
   customPromos.forEach(cp => {
     container.appendChild(makeOpt({
       id   : 'opt-' + cp.key,
@@ -463,7 +545,7 @@ function buildPromoOptions() {
     }));
   });
 
-  // 5. 只集點
+  // ── 8. 只集點 ──
   container.appendChild(makeOpt({
     id   : 'opt-points',
     key  : 'points',
@@ -505,14 +587,15 @@ function selectPromo(key) {
   const btn = document.getElementById("btn-confirm");
   if (promoSelected) {
     btn.className = "btn-confirm active";
-    // 決定按鈕文字
     let label = "✅ 確認選擇";
-    if (promoSelected === 'redeem')   label = "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
-    else if (promoSelected === 'carryout') label = "✅ 確認：外帶第二件半價";
-    else if (promoSelected === 'indoor')   label = "✅ 確認：內用回購半價券";
-    else if (promoSelected === 'points')   label = "✅ 確認：只集點";
+    if      (promoSelected === 'redeem')       label = "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
+    else if (promoSelected === 'carryout')     label = "✅ 確認：外帶第二件半價";
+    else if (promoSelected === 'indoor')       label = "✅ 確認：內用回購半價券";
+    else if (promoSelected === 'half_redeem')  label = "✅ 確認：使用第二件半價券";
+    else if (promoSelected === 'half_issue')   label = "✅ 確認：領取第二件半價券（本次原價）";
+    else if (promoSelected === 'half_keep')    label = "✅ 確認：保留券，本次只集點";
+    else if (promoSelected === 'points')       label = "✅ 確認：只集點";
     else {
-      // 自訂促銷
       const cp = customPromos.find(c => c.key === promoSelected);
       if (cp) label = "✅ 確認：" + cp.label;
     }
@@ -538,7 +621,7 @@ async function confirmPromo() {
   } else if (promoSelected === 'redeem') {
     promoKey = 'redeem'; tierPoints = redeemTierPoints; tierDisc = redeemTierDisc;
   }
-  // 自訂促銷：promoKey 直接帶自訂 key，decision=use
+  // half_redeem / half_issue / half_keep → 直接帶 key
 
   await submitPromoChoice(promoKey, tierPoints, tierDisc);
 }
@@ -547,8 +630,29 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   goScreen("co-sending");
   tierPoints = tierPoints || 0; tierDisc = tierDisc || 0;
 
+  // ★ 第二件半價券：發券 / 核銷 → 先呼叫 GAS
+  if (promoKey === 'half_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("領取失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'half_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
   let decisionValue = 'use';
-  if (promoKey === 'points') decisionValue = 'skip';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep') decisionValue = 'skip';
   if (promoKey === 'redeem') decisionValue = 'redeem';
 
   try {
@@ -561,17 +665,18 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       + "&tierDisc="    + tierDisc
       + "&promoChoice=" + encodeURIComponent(promoKey);
     const res  = await fetch(url);
-    const text = await res.text();
-    let data = {};
-    try { data = JSON.parse(text); } catch(_) {}
+    const data = await res.json().catch(() => ({}));
+
     if (data.status === "OK") {
-      // 決定等待畫面文字
       let waitText = "已送出選擇";
-      if (promoKey === 'redeem')        waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
-      else if (promoKey === 'carryout') waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
-      else if (promoKey === 'indoor_issue')  waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
+      if      (promoKey === 'redeem')       waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
+      else if (promoKey === 'carryout')     waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
+      else if (promoKey === 'indoor_issue') waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
       else if (promoKey === 'indoor_redeem') waitText = "已選擇：核銷內用回購券\n最低價套餐半價折抵";
-      else if (promoKey === 'points')   waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
+      else if (promoKey === 'half_issue')   waitText = "✅ 第二件半價券已發出！\n請保留收據，10天內到店使用\n本次照原價結帳";
+      else if (promoKey === 'half_redeem')  waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
+      else if (promoKey === 'half_keep')    waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
+      else if (promoKey === 'points')       waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
       else {
         const cp = customPromos.find(c => c.key === promoKey);
         if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
@@ -584,6 +689,9 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   } catch (_) { showFatalError("網路錯誤，請告知店員"); }
 }
 
+// ══════════════════════════════════════════════
+// 集點流程（不變）
+// ══════════════════════════════════════════════
 async function startPointsFlow() {
   hideLoading();
   curPts = 0;
