@@ -115,12 +115,115 @@ body {
   border: 2px dashed #7C3AED; border-radius: 12px; }
 .coupon-card .title { font-size: 14px; font-weight: 800; color: #5B21B6; margin-bottom: 4px; }
 .coupon-card .detail { font-size: 11px; color: #6D28D9; line-height: 1.6; }
+
+/* ── 使用規則頁 ── */
+.terms-body { padding: 16px 18px 0; max-height: 58vh; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; }
+.terms-section { margin-bottom: 14px; }
+.terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20;
+  border-left: 4px solid #2E7D32; padding-left: 8px; margin-bottom: 6px; }
+.terms-item { font-size: 12px; color: #444; line-height: 1.8; padding-left: 4px; }
+.terms-item li { margin-bottom: 2px; list-style: none; padding-left: 12px; text-indent: -12px; }
+.terms-item li::before { content: "• "; color: #2E7D32; font-weight: 700; }
+.terms-tag { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px;
+  padding: 1px 6px; margin-right: 4px; vertical-align: middle; }
+.tag-red  { background:#FFEBEE; color:#B71C1C; }
+.tag-grn  { background:#E8F5E9; color:#1B5E20; }
+.tag-blu  { background:#E3F2FD; color:#0D47A1; }
+.tag-org  { background:#FFF3E0; color:#E65100; }
+.terms-scroll-hint { text-align:center; font-size:11px; color:#aaa; padding: 6px 0 2px;
+  animation: bounce-hint 1.5s ease-in-out infinite; }
+@keyframes bounce-hint { 0%,100%{transform:translateY(0)} 50%{transform:translateY(3px)} }
+.terms-footer { padding: 12px 16px 4px; border-top: 1px solid #eee; }
+.terms-agree-btn { display:block; width:100%; padding:14px; border-radius:12px;
+  background:#15803d; color:#fff; border:none; font-size:15px; font-weight:700;
+  cursor:pointer; margin-bottom:8px; }
+.terms-disagree-btn { display:block; width:100%; padding:13px; border-radius:12px;
+  background:#f5f5f5; color:#666; border:1.5px solid #ddd; font-size:14px; font-weight:600;
+  cursor:pointer; }
+.terms-disagree-btn:active { background:#eee; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
 
-  <div class="loading" id="global-loading">
+  <!-- ══ 使用規則畫面 ══ -->
+  <div class="scn" id="terms-screen">
+    <div class="hdr">
+      <div class="hdr-icon">📋</div>
+      <h2>會員優惠使用規則</h2>
+      <p>請詳閱後選擇同意或不同意</p>
+    </div>
+
+    <div class="terms-body" id="terms-body">
+
+      <div class="terms-section">
+        <div class="terms-section-title">一、總則</div>
+        <ul class="terms-item">
+          <li>本優惠專屬已加入無名牛排 LINE 官方帳號之會員，每次消費需掃描 QR Code 驗證身份。</li>
+          <li>所有優惠 <span class="terms-tag tag-red">不得折換現金</span>，不得找零，不得轉讓他人。</li>
+          <li>各項優惠 <span class="terms-tag tag-red">不可與其他優惠同時併用</span>，每次消費限擇一。</li>
+          <li>如有任何爭議，最終解釋權歸無名牛排所有。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">二、累積點數</div>
+        <ul class="terms-item">
+          <li>每次消費依店員輸入金額計算點數，集滿門檻可參加抽獎。</li>
+          <li>點數 <span class="terms-tag tag-red">不得折換現金</span>，不可轉讓或合併。</li>
+          <li><span class="terms-tag tag-org">30 天內</span> 無消費紀錄，點數將自動歸零。</li>
+          <li>抽獎獎項依當次結果為準，店方保留調整獎項之權利。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">三、外帶第二件半價</div>
+        <ul class="terms-item">
+          <li>適用對象：<span class="terms-tag tag-blu">外帶訂單</span>，每位會員每次消費限用一次。</li>
+          <li>需至少點 <strong>2 件主餐（套餐）</strong>，折抵最低價套餐半價。</li>
+          <li>不可與點數折抵、回購券或其他優惠併用。</li>
+          <li>僅限本人 LINE 帳號，不可轉讓。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">四、內用回購半價券</div>
+        <ul class="terms-item">
+          <li>結帳時可選擇領取，<span class="terms-tag tag-org">限下次內用</span>使用，當次不適用。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">14 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>需至少點 <strong>2 件主餐（套餐）</strong>，折抵最低價套餐半價。</li>
+          <li>每人限持一張，使用後方可再領取下一張，不可轉讓。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">五、第二件半價券（LINE 會員專屬）</div>
+        <ul class="terms-item">
+          <li>每位會員限持 <strong>一張有效券</strong>，使用後才可重新領取。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">10 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>適用 <span class="terms-tag tag-grn">內用</span><span class="terms-tag tag-blu">外帶</span>，需至少點 <strong>2 件主餐</strong>，折抵較便宜者半價。</li>
+          <li><span class="terms-tag tag-red">不得折換現金</span>，不可轉讓，僅限本人 LINE 帳號核銷。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">六、免責聲明</div>
+        <ul class="terms-item">
+          <li>遇不可抗力因素（停電、系統維護等），店方有權暫停或調整活動。</li>
+          <li>店方保留修改、暫停或終止各項優惠之權利，並以 LINE 官方帳號公告為準。</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="terms-scroll-hint" id="terms-hint">▼ 向下滑動閱讀完整規則</div>
+
+    <div class="terms-footer">
+      <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
+      <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
+    </div>
+  </div>
     <div class="spinner"></div>載入中，請稍候…
   </div>
 
@@ -319,6 +422,9 @@ let customPromos = [];
 // ★ 第二件半價券狀態
 let halfCouponStatus = null; // null | { status:'none'|'active'|'expired'|'used', expiry:'', couponId:'' }
 
+// ── 流程暫存（同意規則後才繼續）──
+let _pendingFlow = null;
+
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -363,19 +469,57 @@ async function init() {
     const orderParam = p.get("orderId");
     const typeParam  = p.get("type");
 
+    // 判斷流程類型，暫存起來等同意後再執行
     if (skParam && !ptsParam) {
       sessionKey = skParam;
       earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
-      await startCheckoutPromoFlow();
+      _pendingFlow = "checkout";
     } else if (ptsParam && orderParam) {
       earnPts = Math.max(0, parseInt(ptsParam)||0);
-      await startPointsFlow();
+      _pendingFlow = "points";
     } else if (typeParam && SIGNIN_INFO[typeParam]) {
-      startSigninFlow(typeParam);
+      _pendingFlow = "signin_" + typeParam;
     } else {
       showFatalError("未知的進入方式，請重新掃描 QR Code");
+      return;
     }
+
+    // ★ 先顯示規則畫面
+    hideLoading();
+    goScreen("terms-screen");
+
+    // 滑到底部時隱藏提示箭頭
+    const tb = document.getElementById("terms-body");
+    const hint = document.getElementById("terms-hint");
+    if (tb && hint) {
+      tb.addEventListener("scroll", () => {
+        if (tb.scrollTop + tb.clientHeight >= tb.scrollHeight - 10) {
+          hint.style.opacity = "0";
+        } else {
+          hint.style.opacity = "1";
+        }
+      });
+    }
+
   } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
+}
+
+// ── 同意規則 → 繼續原本流程 ──
+async function agreeTerms() {
+  if (!_pendingFlow) return;
+  if (_pendingFlow === "checkout") {
+    await startCheckoutPromoFlow();
+  } else if (_pendingFlow === "points") {
+    await startPointsFlow();
+  } else if (_pendingFlow.startsWith("signin_")) {
+    const type = _pendingFlow.replace("signin_", "");
+    startSigninFlow(type);
+  }
+}
+
+// ── 不同意 → 直接結帳（跳到 pt-skip 畫面）──
+function disagreeTerms() {
+  goScreen("pt-skip");
 }
 
 async function startCheckoutPromoFlow() {
