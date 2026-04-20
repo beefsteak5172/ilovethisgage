@@ -561,12 +561,20 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   goScreen("co-sending");
   tierPoints = tierPoints || 0;
   tierDisc   = tierDisc   || 0;
+
+  // ★ FIX-DECISION: promoKey='redeem' 時送 decision=redeem（POS 才會執行扣點折抵）
+  //   promoKey='points' 時送 decision=skip（不集點）
+  //   其餘促銷（carryout/indoor_*）送 decision=use
+  let decisionValue = 'use';
+  if (promoKey === 'points')  decisionValue = 'skip';
+  if (promoKey === 'redeem')  decisionValue = 'redeem';
+
   try {
     const url = GAS_URL
       + "?action=set_decision"
       + "&sessionKey="  + encodeURIComponent(sessionKey)
       + "&lineuid="     + encodeURIComponent(profile.userId)
-      + "&decision="    + encodeURIComponent(promoKey === 'points' ? 'skip' : 'use')
+      + "&decision="    + encodeURIComponent(decisionValue)
       + "&tierPoints="  + tierPoints
       + "&tierDisc="    + tierDisc
       + "&promoChoice=" + encodeURIComponent(promoKey);
