@@ -541,8 +541,19 @@ async function startCheckoutPromoFlow() {
   promoElig = (promoResult.status === 'fulfilled' && promoResult.value.status === 'OK')
     ? promoResult.value : {};
 
-  if (ptsResult.status === 'fulfilled' && ptsResult.value.status === 'OK') {
-    curPts = ptsResult.value.currentPoints || 0;
+  // ★ 點數狀態（含到期警告 / 已歸零）
+  let ptsExpired = false, ptsDaysLeft = 30, ptsExpiring = false;
+  if (ptsResult.status === 'fulfilled') {
+    const pv = ptsResult.value;
+    if (pv.status === 'OK') {
+      curPts      = pv.currentPoints || 0;
+      ptsDaysLeft = pv.daysLeft != null ? pv.daysLeft : 30;
+      ptsExpiring = !!pv.expiring;
+    } else if (pv.status === 'EXPIRED') {
+      curPts = 0; ptsExpired = true;
+    } else if (pv.status === 'NEW') {
+      curPts = 0;
+    }
   }
 
   // ★ 解析第二件半價券狀態
@@ -559,6 +570,20 @@ async function startCheckoutPromoFlow() {
 
   const bestTier = [...redeemTiers].reverse().find(t => curPts >= t.threshold || earnPts >= t.threshold);
   if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
+
+  // ★ 點數到期警告橫幅
+  const container = document.getElementById("promo-options-container");
+  if (ptsExpired) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#FFEBEE;border:1.5px solid #FFCDD2;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
+    warn.innerHTML = '<strong style="display:block;margin-bottom:2px;">⚠️ 點數已自動歸零</strong>超過 30 天未消費，累積點數已清零。本次消費重新開始集點！';
+    container.appendChild(warn);
+  } else if (ptsExpiring && curPts > 0) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#E65100;line-height:1.7;';
+    warn.innerHTML = '<strong style="display:block;margin-bottom:2px;">⏰ 點數即將到期！</strong>您的 <strong>' + curPts + ' 點</strong>將在 <strong>' + ptsDaysLeft + ' 天後</strong>清零，記得盡快使用！';
+    container.appendChild(warn);
+  }
 
   buildPromoOptions();
   goScreen("co-promo");
@@ -795,8 +820,30 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
+  // ★ 內用回購券：發券
+  if (promoKey === 'indoor_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId) + "&expDays=" + indoorExpDays);
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("領取失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  // ★ 內用回購券：核銷
+  if (promoKey === 'indoor_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
   let decisionValue = 'use';
-  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep') decisionValue = 'skip';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue') decisionValue = 'skip';
   if (promoKey === 'redeem') decisionValue = 'redeem';
 
   try {
