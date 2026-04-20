@@ -26,13 +26,11 @@ body {
 .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #2E7D32;
   border-radius: 50%; animation: rotate .7s linear infinite; margin: 0 auto 10px; }
 @keyframes rotate { to { transform: rotate(360deg); } }
-/* 三選一選項 */
 .opt { display: flex; align-items: flex-start; gap: 12px; padding: 14px;
   border-radius: 14px; border: 2px solid #e2e8f0; background: #fff;
   cursor: pointer; text-align: left; width: 100%; margin-bottom: 10px; transition: all .15s; }
 .opt.sel  { border-color: #15803d; background: #f0fdf4; }
 .opt.dis  { opacity: 0.4; cursor: not-allowed; }
-/* ★ 點數折抵選項的特殊高亮框 */
 .opt.redeem-opt { border-color: #B45309; background: #FFFBEB; }
 .opt.redeem-opt.sel { border-color: #92400E; background: #FEF3C7; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
@@ -41,7 +39,7 @@ body {
 .opt.redeem-opt .opt-title { color: #92400E; }
 .opt.redeem-opt.sel .opt-title { color: #78350F; }
 .opt-sub   { font-size: 12px; color: #64748b; line-height: 1.5; }
-.opt-check { margin-left: auto; flex-shrink: 0; font-size: 18px; }
+.opt-check { margin-left: auto; flex-shrink: 0; font-size: 18px; display: none; }
 .redeem-badge { display: inline-block; background: #B45309; color: #fff;
   font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 6px;
   margin-left: 6px; vertical-align: middle; }
@@ -50,7 +48,6 @@ body {
   transition: background .2s; }
 .btn-confirm.active { background: #15803d; color: #fff; }
 .btn-confirm.disabled { background: #cbd5e1; color: #fff; cursor: not-allowed; }
-/* 等待畫面 */
 .done-wrap { padding: 40px 24px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .done-icon  { font-size: 50px; margin-bottom: 14px; }
 .done-title { font-size: 19px; font-weight: 800; color: #1B5E20; margin-bottom: 8px; }
@@ -58,7 +55,6 @@ body {
 .pulse-dot  { display: inline-block; width: 8px; height: 8px; background: #2E7D32;
   border-radius: 50%; margin-right: 6px; animation: pulse-anim 1.2s ease-in-out infinite; }
 @keyframes pulse-anim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-/* 集點流程 */
 .pts-big-num   { font-size: 56px; font-weight: 900; color: #1B5E20; line-height: 1; }
 .pts-big-label { font-size: 13px; color: #888; margin-top: 4px; }
 .stars { display: flex; justify-content: center; gap: 8px; margin: 14px 0 8px; flex-wrap: wrap; }
@@ -117,7 +113,6 @@ body {
     <div class="spinner"></div>載入中，請稍候…
   </div>
 
-  <!-- ★ 結帳模式：查詢促銷資格中 -->
   <div class="scn" id="co-checking">
     <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
     <div class="loading" style="padding:48px 20px;">
@@ -125,58 +120,14 @@ body {
     </div>
   </div>
 
-  <!-- ★ 結帳模式：四選一促銷選擇 -->
   <div class="scn" id="co-promo">
     <div class="hdr">
       <div class="hdr-icon">🎁</div>
       <h2>請選擇本次優惠</h2>
       <p id="co-promo-sub">選擇後即完成確認</p>
     </div>
-    <div style="padding: 16px 16px 0;">
-
-      <!-- ★ 點數折抵（僅在點數足夠時顯示） -->
-      <div class="opt redeem-opt" id="opt-redeem" onclick="selectPromo('redeem')" style="display:none;">
-        <div class="opt-icon">💰</div>
-        <div style="flex:1;">
-          <div class="opt-title">
-            點數折抵現金
-            <span class="redeem-badge" id="redeem-badge-pts">−0點</span>
-          </div>
-          <div class="opt-sub" id="opt-redeem-sub">使用累積點數折抵本次消費</div>
-        </div>
-        <div class="opt-check" id="chk-redeem" style="display:none;">✅</div>
-      </div>
-
-      <!-- 外帶第二件半價 -->
-      <div class="opt" id="opt-carryout" onclick="selectPromo('carryout')">
-        <div class="opt-icon">🛍️</div>
-        <div>
-          <div class="opt-title">外帶第二件半價</div>
-          <div class="opt-sub" id="opt-carryout-sub">外帶訂單最低價套餐半價，每人限用一次</div>
-        </div>
-        <div class="opt-check" id="chk-carryout" style="display:none;">✅</div>
-      </div>
-
-      <!-- 內用回購券 -->
-      <div class="opt" id="opt-indoor" onclick="selectPromo('indoor')">
-        <div class="opt-icon">🪑</div>
-        <div>
-          <div class="opt-title" id="opt-indoor-title">領取內用回購半價券</div>
-          <div class="opt-sub" id="opt-indoor-sub">本次到店可領取，下次內用使用</div>
-        </div>
-        <div class="opt-check" id="chk-indoor" style="display:none;">✅</div>
-      </div>
-
-      <!-- 只集點 -->
-      <div class="opt" id="opt-points" onclick="selectPromo('points')">
-        <div class="opt-icon">⭐</div>
-        <div>
-          <div class="opt-title">只集點，不使用優惠</div>
-          <div class="opt-sub">本次累積點數，促銷留著下次再用</div>
-        </div>
-        <div class="opt-check" id="chk-points" style="display:none;">✅</div>
-      </div>
-
+    <div style="padding: 16px 16px 0;" id="promo-options-container">
+      <!-- 動態產生 -->
     </div>
     <div style="padding: 8px 16px 0;">
       <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">請先選擇一個優惠</button>
@@ -184,7 +135,6 @@ body {
     <div id="co-user-info" class="user-info"></div>
   </div>
 
-  <!-- ★ 結帳模式：送出中 -->
   <div class="scn" id="co-sending">
     <div class="hdr"><div class="hdr-icon">📡</div><h2>送出中</h2><p>請稍候…</p></div>
     <div class="loading" style="padding:48px 20px;">
@@ -192,7 +142,6 @@ body {
     </div>
   </div>
 
-  <!-- ★ 結帳模式：等待店員結帳 -->
   <div class="scn" id="co-waiting">
     <div class="hdr">
       <div class="hdr-icon">✅</div><h2>選擇完成！</h2><p>請等候店員完成結帳</p>
@@ -208,7 +157,6 @@ body {
     </div>
   </div>
 
-  <!-- 集點流程：確認 -->
   <div class="scn" id="pt-confirm">
     <div class="hdr">
       <div class="hdr-icon">🎁</div><h2>消費集點</h2>
@@ -245,13 +193,11 @@ body {
     </div>
   </div>
 
-  <!-- 集點：集點中 -->
   <div class="scn" id="pt-collecting">
     <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點中…</h2><p>正在寫入點數</p></div>
     <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在為您累積點數…</div>
   </div>
 
-  <!-- 集點：餘額 -->
   <div class="scn" id="pt-balance">
     <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點成功！</h2><p>點數已更新</p></div>
     <div style="text-align:center;padding:24px 20px 16px;" class="anim-in">
@@ -266,7 +212,6 @@ body {
     <div id="bal-action"></div>
   </div>
 
-  <!-- 集點：抽獎 -->
   <div class="scn" id="pt-draw">
     <div class="hdr"><div class="hdr-icon">🎰</div><h2>幸運抽獎！</h2><p id="pt-draw-sub">使用門檻點數抽獎</p></div>
     <div style="padding:24px 20px;text-align:center;">
@@ -277,7 +222,6 @@ body {
     </div>
   </div>
 
-  <!-- 集點：獎品 -->
   <div class="scn" id="pt-prize">
     <div class="hdr"><div class="hdr-icon">🎉</div><h2>恭喜獲獎！</h2><p>請向店員出示兌換</p></div>
     <div style="padding:20px 0 0;">
@@ -291,7 +235,6 @@ body {
     <button class="btn-main" onclick="ptDone()">完成結帳 ✓</button>
   </div>
 
-  <!-- 集點：完成 -->
   <div class="scn" id="pt-done">
     <div class="done-wrap">
       <div class="done-icon">✅</div>
@@ -305,7 +248,6 @@ body {
     </div>
   </div>
 
-  <!-- 集點：跳過 -->
   <div class="scn" id="pt-skip">
     <div class="hdr"><div class="hdr-icon">💳</div><h2>結帳完成</h2><p>感謝您的光臨</p></div>
     <div class="done-wrap" style="padding:36px 24px 20px;">
@@ -315,7 +257,6 @@ body {
     </div>
   </div>
 
-  <!-- 簽到模式 -->
   <div class="scn" id="si-main">
     <div class="hdr">
       <div class="hdr-icon" id="si-icon">🎮</div>
@@ -350,14 +291,14 @@ let profile = null, earnPts = 0, curPts = 0, newTotal = 0, finalPts = 0;
 let drawnPrize = null, drawTimer = null;
 let sessionKey = null, goalThreshold = 5, redeemDisc = 50, redeemTiers = [];
 let promoElig = null, promoSelected = null;
-// 促銷開關（由 URL 參數傳入）
 let promoCarryoutOn = true, promoIndoorOn = true;
 let indoorExpDays = 14;
+let redeemEligible = false, redeemTierPoints = 0, redeemTierDisc = 0;
 
-// ★ 結帳模式：點數折抵相關
-let redeemEligible = false;  // 是否可折抵
-let redeemTierPoints = 0;    // 折抵使用的點數
-let redeemTierDisc   = 0;    // 折抵金額（元）
+// ★ 自訂促銷活動陣列（從 URL 參數 customPromos 解析）
+// 格式：[{ key, label, icon, desc, type }]
+// type: 'carryout'(外帶第二件半價) | 'indoor'(內用回購半價券) | 'custom'(自訂，送 decision=use)
+let customPromos = [];
 
 async function init() {
   try {
@@ -366,7 +307,6 @@ async function init() {
     profile = await liff.getProfile();
     const p = new URL(location.href).searchParams;
 
-    // 解析 tiers
     const tiersParam = p.get("tiers");
     if (tiersParam) {
       try {
@@ -379,10 +319,29 @@ async function init() {
     redeemDisc    = Math.max(0, parseInt(p.get("discount")||"50")||50);
     if (redeemTiers.length === 0) redeemTiers = [{ threshold: goalThreshold, discount: redeemDisc }];
 
-    // 促銷開關
     promoCarryoutOn = p.get("promoCarryout") !== "0";
     promoIndoorOn   = p.get("promoIndoor")   !== "0";
     indoorExpDays   = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
+
+    // ★ 解析自訂促銷活動
+    // URL 參數格式：customPromos=JSON encoded array
+    // 例：[{"key":"custom_55","label":"新促銷活動55","icon":"🎉","desc":"55555","type":"carryout"}]
+    // 管理介面產生 URL 時應把促銷活動序列化並 encodeURIComponent 後放入此參數
+    const cpParam = p.get("customPromos");
+    if (cpParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(cpParam));
+        if (Array.isArray(parsed)) {
+          customPromos = parsed.map((item, idx) => ({
+            key   : item.key   || ('custom_' + idx),
+            label : item.label || '促銷活動',
+            icon  : item.icon  || '🎁',
+            desc  : item.desc  || '',
+            type  : item.type  || 'custom'
+          }));
+        }
+      } catch(_) {}
+    }
 
     const skParam    = p.get("sessionKey");
     const ptsParam   = p.get("points");
@@ -404,15 +363,12 @@ async function init() {
   } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
 }
 
-// ★ 結帳模式：查詢促銷資格 + 現有點數 → 顯示選擇畫面
 async function startCheckoutPromoFlow() {
   hideLoading();
   document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
   document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
-
   goScreen("co-checking");
 
-  // 同時查詢促銷資格 & 點數餘額
   const [promoResult, ptsResult] = await Promise.allSettled([
     fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId))
       .then(r => r.json()).catch(() => ({})),
@@ -427,90 +383,118 @@ async function startCheckoutPromoFlow() {
     curPts = ptsResult.value.currentPoints || 0;
   }
 
-  // ★ 判斷點數折抵資格：累積點數 >= 門檻，或本次消費獲得點數 >= 門檻
   const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
-  redeemEligible  = (curPts >= lo.threshold) || (earnPts >= lo.threshold);
+  redeemEligible   = (curPts >= lo.threshold) || (earnPts >= lo.threshold);
   redeemTierPoints = lo.threshold;
   redeemTierDisc   = lo.discount;
 
-  // 若同時有積點可折，取最高可折門檻
   const bestTier = [...redeemTiers].reverse().find(t => curPts >= t.threshold || earnPts >= t.threshold);
-  if (bestTier) {
-    redeemTierPoints = bestTier.threshold;
-    redeemTierDisc   = bestTier.discount;
-  }
+  if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
 
-  renderPromoOptions();
+  buildPromoOptions();
   goScreen("co-promo");
 }
 
-function renderPromoOptions() {
-  const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
-
-  // ── 點數折抵選項 ──
-  const redeemEl = document.getElementById("opt-redeem");
-  if (redeemEligible) {
-    redeemEl.style.display = "flex";
-    document.getElementById("redeem-badge-pts").textContent = "−" + redeemTierPoints + "點";
-    document.getElementById("opt-redeem-sub").textContent =
-      "使用 " + redeemTierPoints + " 點，折抵 $" + redeemTierDisc +
-      "（目前累積 " + curPts + " 點）";
-  } else {
-    redeemEl.style.display = "none";
-  }
+// ★ 動態建立所有促銷選項 HTML
+function buildPromoOptions() {
+  const container = document.getElementById("promo-options-container");
+  container.innerHTML = "";
 
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
-  // ── 外帶 ──
-  const carryoutUsed = promoElig.carryOut_Status === 'used';
-  const optC = document.getElementById("opt-carryout");
-  if (!promoCarryoutOn || carryoutUsed) {
-    optC.classList.add("dis"); optC.onclick = null;
-    document.getElementById("opt-carryout-sub").textContent =
-      carryoutUsed ? "本次已使用過此優惠" : "此優惠目前未開放";
+  // 1. 點數折抵
+  if (redeemEligible) {
+    container.appendChild(makeOpt({
+      id    : 'opt-redeem',
+      key   : 'redeem',
+      cls   : 'redeem-opt',
+      icon  : '💰',
+      title : '點數折抵現金 <span class="redeem-badge">−' + redeemTierPoints + '點</span>',
+      sub   : '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（目前累積 ' + curPts + ' 點）',
+      dis   : false
+    }));
   }
 
-  // ── 內用券 ──
-  const indoorStatus  = promoElig.indoor_Status || 'unused';
-  const indoorExpiry  = promoElig.indoor_Expiry || '';
-  const indoorExpired = indoorExpiry && new Date(indoorExpiry) < new Date();
-  const indoorIsRedeem = indoorStatus === 'issued' && !indoorExpired;
-  const optI = document.getElementById("opt-indoor");
-  if (!promoIndoorOn) {
-    optI.classList.add("dis"); optI.onclick = null;
-    document.getElementById("opt-indoor-sub").textContent = "此優惠目前未開放";
-  } else if (indoorStatus === 'redeemed') {
-    optI.classList.add("dis"); optI.onclick = null;
-    document.getElementById("opt-indoor-title").textContent = "內用回購半價券（已核銷）";
-    document.getElementById("opt-indoor-sub").textContent = "此券已核銷";
-  } else if (indoorStatus === 'issued' && indoorExpired) {
-    optI.classList.add("dis"); optI.onclick = null;
-    document.getElementById("opt-indoor-title").textContent = "內用回購半價券（已過期）";
-    document.getElementById("opt-indoor-sub").textContent = "券已過期（" + indoorExpiry + "）";
-  } else if (indoorIsRedeem) {
-    document.getElementById("opt-indoor-title").textContent = "核銷內用回購半價券";
-    document.getElementById("opt-indoor-sub").textContent = "最低價套餐半價，有效至 " + indoorExpiry;
-  } else {
-    const expD = new Date(); expD.setDate(expD.getDate() + indoorExpDays);
-    const expS = expD.getFullYear() + '-' + String(expD.getMonth()+1).padStart(2,'0') + '-' + String(expD.getDate()).padStart(2,'0');
-    document.getElementById("opt-indoor-sub").textContent = "本次領取，有效至 " + expS + "，下次內用使用";
+  // 2. 外帶第二件半價（內建）
+  if (promoCarryoutOn) {
+    const used = promoElig.carryOut_Status === 'used';
+    container.appendChild(makeOpt({
+      id   : 'opt-carryout',
+      key  : 'carryout',
+      icon : '🛍️',
+      title: '外帶第二件半價',
+      sub  : used ? '本次已使用過此優惠' : '外帶訂單最低價套餐半價，每人限用一次',
+      dis  : used
+    }));
   }
+
+  // 3. 內用回購券（內建）
+  if (promoIndoorOn) {
+    const indoorStatus  = promoElig.indoor_Status || 'unused';
+    const indoorExpiry  = promoElig.indoor_Expiry || '';
+    const indoorExpired = indoorExpiry && new Date(indoorExpiry) < new Date();
+    const indoorIsRedeem = indoorStatus === 'issued' && !indoorExpired;
+    let indoorTitle = '領取內用回購半價券';
+    let indoorSub   = '';
+    let indoorDis   = false;
+    if (indoorStatus === 'redeemed') {
+      indoorTitle = '內用回購半價券（已核銷）'; indoorSub = '此券已核銷'; indoorDis = true;
+    } else if (indoorStatus === 'issued' && indoorExpired) {
+      indoorTitle = '內用回購半價券（已過期）'; indoorSub = '券已過期（' + indoorExpiry + '）'; indoorDis = true;
+    } else if (indoorIsRedeem) {
+      indoorTitle = '核銷內用回購半價券'; indoorSub = '最低價套餐半價，有效至 ' + indoorExpiry;
+    } else {
+      const expD = new Date(); expD.setDate(expD.getDate() + indoorExpDays);
+      const expS = expD.getFullYear() + '-' + String(expD.getMonth()+1).padStart(2,'0') + '-' + String(expD.getDate()).padStart(2,'0');
+      indoorSub = '本次領取，有效至 ' + expS + '，下次內用使用';
+    }
+    container.appendChild(makeOpt({ id:'opt-indoor', key:'indoor', icon:'🪑', title:indoorTitle, sub:indoorSub, dis:indoorDis }));
+  }
+
+  // 4. ★ 自訂促銷活動（動態）
+  customPromos.forEach(cp => {
+    container.appendChild(makeOpt({
+      id   : 'opt-' + cp.key,
+      key  : cp.key,
+      icon : cp.icon,
+      title: cp.label,
+      sub  : cp.desc,
+      dis  : false
+    }));
+  });
+
+  // 5. 只集點
+  container.appendChild(makeOpt({
+    id   : 'opt-points',
+    key  : 'points',
+    icon : '⭐',
+    title: '只集點，不使用優惠',
+    sub  : '本次累積點數，促銷留著下次再用',
+    dis  : false
+  }));
+}
+
+function makeOpt({ id, key, cls, icon, title, sub, dis }) {
+  const div = document.createElement("div");
+  div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
+  div.id = id;
+  if (!dis) div.onclick = () => selectPromo(key);
+  div.innerHTML =
+    '<div class="opt-icon">' + icon + '</div>' +
+    '<div style="flex:1;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + sub + '</div></div>' +
+    '<div class="opt-check" id="chk-' + key + '">✅</div>';
+  return div;
 }
 
 function selectPromo(key) {
-  const elMap  = { redeem:'opt-redeem', carryout:'opt-carryout', indoor:'opt-indoor', points:'opt-points' };
-  const chkMap = { redeem:'chk-redeem', carryout:'chk-carryout', indoor:'chk-indoor', points:'chk-points' };
-
-  // disabled 就不處理
-  const el = document.getElementById(elMap[key]);
+  const el = document.getElementById("opt-" + key);
   if (!el || el.classList.contains("dis")) return;
 
   promoSelected = (promoSelected === key) ? null : key;
 
-  Object.keys(elMap).forEach(k => {
-    const e  = document.getElementById(elMap[k]);
-    const ch = document.getElementById(chkMap[k]);
-    if (!e) return;
+  document.querySelectorAll(".opt").forEach(e => {
+    const k = e.id.replace("opt-", "");
+    const ch = document.getElementById("chk-" + k);
     if (k === promoSelected) {
       e.classList.add("sel"); if (ch) ch.style.display = "block";
     } else {
@@ -521,13 +505,18 @@ function selectPromo(key) {
   const btn = document.getElementById("btn-confirm");
   if (promoSelected) {
     btn.className = "btn-confirm active";
-    const labels = {
-      redeem  : "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc,
-      carryout: "✅ 確認：外帶第二件半價",
-      indoor  : "✅ 確認：內用回購半價券",
-      points  : "✅ 確認：只集點"
-    };
-    btn.textContent = labels[promoSelected] || "✅ 確認選擇";
+    // 決定按鈕文字
+    let label = "✅ 確認選擇";
+    if (promoSelected === 'redeem')   label = "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
+    else if (promoSelected === 'carryout') label = "✅ 確認：外帶第二件半價";
+    else if (promoSelected === 'indoor')   label = "✅ 確認：內用回購半價券";
+    else if (promoSelected === 'points')   label = "✅ 確認：只集點";
+    else {
+      // 自訂促銷
+      const cp = customPromos.find(c => c.key === promoSelected);
+      if (cp) label = "✅ 確認：" + cp.label;
+    }
+    btn.textContent = label;
   } else {
     btn.className = "btn-confirm disabled";
     btn.textContent = "請先選擇一個優惠";
@@ -541,33 +530,26 @@ async function confirmPromo() {
   const indoorExpiry   = promoElig ? (promoElig.indoor_Expiry || '') : '';
   const indoorIsRedeem = indoorStatus === 'issued' && !(indoorExpiry && new Date(indoorExpiry) < new Date());
 
-  let promoKey    = promoSelected;
-  let tierPoints  = 0;
-  let tierDisc    = 0;
+  let promoKey   = promoSelected;
+  let tierPoints = 0, tierDisc = 0;
 
   if (promoSelected === 'indoor') {
     promoKey = indoorIsRedeem ? 'indoor_redeem' : 'indoor_issue';
   } else if (promoSelected === 'redeem') {
-    // ★ 點數折抵：帶入點數與折扣金額
-    promoKey   = 'redeem';
-    tierPoints = redeemTierPoints;
-    tierDisc   = redeemTierDisc;
+    promoKey = 'redeem'; tierPoints = redeemTierPoints; tierDisc = redeemTierDisc;
   }
+  // 自訂促銷：promoKey 直接帶自訂 key，decision=use
 
   await submitPromoChoice(promoKey, tierPoints, tierDisc);
 }
 
 async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   goScreen("co-sending");
-  tierPoints = tierPoints || 0;
-  tierDisc   = tierDisc   || 0;
+  tierPoints = tierPoints || 0; tierDisc = tierDisc || 0;
 
-  // ★ FIX-DECISION: promoKey='redeem' 時送 decision=redeem（POS 才會執行扣點折抵）
-  //   promoKey='points' 時送 decision=skip（不集點）
-  //   其餘促銷（carryout/indoor_*）送 decision=use
   let decisionValue = 'use';
-  if (promoKey === 'points')  decisionValue = 'skip';
-  if (promoKey === 'redeem')  decisionValue = 'redeem';
+  if (promoKey === 'points') decisionValue = 'skip';
+  if (promoKey === 'redeem') decisionValue = 'redeem';
 
   try {
     const url = GAS_URL
@@ -583,15 +565,18 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     let data = {};
     try { data = JSON.parse(text); } catch(_) {}
     if (data.status === "OK") {
-      const subMap = {
-        redeem       : "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc,
-        carryout     : "已選擇：外帶第二件半價\n最低價套餐半價折抵",
-        indoor_issue : "已選擇：領取內用回購券\n下次到店內用可享半價",
-        indoor_redeem: "已選擇：核銷內用回購券\n最低價套餐半價折抵",
-        points       : "已選擇：只集點\n本次累積 " + earnPts + " 點"
-      };
-      document.getElementById("co-wait-sub").textContent =
-        (subMap[promoKey] || "已送出選擇") + "\n\n請勿關閉此頁面";
+      // 決定等待畫面文字
+      let waitText = "已送出選擇";
+      if (promoKey === 'redeem')        waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
+      else if (promoKey === 'carryout') waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
+      else if (promoKey === 'indoor_issue')  waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
+      else if (promoKey === 'indoor_redeem') waitText = "已選擇：核銷內用回購券\n最低價套餐半價折抵";
+      else if (promoKey === 'points')   waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
+      else {
+        const cp = customPromos.find(c => c.key === promoKey);
+        if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
+      }
+      document.getElementById("co-wait-sub").textContent = waitText + "\n\n請勿關閉此頁面";
       goScreen("co-waiting");
     } else {
       showFatalError("送出失敗：" + (data.message || "請告知店員"));
@@ -599,7 +584,6 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   } catch (_) { showFatalError("網路錯誤，請告知店員"); }
 }
 
-// ─── 集點流程 ───
 async function startPointsFlow() {
   hideLoading();
   curPts = 0;
@@ -720,7 +704,6 @@ function row(label, val) {
   return '<div class="info-row"><span class="info-label">'+label+'</span><span class="info-val">'+val+'</span></div>';
 }
 
-// ─── 簽到流程 ───
 function startSigninFlow(type) {
   hideLoading();
   document.getElementById("si-icon").textContent  = SIGNIN_INFO[type].icon;
@@ -760,7 +743,6 @@ function showSiResult(type, msg) {
   const box = document.getElementById("si-result"); box.className = "result " + type; box.textContent = msg; box.style.display = "block";
 }
 
-// ─── 工具 ───
 function goScreen(id) {
   document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
   const el = document.getElementById(id); if (el) el.classList.add("active");
