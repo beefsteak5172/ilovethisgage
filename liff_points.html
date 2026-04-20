@@ -32,11 +32,19 @@ body {
   cursor: pointer; text-align: left; width: 100%; margin-bottom: 10px; transition: all .15s; }
 .opt.sel  { border-color: #15803d; background: #f0fdf4; }
 .opt.dis  { opacity: 0.4; cursor: not-allowed; }
+/* ★ 點數折抵選項的特殊高亮框 */
+.opt.redeem-opt { border-color: #B45309; background: #FFFBEB; }
+.opt.redeem-opt.sel { border-color: #92400E; background: #FEF3C7; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
 .opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .opt.sel .opt-title { color: #15803d; }
+.opt.redeem-opt .opt-title { color: #92400E; }
+.opt.redeem-opt.sel .opt-title { color: #78350F; }
 .opt-sub   { font-size: 12px; color: #64748b; line-height: 1.5; }
 .opt-check { margin-left: auto; flex-shrink: 0; font-size: 18px; }
+.redeem-badge { display: inline-block; background: #B45309; color: #fff;
+  font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 6px;
+  margin-left: 6px; vertical-align: middle; }
 .btn-confirm { display: block; width: 100%; padding: 15px; border-radius: 12px;
   border: none; font-size: 15px; font-weight: 700; cursor: pointer;
   transition: background .2s; }
@@ -117,7 +125,7 @@ body {
     </div>
   </div>
 
-  <!-- ★ 結帳模式：三選一促銷選擇 -->
+  <!-- ★ 結帳模式：四選一促銷選擇 -->
   <div class="scn" id="co-promo">
     <div class="hdr">
       <div class="hdr-icon">🎁</div>
@@ -125,6 +133,20 @@ body {
       <p id="co-promo-sub">選擇後即完成確認</p>
     </div>
     <div style="padding: 16px 16px 0;">
+
+      <!-- ★ 點數折抵（僅在點數足夠時顯示） -->
+      <div class="opt redeem-opt" id="opt-redeem" onclick="selectPromo('redeem')" style="display:none;">
+        <div class="opt-icon">💰</div>
+        <div style="flex:1;">
+          <div class="opt-title">
+            點數折抵現金
+            <span class="redeem-badge" id="redeem-badge-pts">−0點</span>
+          </div>
+          <div class="opt-sub" id="opt-redeem-sub">使用累積點數折抵本次消費</div>
+        </div>
+        <div class="opt-check" id="chk-redeem" style="display:none;">✅</div>
+      </div>
+
       <!-- 外帶第二件半價 -->
       <div class="opt" id="opt-carryout" onclick="selectPromo('carryout')">
         <div class="opt-icon">🛍️</div>
@@ -134,6 +156,7 @@ body {
         </div>
         <div class="opt-check" id="chk-carryout" style="display:none;">✅</div>
       </div>
+
       <!-- 內用回購券 -->
       <div class="opt" id="opt-indoor" onclick="selectPromo('indoor')">
         <div class="opt-icon">🪑</div>
@@ -143,6 +166,7 @@ body {
         </div>
         <div class="opt-check" id="chk-indoor" style="display:none;">✅</div>
       </div>
+
       <!-- 只集點 -->
       <div class="opt" id="opt-points" onclick="selectPromo('points')">
         <div class="opt-icon">⭐</div>
@@ -152,6 +176,7 @@ body {
         </div>
         <div class="opt-check" id="chk-points" style="display:none;">✅</div>
       </div>
+
     </div>
     <div style="padding: 8px 16px 0;">
       <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">請先選擇一個優惠</button>
@@ -329,6 +354,11 @@ let promoElig = null, promoSelected = null;
 let promoCarryoutOn = true, promoIndoorOn = true;
 let indoorExpDays = 14;
 
+// ★ 結帳模式：點數折抵相關
+let redeemEligible = false;  // 是否可折抵
+let redeemTierPoints = 0;    // 折抵使用的點數
+let redeemTierDisc   = 0;    // 折抵金額（元）
+
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -374,50 +404,77 @@ async function init() {
   } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
 }
 
-// ★ 結帳模式：查詢促銷資格 → 顯示三選一
+// ★ 結帳模式：查詢促銷資格 + 現有點數 → 顯示選擇畫面
 async function startCheckoutPromoFlow() {
   hideLoading();
   document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
   document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
 
-  if (!promoCarryoutOn && !promoIndoorOn) {
-    // 無促銷直接送 use
-    await submitPromoChoice('points');
-    return;
+  goScreen("co-checking");
+
+  // 同時查詢促銷資格 & 點數餘額
+  const [promoResult, ptsResult] = await Promise.allSettled([
+    fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId))
+      .then(r => r.json()).catch(() => ({})),
+    fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId))
+      .then(r => r.json()).catch(() => ({}))
+  ]);
+
+  promoElig = (promoResult.status === 'fulfilled' && promoResult.value.status === 'OK')
+    ? promoResult.value : {};
+
+  if (ptsResult.status === 'fulfilled' && ptsResult.value.status === 'OK') {
+    curPts = ptsResult.value.currentPoints || 0;
   }
 
-  goScreen("co-checking");
-  try {
-    const res  = await fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId));
-    const text = await res.text();
-    try {
-      const data = JSON.parse(text);
-      promoElig = (data.status === 'OK') ? data : {};
-    } catch(_) { promoElig = {}; }
-  } catch(_) { promoElig = {}; }
+  // ★ 判斷點數折抵資格：累積點數 >= 門檻，或本次消費獲得點數 >= 門檻
+  const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+  redeemEligible  = (curPts >= lo.threshold) || (earnPts >= lo.threshold);
+  redeemTierPoints = lo.threshold;
+  redeemTierDisc   = lo.discount;
+
+  // 若同時有積點可折，取最高可折門檻
+  const bestTier = [...redeemTiers].reverse().find(t => curPts >= t.threshold || earnPts >= t.threshold);
+  if (bestTier) {
+    redeemTierPoints = bestTier.threshold;
+    redeemTierDisc   = bestTier.discount;
+  }
 
   renderPromoOptions();
   goScreen("co-promo");
 }
 
 function renderPromoOptions() {
-  const carryoutUsed = promoElig.carryOut_Status === 'used';
-  const indoorStatus = promoElig.indoor_Status || 'unused';
-  const indoorExpiry = promoElig.indoor_Expiry || '';
-  const indoorExpired = indoorExpiry && new Date(indoorExpiry) < new Date();
-  const indoorIsRedeem = indoorStatus === 'issued' && !indoorExpired;
+  const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
 
-  // sub-text update
+  // ── 點數折抵選項 ──
+  const redeemEl = document.getElementById("opt-redeem");
+  if (redeemEligible) {
+    redeemEl.style.display = "flex";
+    document.getElementById("redeem-badge-pts").textContent = "−" + redeemTierPoints + "點";
+    document.getElementById("opt-redeem-sub").textContent =
+      "使用 " + redeemTierPoints + " 點，折抵 $" + redeemTierDisc +
+      "（目前累積 " + curPts + " 點）";
+  } else {
+    redeemEl.style.display = "none";
+  }
+
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
-  // 外帶
+  // ── 外帶 ──
+  const carryoutUsed = promoElig.carryOut_Status === 'used';
   const optC = document.getElementById("opt-carryout");
   if (!promoCarryoutOn || carryoutUsed) {
     optC.classList.add("dis"); optC.onclick = null;
-    document.getElementById("opt-carryout-sub").textContent = carryoutUsed ? "本次已使用過此優惠" : "此優惠目前未開放";
+    document.getElementById("opt-carryout-sub").textContent =
+      carryoutUsed ? "本次已使用過此優惠" : "此優惠目前未開放";
   }
 
-  // 內用
+  // ── 內用券 ──
+  const indoorStatus  = promoElig.indoor_Status || 'unused';
+  const indoorExpiry  = promoElig.indoor_Expiry || '';
+  const indoorExpired = indoorExpiry && new Date(indoorExpiry) < new Date();
+  const indoorIsRedeem = indoorStatus === 'issued' && !indoorExpired;
   const optI = document.getElementById("opt-indoor");
   if (!promoIndoorOn) {
     optI.classList.add("dis"); optI.onclick = null;
@@ -441,29 +498,36 @@ function renderPromoOptions() {
 }
 
 function selectPromo(key) {
-  const elMap = { carryout: 'opt-carryout', indoor: 'opt-indoor', points: 'opt-points' };
-  const chkMap = { carryout: 'chk-carryout', indoor: 'chk-indoor', points: 'chk-points' };
+  const elMap  = { redeem:'opt-redeem', carryout:'opt-carryout', indoor:'opt-indoor', points:'opt-points' };
+  const chkMap = { redeem:'chk-redeem', carryout:'chk-carryout', indoor:'chk-indoor', points:'chk-points' };
 
-  // 如果選項是 disabled 就不處理
-  if (document.getElementById(elMap[key]).classList.contains("dis")) return;
+  // disabled 就不處理
+  const el = document.getElementById(elMap[key]);
+  if (!el || el.classList.contains("dis")) return;
 
   promoSelected = (promoSelected === key) ? null : key;
 
   Object.keys(elMap).forEach(k => {
-    const el  = document.getElementById(elMap[k]);
-    const chk = document.getElementById(chkMap[k]);
+    const e  = document.getElementById(elMap[k]);
+    const ch = document.getElementById(chkMap[k]);
+    if (!e) return;
     if (k === promoSelected) {
-      el.classList.add("sel"); chk.style.display = "block";
+      e.classList.add("sel"); if (ch) ch.style.display = "block";
     } else {
-      el.classList.remove("sel"); chk.style.display = "none";
+      e.classList.remove("sel"); if (ch) ch.style.display = "none";
     }
   });
 
   const btn = document.getElementById("btn-confirm");
   if (promoSelected) {
     btn.className = "btn-confirm active";
-    const labels = { carryout:'✅ 確認：外帶第二件半價', indoor:'✅ 確認：內用回購半價券', points:'✅ 確認：只集點' };
-    btn.textContent = labels[promoSelected];
+    const labels = {
+      redeem  : "✅ 確認：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc,
+      carryout: "✅ 確認：外帶第二件半價",
+      indoor  : "✅ 確認：內用回購半價券",
+      points  : "✅ 確認：只集點"
+    };
+    btn.textContent = labels[promoSelected] || "✅ 確認選擇";
   } else {
     btn.className = "btn-confirm disabled";
     btn.textContent = "請先選擇一個優惠";
@@ -472,39 +536,54 @@ function selectPromo(key) {
 
 async function confirmPromo() {
   if (!promoSelected) return;
-  const indoorStatus  = promoElig ? (promoElig.indoor_Status || 'unused') : 'unused';
-  const indoorExpiry  = promoElig ? (promoElig.indoor_Expiry || '') : '';
+
+  const indoorStatus   = promoElig ? (promoElig.indoor_Status || 'unused') : 'unused';
+  const indoorExpiry   = promoElig ? (promoElig.indoor_Expiry || '') : '';
   const indoorIsRedeem = indoorStatus === 'issued' && !(indoorExpiry && new Date(indoorExpiry) < new Date());
 
-  let promoKey = promoSelected;
+  let promoKey    = promoSelected;
+  let tierPoints  = 0;
+  let tierDisc    = 0;
+
   if (promoSelected === 'indoor') {
     promoKey = indoorIsRedeem ? 'indoor_redeem' : 'indoor_issue';
+  } else if (promoSelected === 'redeem') {
+    // ★ 點數折抵：帶入點數與折扣金額
+    promoKey   = 'redeem';
+    tierPoints = redeemTierPoints;
+    tierDisc   = redeemTierDisc;
   }
-  await submitPromoChoice(promoKey);
+
+  await submitPromoChoice(promoKey, tierPoints, tierDisc);
 }
 
-async function submitPromoChoice(promoKey) {
+async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   goScreen("co-sending");
+  tierPoints = tierPoints || 0;
+  tierDisc   = tierDisc   || 0;
   try {
     const url = GAS_URL
       + "?action=set_decision"
-      + "&sessionKey="   + encodeURIComponent(sessionKey)
-      + "&lineuid="      + encodeURIComponent(profile.userId)
-      + "&decision=use"
-      + "&tierPoints=0&tierDisc=0"
-      + "&promoChoice="  + encodeURIComponent(promoKey);
+      + "&sessionKey="  + encodeURIComponent(sessionKey)
+      + "&lineuid="     + encodeURIComponent(profile.userId)
+      + "&decision="    + encodeURIComponent(promoKey === 'points' ? 'skip' : 'use')
+      + "&tierPoints="  + tierPoints
+      + "&tierDisc="    + tierDisc
+      + "&promoChoice=" + encodeURIComponent(promoKey);
     const res  = await fetch(url);
     const text = await res.text();
     let data = {};
     try { data = JSON.parse(text); } catch(_) {}
     if (data.status === "OK") {
       const subMap = {
+        redeem       : "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc,
         carryout     : "已選擇：外帶第二件半價\n最低價套餐半價折抵",
         indoor_issue : "已選擇：領取內用回購券\n下次到店內用可享半價",
         indoor_redeem: "已選擇：核銷內用回購券\n最低價套餐半價折抵",
         points       : "已選擇：只集點\n本次累積 " + earnPts + " 點"
       };
-      document.getElementById("co-wait-sub").textContent = (subMap[promoKey] || "已送出選擇") + "\n\n請勿關閉此頁面";
+      document.getElementById("co-wait-sub").textContent =
+        (subMap[promoKey] || "已送出選擇") + "\n\n請勿關閉此頁面";
       goScreen("co-waiting");
     } else {
       showFatalError("送出失敗：" + (data.message || "請告知店員"));
@@ -683,7 +762,6 @@ function hideLoading() { const el = document.getElementById("global-loading"); i
 function showError(msg) {
   hideLoading();
   document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
-  // 移除舊的錯誤訊息
   document.querySelectorAll(".err-block").forEach(e => e.remove());
   const div = document.createElement("div");
   div.className = "err-block";
