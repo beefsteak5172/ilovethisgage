@@ -378,7 +378,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz3aQyuScKTDskMcNcpfdTYjJ0BNYwn_jpVlnCCF2f7KutTyIZdUvl5Bqj40yGH8-4wkQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyBI-Gl03_EoZwBMYq5pBmEF-wgf5Xs2ciAbYHdqeSfYQ171R-T6dPLwxKw8oy9s6vUTw/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -506,11 +506,9 @@ async function startCheckoutPromoFlow() {
       return;
     }
 
-    // 儲存 GAS 回傳的完整狀態（供後續 confirmPromo 使用）
     window._memberStatus = data;
     curPts = (data.points && data.points.current) || 0;
 
-    // 取得最佳折抵層級
     const bestTier = [...redeemTiers].reverse().find(t => (data.points.totalAfterEarn || 0) >= t.threshold);
     if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
     else { redeemTierPoints = lo.threshold; redeemTierDisc = lo.discount; }
@@ -523,13 +521,11 @@ async function startCheckoutPromoFlow() {
   }
 }
 
-// ★ v9：直接使用 GAS 回傳的 eligibleOptions 建立選項，不做任何前端判斷
 function buildPromoOptionsFromGAS(data) {
   const container = document.getElementById("promo-options-container");
   container.innerHTML = "";
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
-  // ── 警告訊息（GAS 決定） ──
   (data.warnings || []).forEach(w => {
     const warn = document.createElement('div');
     warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
@@ -537,7 +533,6 @@ function buildPromoOptionsFromGAS(data) {
     container.appendChild(warn);
   });
 
-  // ── 提示訊息（GAS 決定） ──
   (data.notices || []).forEach(n => {
     const note = document.createElement('div');
     note.style.cssText = 'background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;';
@@ -545,7 +540,6 @@ function buildPromoOptionsFromGAS(data) {
     container.appendChild(note);
   });
 
-  // ── 優惠選項（完全由 GAS 決定，前端只顯示） ──
   const options = data.eligibleOptions || [];
   options.forEach(opt => {
     let cls = '';
@@ -563,7 +557,6 @@ function buildPromoOptionsFromGAS(data) {
     }));
   });
 
-  // ── 自訂促銷（從後台設定讀取，仍保留） ──
   customPromos.forEach(cp => {
     container.appendChild(makeOpt({
       id   : 'opt-' + cp.key,
@@ -576,7 +569,6 @@ function buildPromoOptionsFromGAS(data) {
   });
 }
 
-// 保留舊版 buildPromoOptions 作為降級備用
 function buildPromoOptions() {
   buildPromoOptionsFromGAS(window._memberStatus || { eligibleOptions:[], warnings:[], notices:[] });
 }
