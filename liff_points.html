@@ -490,13 +490,14 @@ async function startCheckoutPromoFlow() {
     halfCouponStatus = { couponStatus: 'none' };
   }
 
-  // ★ 修正：只用 curPts 判斷折抵資格，earnPts 是本次才要獲得的，尚未入帳
+  // ★ 顯示判斷用 curPts + earnPts（本次集完後是否達門檻）
+  // ★ 實際折抵時會先把 earnPts 入帳，再扣門檻點數，確保 GAS 點數正確
   const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
-  redeemEligible   = (curPts >= lo.threshold);
+  redeemEligible   = (curPts + earnPts >= lo.threshold);
   redeemTierPoints = lo.threshold;
   redeemTierDisc   = lo.discount;
 
-  const bestTier = [...redeemTiers].reverse().find(t => curPts >= t.threshold);
+  const bestTier = [...redeemTiers].reverse().find(t => curPts + earnPts >= t.threshold);
   if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
 
   const container = document.getElementById("promo-options-container");
@@ -528,13 +529,17 @@ function buildPromoOptions() {
 
   // ── 1. 點數折抵（只有 curPts 足夠才顯示）──
   if (redeemEligible) {
+    const totalAfterEarn = curPts + earnPts;
+    const redeemSub = curPts >= redeemTierPoints
+      ? '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（目前累積 ' + curPts + ' 點）'
+      : '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（本次集點後共 ' + totalAfterEarn + ' 點，達門檻可折抵）';
     container.appendChild(makeOpt({
       id    : 'opt-redeem',
       key   : 'redeem',
       cls   : 'redeem-opt',
       icon  : '💰',
       title : '點數折抵現金',
-      sub   : '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（目前累積 ' + curPts + ' 點）',
+      sub   : redeemSub,
       dis   : false
     }));
   }
@@ -754,9 +759,27 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
+  // ★ 點數折抵：若 curPts 不夠但 curPts+earnPts 夠，先把本次點數入帳再折抵
+  //    （防止 GAS 那邊點數不足導致折抵失敗）
+  if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
+    try {
+      const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("集點失敗，無法折抵：" + (data.message || "請告知店員")); return;
+      }
+      // 更新本地 curPts，後續 set_decision 的 tierPoints/tierDisc 不受影響
+      curPts = data.newTotal || (curPts + earnPts);
+      earnPts = 0; // 已入帳，避免 POS 端重複加點
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
   let decisionValue = 'use';
   if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue') decisionValue = 'skip';
   if (promoKey === 'redeem') decisionValue = 'redeem';
+
+  // ★ 若已預先入帳，在 promoChoice 標記 :pre_earned，POS 收到後跳過加點
+  const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
 
   try {
     const url = GAS_URL
@@ -766,7 +789,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       + "&decision="    + encodeURIComponent(decisionValue)
       + "&tierPoints="  + tierPoints
       + "&tierDisc="    + tierDisc
-      + "&promoChoice=" + encodeURIComponent(promoKey);
+      + "&promoChoice=" + encodeURIComponent(finalPromoChoice);
     const res  = await fetch(url);
     const data = await res.json().catch(() => ({}));
 
