@@ -535,7 +535,7 @@ function buildPromoOptionsFromGAS(data) {
     'half_redeem'     : _flags.promoHalf,
     'half_issue'      : _flags.promoHalf,
     'half_keep'       : _flags.promoHalf,
-    'points'          : true   // ★ 修正：只集點永遠顯示，不受開關影響
+    'points'          : _flags.promoPoints  // 集點關閉時不顯示「只集點」
   };
 
   // ── warnings / notices ──
