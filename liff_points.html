@@ -481,167 +481,89 @@ function disagreeTerms() {
   goScreen("pt-skip");
 }
 
+// ★ v9：startCheckoutPromoFlow 改由 GAS member_status 統一審核
 async function startCheckoutPromoFlow() {
   hideLoading();
   document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
   document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
   goScreen("co-checking");
 
-  const [promoResult, ptsResult, halfResult] = await Promise.allSettled([
-    fetch(GAS_URL + "?action=promo_check&lineuid=" + encodeURIComponent(profile.userId))
-      .then(r => r.json()).catch(() => ({})),
-    fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId))
-      .then(r => r.json()).catch(() => ({})),
-    fetch(GAS_URL + "?action=check_half_coupon&lineuid=" + encodeURIComponent(profile.userId))
-      .then(r => r.json()).catch(() => ({ status: 'ERROR' }))
-  ]);
+  try {
+    const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+    const url = GAS_URL
+      + "?action=member_status"
+      + "&lineuid="       + encodeURIComponent(profile.userId)
+      + "&earnPts="       + earnPts
+      + "&threshold="     + lo.threshold
+      + "&discount="      + lo.discount
+      + "&indoorExpDays=" + indoorExpDays;
 
-  promoElig = (promoResult.status === 'fulfilled' && promoResult.value.status === 'OK')
-    ? promoResult.value : {};
+    const res  = await fetch(url);
+    const data = await res.json();
 
-  let ptsExpired = false, ptsDaysLeft = 30, ptsExpiring = false;
-  if (ptsResult.status === 'fulfilled') {
-    const pv = ptsResult.value;
-    if (pv.status === 'OK') {
-      curPts      = pv.currentPoints || 0;
-      ptsDaysLeft = pv.daysLeft != null ? pv.daysLeft : 30;
-      ptsExpiring = !!pv.expiring;
-    } else if (pv.status === 'EXPIRED') {
-      curPts = 0; ptsExpired = true;
-    } else if (pv.status === 'NEW') {
-      curPts = 0;
+    if (data.status !== 'OK') {
+      showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
+      return;
     }
+
+    // 儲存 GAS 回傳的完整狀態（供後續 confirmPromo 使用）
+    window._memberStatus = data;
+    curPts = (data.points && data.points.current) || 0;
+
+    // 取得最佳折抵層級
+    const bestTier = [...redeemTiers].reverse().find(t => (data.points.totalAfterEarn || 0) >= t.threshold);
+    if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
+    else { redeemTierPoints = lo.threshold; redeemTierDisc = lo.discount; }
+
+    buildPromoOptionsFromGAS(data);
+    goScreen("co-promo");
+
+  } catch(err) {
+    showFatalError("網路錯誤，請告知店員：\n" + err.message);
   }
-
-  if (halfResult.status === 'fulfilled') {
-    halfCouponStatus = halfResult.value;
-  } else {
-    halfCouponStatus = { couponStatus: 'none' };
-  }
-
-  const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
-  redeemEligible   = (curPts + earnPts >= lo.threshold);
-  redeemTierPoints = lo.threshold;
-  redeemTierDisc   = lo.discount;
-
-  const bestTier = [...redeemTiers].reverse().find(t => curPts + earnPts >= t.threshold);
-  if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
-
-  const container = document.getElementById("promo-options-container");
-  if (ptsExpired) {
-    const warn = document.createElement('div');
-    warn.style.cssText = 'background:#FFEBEE;border:1.5px solid #FFCDD2;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
-    warn.innerHTML = '<strong style="display:block;margin-bottom:2px;">⚠️ 點數已自動歸零</strong>超過 30 天未消費，累積點數已清零。本次消費重新開始集點！';
-    container.appendChild(warn);
-  } else if (ptsExpiring && curPts > 0) {
-    const warn = document.createElement('div');
-    warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#E65100;line-height:1.7;';
-    warn.innerHTML = '<strong style="display:block;margin-bottom:2px;">⏰ 點數即將到期！</strong>您的 <strong>' + curPts + ' 點</strong>將在 <strong>' + ptsDaysLeft + ' 天後</strong>清零，記得盡快使用！';
-    container.appendChild(warn);
-  }
-
-  buildPromoOptions();
-  goScreen("co-promo");
 }
 
-function buildPromoOptions() {
+// ★ v9：直接使用 GAS 回傳的 eligibleOptions 建立選項，不做任何前端判斷
+function buildPromoOptionsFromGAS(data) {
   const container = document.getElementById("promo-options-container");
   container.innerHTML = "";
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
-  const cs = halfCouponStatus || {};
-  const couponSt  = cs.couponStatus || 'none';
-  const couponExp = cs.expiry || '';
-  const couponId  = cs.couponId || '';
+  // ── 警告訊息（GAS 決定） ──
+  (data.warnings || []).forEach(w => {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
+    warn.innerHTML = w;
+    container.appendChild(warn);
+  });
 
-  if (redeemEligible) {
-    const totalAfterEarn = curPts + earnPts;
-    const redeemSub = curPts >= redeemTierPoints
-      ? '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（目前累積 ' + curPts + ' 點）'
-      : '使用 ' + redeemTierPoints + ' 點，折抵 $' + redeemTierDisc + '（本次集點後共 ' + totalAfterEarn + ' 點，達門檻可折抵）';
+  // ── 提示訊息（GAS 決定） ──
+  (data.notices || []).forEach(n => {
+    const note = document.createElement('div');
+    note.style.cssText = 'background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;';
+    note.innerHTML = n;
+    container.appendChild(note);
+  });
+
+  // ── 優惠選項（完全由 GAS 決定，前端只顯示） ──
+  const options = data.eligibleOptions || [];
+  options.forEach(opt => {
+    let cls = '';
+    if (opt.type === 'redeem')      cls = 'redeem-opt';
+    if (opt.type === 'half_redeem') cls = 'half-opt';
+    if (opt.type === 'half_issue')  cls = 'half-issue';
     container.appendChild(makeOpt({
-      id    : 'opt-redeem',
-      key   : 'redeem',
-      cls   : 'redeem-opt',
-      icon  : '💰',
-      title : '點數折抵現金',
-      sub   : redeemSub,
-      dis   : false
+      id   : 'opt-' + opt.key,
+      key  : opt.key,
+      cls,
+      icon : opt.icon,
+      title: opt.title,
+      sub  : opt.sub,
+      dis  : !!opt.disabled
     }));
-  }
+  });
 
-  if (couponSt === 'active') {
-    container.appendChild(makeOpt({
-      id   : 'opt-half_redeem',
-      key  : 'half_redeem',
-      cls  : 'half-opt',
-      icon : '🥩',
-      title: '使用第二件半價券',
-      sub  : '有效至 ' + couponExp + '｜第二件（較便宜者）半價折抵\n📋 券號：' + couponId,
-      dis  : false
-    }));
-  }
-
-  if (promoCarryoutOn) {
-    const used = promoElig.carryOut_Status === 'used';
-    container.appendChild(makeOpt({
-      id   : 'opt-carryout',
-      key  : 'carryout',
-      icon : '🛍️',
-      title: '外帶第二件半價',
-      sub  : used ? '本次已使用過此優惠' : '外帶訂單最低價套餐半價，每人限用一次',
-      dis  : used
-    }));
-  }
-
-  if (promoIndoorOn) {
-    const indoorStatus  = promoElig.indoor_Status || 'unused';
-    const indoorExpiry  = promoElig.indoor_Expiry || '';
-    const indoorExpired = indoorExpiry && new Date(indoorExpiry) < new Date();
-    const indoorIsRedeem = indoorStatus === 'issued' && !indoorExpired;
-    let indoorTitle = '領取內用回購半價券';
-    let indoorSub   = '';
-    let indoorDis   = false;
-    if (indoorStatus === 'redeemed') {
-      indoorTitle = '內用回購半價券（已核銷）'; indoorSub = '此券已核銷'; indoorDis = true;
-    } else if (indoorStatus === 'issued' && indoorExpired) {
-      indoorTitle = '內用回購半價券（已過期）'; indoorSub = '券已過期（' + indoorExpiry + '）'; indoorDis = true;
-    } else if (indoorIsRedeem) {
-      indoorTitle = '核銷內用回購半價券'; indoorSub = '最低價套餐半價，有效至 ' + indoorExpiry;
-    } else {
-      const expD = new Date(); expD.setDate(expD.getDate() + indoorExpDays);
-      const expS = expD.getFullYear() + '-' + String(expD.getMonth()+1).padStart(2,'0') + '-' + String(expD.getDate()).padStart(2,'0');
-      indoorSub = '本次領取，有效至 ' + expS + '，下次內用使用';
-    }
-    container.appendChild(makeOpt({ id:'opt-indoor', key:'indoor', icon:'🪑', title:indoorTitle, sub:indoorSub, dis:indoorDis }));
-  }
-
-  const canIssue = (couponSt === 'none' || couponSt === 'expired' || couponSt === 'used');
-  if (canIssue) {
-    const expiredNote = couponSt === 'expired' ? '（上一張已過期，可重新領取）' :
-                        couponSt === 'used'    ? '（上一張已使用，可重新領取）' : '';
-    container.appendChild(makeOpt({
-      id   : 'opt-half_issue',
-      key  : 'half_issue',
-      cls  : 'half-issue',
-      icon : '🎫',
-      title: '領取第二件半價券' + (expiredNote ? ' ' + expiredNote : ''),
-      sub  : '本次照原價結帳，下次到店出示此券享第二件半價',
-      dis  : false
-    }));
-  }
-
-  if (couponSt === 'active') {
-    container.appendChild(makeOpt({
-      id   : 'opt-half_keep',
-      key  : 'half_keep',
-      icon : '💼',
-      title: '保留第二件半價券（不使用）',
-      sub  : '本次不使用，券繼續保留至 ' + couponExp,
-      dis  : false
-    }));
-  }
-
+  // ── 自訂促銷（從後台設定讀取，仍保留） ──
   customPromos.forEach(cp => {
     container.appendChild(makeOpt({
       id   : 'opt-' + cp.key,
@@ -652,15 +574,11 @@ function buildPromoOptions() {
       dis  : false
     }));
   });
+}
 
-  container.appendChild(makeOpt({
-    id   : 'opt-points',
-    key  : 'points',
-    icon : '⭐',
-    title: '只集點，不使用優惠',
-    sub  : '本次累積點數，促銷留著下次再用',
-    dis  : false
-  }));
+// 保留舊版 buildPromoOptions 作為降級備用
+function buildPromoOptions() {
+  buildPromoOptionsFromGAS(window._memberStatus || { eligibleOptions:[], warnings:[], notices:[] });
 }
 
 function makeOpt({ id, key, cls, icon, title, sub, dis }) {
