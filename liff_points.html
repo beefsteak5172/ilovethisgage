@@ -525,18 +525,34 @@ function buildPromoOptionsFromGAS(data) {
 
   const options = data.eligibleOptions || [];
 
-  // ★ 半價券邏輯：若帳號已有未使用的第二件半價券（half_issue 選項出現且未禁用），
-  //   封鎖再次領取，改顯示警告，並保留核銷選項。
-  const hasExistingHalfCoupon = options.some(opt => opt.type === 'half_issue' && !opt.disabled);
+  // ★ 半價券邏輯：
+  //   - 若 GAS 回傳 half_issue（可領取），但帳號實際已有有效券（halfCoupon.status === 'issued'）
+  //     → 移除領取選項，改為顯示警告 + 自動注入核銷選項（若尚未有 half_redeem）
+  //   - 若 GAS 直接回傳 half_redeem（有券可核銷），正常顯示
+  const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
+  const _hasIssuedHalf    = _halfCouponStatus === 'issued';
+  const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
+
+  // 若有有效券但 GAS 未回傳核銷選項，自動補上
+  if (_hasIssuedHalf && !_alreadyHasRedeem) {
+    options.push({
+      type : 'half_redeem',
+      key  : 'half_redeem',
+      icon : '🎫',
+      title: '核銷第二件半價券',
+      sub  : '使用帳號內的第二件半價券，較便宜那份半價折抵',
+      disabled: false
+    });
+  }
 
   options.forEach(opt => {
-    // 若帳號已有半價券，移除「領取第二件半價券」選項，改顯示警告提示
-    if (hasExistingHalfCoupon && opt.type === 'half_issue') {
+    // 若帳號已有有效券，封鎖「領取」選項，改顯示警告
+    if (_hasIssuedHalf && opt.type === 'half_issue') {
       const warn = document.createElement('div');
       warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
       warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
         '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
-        '如需使用，請選擇下方「核銷第二件半價券」選項；如不使用，請選擇其他優惠或只集點。';
+        '請選擇下方「核銷第二件半價券」選項使用，或選其他優惠。';
       container.appendChild(warn);
       return; // 不渲染為可點選選項
     }
@@ -634,6 +650,10 @@ async function confirmPromo() {
     const indoorStatus = (ms.indoorCoupon && ms.indoorCoupon.status) || 'unused';
     // GAS 已判斷好：issued = 有有效券 → 核銷；其他 → 領取
     promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
+  } else if (promoSelected === 'half_issue') {
+    // ★ 若選到 half_issue 但帳號已有有效券，強制改為核銷
+    const halfStatus = (ms.halfCoupon && ms.halfCoupon.status) || 'unused';
+    promoKey = (halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
   } else if (promoSelected === 'redeem') {
     promoKey = 'redeem';
   }
