@@ -554,8 +554,19 @@ function buildPromoOptionsFromGAS(data) {
   });
 
   // ── 過濾 GAS 選項 ──
+  // 先過濾出非 points 的選項，用來判斷是否有其他可用優惠
+  const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
+    const t = opt.type || '';
+    if (t === 'points') return false;
+    if (t in TYPE_FLAG) return TYPE_FLAG[t];
+    return true;
+  });
+  const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
+  // points 只在有其他可用優惠時才顯示（讓客人可選擇不用優惠）
+  // 若沒有其他可用優惠，由後方 auto-submit 自動送出，不需顯示
   let options = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
+    if (t === 'points') return hasOtherUsable; // ★ 有其他優惠才顯示「只集點」
     if (t in TYPE_FLAG) return TYPE_FLAG[t];
     return true; // 不認識的 type 預設顯示
   });
@@ -616,17 +627,12 @@ function buildPromoOptionsFromGAS(data) {
     }));
   });
 
-  // ★ 修正：若沒有任何可點選的選項（全部 disabled 或被過濾），強制加入「只集點」
+  // ★ 修正：若沒有任何可點選的選項（全部 disabled 或被過濾）
+  //   → 自動以 'points'（只集點）直接送出，客人不需要操作，直接原價結帳
   const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
   if (!hasSelectable) {
-    container.appendChild(makeOpt({
-      id   : 'opt-points-fallback',
-      key  : 'points',
-      icon : '⭐',
-      title: '只集點，不使用優惠',
-      sub  : '本次累積 ' + earnPts + ' 點，優惠留著下次再用',
-      dis  : false
-    }));
+    // 無可用優惠，自動送出 points（原價結帳 + 集點）
+    setTimeout(() => submitPromoChoice('points', 0, 0), 300);
   }
 }
 
