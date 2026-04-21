@@ -547,7 +547,7 @@ function buildPromoOptions() {
   // ── 2. 第二件半價券：使用（有有效券）──
   if (couponSt === 'active') {
     container.appendChild(makeOpt({
-      id   : 'opt-half-redeem',
+      id   : 'opt-half_redeem',
       key  : 'half_redeem',
       cls  : 'half-opt',
       icon : '🥩',
@@ -599,7 +599,7 @@ function buildPromoOptions() {
     const expiredNote = couponSt === 'expired' ? '（上一張已過期，可重新領取）' :
                         couponSt === 'used'    ? '（上一張已使用，可重新領取）' : '';
     container.appendChild(makeOpt({
-      id   : 'opt-half-issue',
+      id   : 'opt-half_issue',
       key  : 'half_issue',
       cls  : 'half-issue',
       icon : '🎫',
@@ -612,7 +612,7 @@ function buildPromoOptions() {
   // ── 6. 有券但不想用（保留）──
   if (couponSt === 'active') {
     container.appendChild(makeOpt({
-      id   : 'opt-half-keep',
+      id   : 'opt-half_keep',
       key  : 'half_keep',
       icon : '💼',
       title: '保留第二件半價券（不使用）',
