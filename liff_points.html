@@ -247,6 +247,7 @@ body {
     </div>
   </div>
 
+  <!-- ★ 修復 A：集點確認畫面（僅在 promoPoints=1 時才會到達） -->
   <div class="scn" id="pt-confirm">
     <div class="hdr">
       <div class="hdr-icon">🎁</div><h2>消費集點</h2>
@@ -342,8 +343,8 @@ body {
     <div class="hdr"><div class="hdr-icon">💳</div><h2>結帳完成</h2><p>感謝您的光臨</p></div>
     <div class="done-wrap" style="padding:36px 24px 20px;">
       <div class="done-icon">👋</div>
-      <div class="done-title" style="font-size:16px;">下次歡迎集點！</div>
-      <div class="done-sub">集滿門檻即可享折抵優惠</div>
+      <div class="done-title" style="font-size:16px;">下次歡迎光臨！</div>
+      <div class="done-sub">感謝您的消費</div>
     </div>
   </div>
 
@@ -385,15 +386,18 @@ let indoorExpDays = 14;
 let redeemTierPoints = 0, redeemTierDisc = 0;
 let customPromos = [];
 
-// ★ 修正一：新增完整的優惠開關旗標
+// ── 優惠開關旗標（從 URL 參數讀入，預設全關）
 let _flags = {
-  promoHalf    : true,   // 第二件半價券（領取 + 核銷）
-  promoCarryout: true,   // 外帶第二件半價
-  promoIndoor  : true,   // 內用回購券
-  promoRedeem  : true,   // 點數折抵
-  promoPoints  : true    // 只集點
+  promoHalf    : false,
+  promoCarryout: false,
+  promoIndoor  : false,
+  promoRedeem  : false,
+  promoPoints  : false   // ★ 集點功能開關
 };
 
+// ══════════════════════════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════════════════════════
 async function init() {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -416,12 +420,12 @@ async function init() {
 
     indoorExpDays = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
 
-    // ★ 修正一：正確讀取所有開關旗標
-    _flags.promoHalf     = p.get("promoHalf")     !== "0";
-    _flags.promoCarryout = p.get("promoCarryout") !== "0";
-    _flags.promoIndoor   = p.get("promoIndoor")   !== "0";
-    _flags.promoRedeem   = p.get("promoRedeem")   !== "0";
-    _flags.promoPoints   = p.get("promoPoints")   !== "0";
+    // ★ 修復：所有旗標改為「=== '1'」，缺少時預設 false（關閉）
+    _flags.promoHalf     = p.get("promoHalf")     === '1';
+    _flags.promoCarryout = p.get("promoCarryout") === '1';
+    _flags.promoIndoor   = p.get("promoIndoor")   === '1';
+    _flags.promoRedeem   = p.get("promoRedeem")   === '1';
+    _flags.promoPoints   = p.get("promoPoints")   === '1';  // ★ 集點開關
 
     // ── 讀取 customPromos ──
     const cpParam = p.get("customPromos");
@@ -452,6 +456,7 @@ async function init() {
       earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
       window._pendingFlow = "checkout";
     } else if (ptsParam && orderParam) {
+      // ★ 修復 A：points 流程進入點，記錄 earnPts，但先不決定路徑
       earnPts = Math.max(0, parseInt(ptsParam)||0);
       window._pendingFlow = "points";
     } else if (typeParam && SIGNIN_INFO[typeParam]) {
@@ -465,12 +470,23 @@ async function init() {
   } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
 }
 
+// ══════════════════════════════════════════════════════════════
+//  同意規則 → 根據 flow 跳轉
+// ══════════════════════════════════════════════════════════════
 async function agreeTerms() {
   const f = window._pendingFlow || '';
+
   if (f === "checkout") {
     await startCheckoutPromoFlow();
+
   } else if (f === "points") {
+    // ★ 修復 A（核心）：集點功能關閉時，直接顯示結帳完成，不進入集點流程
+    if (!_flags.promoPoints) {
+      goScreen("pt-skip");
+      return;
+    }
     await startPointsFlow();
+
   } else if (f.startsWith("signin_")) {
     startSigninFlow(f.replace("signin_", ""));
   }
@@ -480,6 +496,9 @@ function disagreeTerms() {
   goScreen("pt-skip");
 }
 
+// ══════════════════════════════════════════════════════════════
+//  結帳優惠流程
+// ══════════════════════════════════════════════════════════════
 async function startCheckoutPromoFlow() {
   hideLoading();
   document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
@@ -519,7 +538,9 @@ async function startCheckoutPromoFlow() {
   }
 }
 
-// ★ 修正一：buildPromoOptionsFromGAS 加入完整過濾邏輯
+// ══════════════════════════════════════════════════════════════
+//  建立優惠選項（結帳流程）
+// ══════════════════════════════════════════════════════════════
 function buildPromoOptionsFromGAS(data) {
   const container = document.getElementById("promo-options-container");
   container.innerHTML = "";
@@ -535,7 +556,7 @@ function buildPromoOptionsFromGAS(data) {
     'half_redeem'     : _flags.promoHalf,
     'half_issue'      : _flags.promoHalf,
     'half_keep'       : _flags.promoHalf,
-    'points'          : _flags.promoPoints  // 集點關閉時不顯示「只集點」
+    'points'          : _flags.promoPoints  // ★ 集點開關也管「只集點」選項
   };
 
   // ── warnings / notices ──
@@ -553,8 +574,7 @@ function buildPromoOptionsFromGAS(data) {
     container.appendChild(note);
   });
 
-  // ── 過濾 GAS 選項 ──
-  // 先過濾出非 points 的選項，用來判斷是否有其他可用優惠
+  // ── 先過濾非 points 的可用選項，判斷是否有其他優惠 ──
   const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
     if (t === 'points') return false;
@@ -562,16 +582,18 @@ function buildPromoOptionsFromGAS(data) {
     return true;
   });
   const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
-  // points 只在有其他可用優惠時才顯示（讓客人可選擇不用優惠）
-  // 若沒有其他可用優惠，由後方 auto-submit 自動送出，不需顯示
+
+  // ── 「只集點」只在以下條件全成立時才顯示：
+  //    1. promoPoints 旗標開啟
+  //    2. 有其他可用優惠（讓客人可選擇不用優惠）
   let options = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
-    if (t === 'points') return hasOtherUsable; // ★ 有其他優惠才顯示「只集點」
+    if (t === 'points') return _flags.promoPoints && hasOtherUsable;
     if (t in TYPE_FLAG) return TYPE_FLAG[t];
-    return true; // 不認識的 type 預設顯示
+    return true;
   });
 
-  // ── 半價券：若有有效券但 GAS 未回傳 half_redeem，自動補上（且旗標開啟時） ──
+  // ── 半價券：若有有效券但 GAS 未回傳 half_redeem，自動補上 ──
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
   const _hasIssuedHalf    = _halfCouponStatus === 'issued';
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
@@ -589,7 +611,6 @@ function buildPromoOptionsFromGAS(data) {
 
   // ── 渲染選項 ──
   options.forEach(opt => {
-    // 若帳號已有有效半價券，封鎖「領取」選項
     if (_hasIssuedHalf && opt.type === 'half_issue') {
       const warn = document.createElement('div');
       warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
@@ -627,12 +648,18 @@ function buildPromoOptionsFromGAS(data) {
     }));
   });
 
-  // ★ 修正：若沒有任何可點選的選項（全部 disabled 或被過濾）
-  //   → 自動以 'points'（只集點）直接送出，客人不需要操作，直接原價結帳
+  // ★ 修復 B：無可選項時的處理
+  //   若沒有任何可點選選項，且 promoPoints 開啟 → 自動送 'points'（只集點，原價結帳）
+  //   若 promoPoints 也關閉 → 直接送 'skip'（什麼都不做）
   const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
   if (!hasSelectable) {
-    // 無可用優惠，自動送出 points（原價結帳 + 集點）
-    setTimeout(() => submitPromoChoice('points', 0, 0), 300);
+    if (_flags.promoPoints) {
+      // 集點開啟但沒有促銷選項 → 靜默送出只集點
+      setTimeout(() => submitPromoChoice('points', 0, 0), 300);
+    } else {
+      // 集點也關閉 → 直接送 skip，通知 POS 正常結帳
+      setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
+    }
   }
 }
 
@@ -765,7 +792,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   }
 
   let decisionValue = 'use';
-  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue') decisionValue = 'skip';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue' || promoKey === 'skip') decisionValue = 'skip';
   if (promoKey === 'redeem') decisionValue = 'redeem';
 
   const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
@@ -792,6 +819,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       else if (promoKey === 'half_redeem')   waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
       else if (promoKey === 'half_keep')     waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
       else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
+      else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
       else {
         const cp = customPromos.find(c => c.key === promoKey);
         if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
@@ -804,8 +832,16 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   } catch (_) { showFatalError("網路錯誤，請告知店員"); }
 }
 
-// ── 集點流程 ──
+// ══════════════════════════════════════════════════════════════
+//  ★ 修復 A：集點流程（只有 promoPoints=1 時才會執行到這裡）
+// ══════════════════════════════════════════════════════════════
 async function startPointsFlow() {
+  // 雙重保險：若旗標關閉，直接跳走
+  if (!_flags.promoPoints) {
+    goScreen("pt-skip");
+    return;
+  }
+
   hideLoading();
   curPts = 0;
   try {
@@ -826,8 +862,10 @@ async function startPointsFlow() {
   goScreen("pt-confirm");
 }
 
-// ★ 修正二：集點成功後加入列印
 async function confirmCollect() {
+  // ★ 修復 A（防護層）：此函式只應在 promoPoints=1 時被呼叫到
+  if (!_flags.promoPoints) { goScreen("pt-skip"); return; }
+
   goScreen("pt-collecting");
   try {
     const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
@@ -835,14 +873,13 @@ async function confirmCollect() {
     if (data.status === "OK") {
       newTotal = data.newTotal || newTotal;
       showBalance();
-      printPointsReceipt(newTotal); // ★ 列印集點明細
+      printPointsReceipt(newTotal);
     } else {
       showError("集點失敗：" + (data.message || "請向店員確認"));
     }
   } catch(_) { showError("網路錯誤，請向店員確認"); }
 }
 
-// ★ 修正二：列印集點明細函式
 function printPointsReceipt(total) {
   const lo     = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
   const left   = Math.max(0, lo.threshold - total);
@@ -856,7 +893,6 @@ function printPointsReceipt(total) {
 
   const win = window.open('', '_blank', 'width=360,height=420');
   if (!win) {
-    // popup 被封鎖時在頁面底部顯示提示
     const tip = document.createElement('div');
     tip.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:12px;padding:10px 18px;border-radius:20px;z-index:9999;';
     tip.textContent = '⚠️ 請允許彈出視窗以列印集點明細';
@@ -881,10 +917,7 @@ function printPointsReceipt(total) {
   .big    { text-align: center; font-size: 36px; font-weight: 900; color: #1B5E20; margin: 14px 0 4px; }
   .hint   { text-align: center; font-size: 12px; color: #E65100; font-weight: 700; padding: 6px 10px; background: #FFF8E1; border-radius: 6px; margin-bottom: 10px; }
   .foot   { font-size: 10px; color: #aaa; text-align: center; margin-top: 14px; line-height: 1.8; }
-  @media print {
-    body { padding: 8px; }
-    .no-print { display: none; }
-  }
+  @media print { body { padding: 8px; } .no-print { display: none; } }
 </style>
 </head><body>
   <div class="center">
@@ -909,10 +942,8 @@ function printPointsReceipt(total) {
   </div>
 </body></html>`);
   win.document.close();
-  // 短暫延遲確保內容渲染完畢再自動列印
   setTimeout(() => {
     try { win.print(); } catch(_) {}
-    // 列印對話框關閉後自動關閉視窗（部分瀏覽器支援）
     setTimeout(() => { try { win.close(); } catch(_) {} }, 1000);
   }, 400);
 }
@@ -1007,7 +1038,9 @@ function row(label, val) {
   return '<div class="info-row"><span class="info-label">'+label+'</span><span class="info-val">'+val+'</span></div>';
 }
 
-// ── 簽到流程 ──
+// ══════════════════════════════════════════════════════════════
+//  簽到流程
+// ══════════════════════════════════════════════════════════════
 function startSigninFlow(type) {
   hideLoading();
   document.getElementById("si-icon").textContent  = SIGNIN_INFO[type].icon;
@@ -1047,7 +1080,9 @@ function showSiResult(type, msg) {
   const box = document.getElementById("si-result"); box.className = "result " + type; box.textContent = msg; box.style.display = "block";
 }
 
-// ── 工具函式 ──
+// ══════════════════════════════════════════════════════════════
+//  工具函式
+// ══════════════════════════════════════════════════════════════
 function goScreen(id) {
   document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
   const el = document.getElementById(id); if (el) el.classList.add("active");
