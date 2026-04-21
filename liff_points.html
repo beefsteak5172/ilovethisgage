@@ -535,7 +535,7 @@ function buildPromoOptionsFromGAS(data) {
     'half_redeem'     : _flags.promoHalf,
     'half_issue'      : _flags.promoHalf,
     'half_keep'       : _flags.promoHalf,
-    'points'          : _flags.promoPoints
+    'points'          : true   // ★ 修正：只集點永遠顯示，不受開關影響
   };
 
   // ── warnings / notices ──
@@ -615,6 +615,19 @@ function buildPromoOptionsFromGAS(data) {
       dis  : false
     }));
   });
+
+  // ★ 修正：若沒有任何可點選的選項（全部 disabled 或被過濾），強制加入「只集點」
+  const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
+  if (!hasSelectable) {
+    container.appendChild(makeOpt({
+      id   : 'opt-points-fallback',
+      key  : 'points',
+      icon : '⭐',
+      title: '只集點，不使用優惠',
+      sub  : '本次累積 ' + earnPts + ' 點，優惠留著下次再用',
+      dis  : false
+    }));
+  }
 }
 
 function makeOpt({ id, key, cls, icon, title, sub, dis }) {
