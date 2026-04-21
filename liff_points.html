@@ -364,7 +364,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzuW6Wuh14LJwrOW2u4jLLugceG4ThvvtYWfJmyYzbcjjyOBcQ-poVKZMRP30MqPaNrrA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxnftm81t7u3GXMwEGyQdsFEMvtybNt1AqCfmwOybH82LeW8dsTb2dWUGPO6nbO49yJhw/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -556,6 +556,7 @@ function buildPromoOptionsFromGAS(data) {
     'half_redeem'     : _flags.promoHalf,
     'half_issue'      : _flags.promoHalf,
     'half_keep'       : _flags.promoHalf,
+    'quota_redeem'    : _flags.promoHalf,    // ★ v9.2 額度半價，跟隨半價開關
     'points'          : _flags.promoPoints  // ★ 集點開關也管「只集點」選項
   };
 
@@ -779,6 +780,18 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
+  // ★ v9.2 quota_redeem：核銷半價額度
+  if (promoKey === 'quota_redeem') {
+    const _useQty = parseInt((new URL(location.href)).searchParams.get("useQty") || "1") || 1;
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_quota&lineuid=" + encodeURIComponent(profile.userId) + "&useQty=" + _useQty);
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("額度核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
   if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
     try {
       const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
@@ -818,6 +831,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       else if (promoKey === 'half_issue')    waitText = "✅ 第二件半價券已發出！\n請保留收據，10天內到店使用\n本次照原價結帳";
       else if (promoKey === 'half_redeem')   waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
       else if (promoKey === 'half_keep')     waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
+      else if (promoKey === 'quota_redeem')  waitText = "✅ 半價額度已核銷！\n折扣已套用，請等候店員確認";
       else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
       else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
       else {
