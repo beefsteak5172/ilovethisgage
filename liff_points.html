@@ -524,7 +524,23 @@ function buildPromoOptionsFromGAS(data) {
   });
 
   const options = data.eligibleOptions || [];
+
+  // ★ 半價券邏輯：若帳號已有未使用的第二件半價券（half_issue 選項出現且未禁用），
+  //   封鎖再次領取，改顯示警告，並保留核銷選項。
+  const hasExistingHalfCoupon = options.some(opt => opt.type === 'half_issue' && !opt.disabled);
+
   options.forEach(opt => {
+    // 若帳號已有半價券，移除「領取第二件半價券」選項，改顯示警告提示
+    if (hasExistingHalfCoupon && opt.type === 'half_issue') {
+      const warn = document.createElement('div');
+      warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
+      warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
+        '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
+        '如需使用，請選擇下方「核銷第二件半價券」選項；如不使用，請選擇其他優惠或只集點。';
+      container.appendChild(warn);
+      return; // 不渲染為可點選選項
+    }
+
     let cls = '';
     if (opt.type === 'redeem')      cls = 'redeem-opt';
     if (opt.type === 'half_redeem') cls = 'half-opt';
