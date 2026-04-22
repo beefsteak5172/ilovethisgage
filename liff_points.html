@@ -26,7 +26,7 @@
   <div id="scn-options" style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div id="auto-processing">
       <div style="width:36px; height:36px; border:4px solid #f3f3f3; border-top:4px solid #007bff; border-radius:50%; animation:rotate 0.8s linear infinite; margin:0 auto;"></div>
-      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在同步優惠資訊...</p>
+      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在全自動同步結帳...</p>
     </div>
   </div>
 </div>
@@ -51,10 +51,16 @@ async function initLiff() {
     if (!liff.isLoggedIn()) { liff.login(); return; }
     const profile = await liff.getProfile();
     
+    // 1. 立即獲取會員狀態
     const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}`);
     const status = await res.json();
+    
+    // 2. 執行自動化決策並渲染
     renderOptions(status, profile.userId);
-  } catch (err) { renderFallback("unknown"); }
+  } catch (err) { 
+    console.error(err);
+    renderFallback("unknown"); 
+  }
 }
 
 function renderOptions(status, uid) {
@@ -69,9 +75,11 @@ function renderOptions(status, uid) {
         <h2 style="color:#28a745; margin:10px 0;">已自動套用優惠</h2>
         <div style="font-size:24px; font-weight:900;">使用 ${_quotaRemain} 份額度</div>
         <p style="color:#666;">✨ 剩餘總額度：${_quotaRemain} 份</p>
+        <p style="margin-top:10px; color:#007bff; font-weight:bold;">🚀 POS 機正在自動結帳中...</p>
         <button id="closeBtn" class="btn-close" onclick="liff.closeWindow()">完成並關閉</button>
       </div>
     `;
+    // 自動執行核銷並同步給 POS
     submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
   } else {
     renderFallback(uid);
@@ -86,20 +94,39 @@ function renderFallback(uid) {
       <h2 style="color:#856404; margin:10px 0;">已自動領取優惠</h2>
       <div style="font-size:24px; font-weight:900;">獲得 ${_issueQty} 份額度</div>
       <p style="color:#dc3545; font-weight:bold;">⏰ 隔日起 10 天內有效</p>
+      <p style="margin-top:10px; color:#007bff; font-weight:bold;">🚀 POS 機正在自動結帳中...</p>
       <button id="closeBtn" class="btn-close" onclick="liff.closeWindow()">完成並關閉</button>
     </div>
   `;
+  // 自動執行領券並同步給 POS
   submitToGas(uid, 'half_issue', _issueQty, _baseDisc);
 }
 
 async function submitToGas(uid, choice, qty, disc) {
-  const finalUrl = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&sessionKey=${encodeURIComponent(_sessionKey || '')}&t=${Date.now()}`;
-  fetch(finalUrl, { mode: 'no-cors' });
-  new Image().src = finalUrl;
+  // ★ 關鍵修改：同時發送 submit_promo (寫入資料) 與 set_decision (通知 POS)
+  // 這樣 POS 的輪詢才能抓到 status: 'OK' 並自動跳轉
+  const submitUrl = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&sessionKey=${encodeURIComponent(_sessionKey || '')}&t=${Date.now()}`;
+  const decisionUrl = `${GAS_URL}?action=set_decision&sessionKey=${encodeURIComponent(_sessionKey || '')}&decision=use&lineuid=LINE_${uid}&promoChoice=${choice}&t=${Date.now()}`;
+  
+  try {
+    // 使用 Promise.all 確保兩個請求都發出
+    await Promise.all([
+      fetch(submitUrl, { mode: 'no-cors' }),
+      fetch(decisionUrl, { mode: 'no-cors' })
+    ]);
+    
+    // 備用方案：使用 Image beacon 確保請求送出
+    new Image().src = submitUrl;
+    new Image().src = decisionUrl;
+  } catch (e) {
+    console.error("Sync failed", e);
+  }
+
   setTimeout(() => { 
     document.getElementById('closeBtn').style.display = 'inline-block';
+    // 3秒後自動關閉，給客人足夠時間看結果
     setTimeout(() => liff.closeWindow(), 3000);
-  }, 1500);
+  }, 1000);
 }
 
 initLiff();
