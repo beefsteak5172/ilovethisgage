@@ -397,7 +397,9 @@ async function initLIFF() {
     checkTerms();
   } catch (err) {
     console.error("LIFF Init Error", err);
-    showError("LIFF 初始化失敗，請重新開啟");
+    const errorMsg = `LIFF 初始化失敗\n錯誤代碼: ${err.code || 'unknown'}\n訊息: ${err.message || '無'}\n網址: ${window.location.href}`;
+    console.error("LIFF Init Error", err);
+    showError(errorMsg);
   }
 }
 
