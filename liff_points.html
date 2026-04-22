@@ -7,126 +7,223 @@
 <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
   @keyframes rotate { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "PingFang TC", "Helvetica Neue", Arial, sans-serif;
     background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px;
   }
-  .card { background: #fff; border-radius: 24px; max-width: 380px; width: 100%; box-shadow: 0 15px 40px rgba(0,0,0,0.25); overflow: hidden; }
+  .card {
+    background: #fff; border-radius: 24px; max-width: 380px; width: 100%;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25); overflow: hidden;
+    animation: fadeIn 0.4s ease;
+  }
   .hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32); padding: 18px 20px; text-align: center; color: #fff; }
   .hdr h2 { font-size: 17px; font-weight: 700; }
-  .status-panel { width: 100%; text-align: center; padding: 25px 20px; }
-  .btn-close { margin-top: 20px; padding: 12px 30px; background: #28a745; color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; display: none; }
+  .body { padding: 28px 24px 24px; text-align: center; }
+  .icon { font-size: 52px; margin-bottom: 10px; }
+  .title { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .badge {
+    display: inline-block; font-size: 22px; font-weight: 900;
+    padding: 8px 20px; border-radius: 50px; margin: 10px 0; letter-spacing: 0.5px;
+  }
+  .detail { font-size: 13px; color: #666; line-height: 1.7; margin-top: 6px; }
+  .tag { font-size: 13px; font-weight: 700; margin-top: 8px; }
+  .spinner {
+    width:36px; height:36px; border:4px solid #f3f3f3;
+    border-top:4px solid #2E7D32; border-radius:50%;
+    animation:rotate 0.8s linear infinite; margin:0 auto 16px;
+  }
+  .loading-text { font-size:15px; color:#2E7D32; font-weight:700; }
+  .progress-bar {
+    height: 6px; background: #e8f5e9; border-radius: 3px; overflow: hidden;
+    margin: 14px 0 4px;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 3px; transition: width 0.3s;
+  }
+  .step-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #555; margin: 4px 0; text-align: left;
+  }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
-  <div class="hdr"><h2>無名牛排會員系統</h2></div>
-  <div id="scn-options" style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div id="auto-processing">
-      <div style="width:36px; height:36px; border:4px solid #f3f3f3; border-top:4px solid #007bff; border-radius:50%; animation:rotate 0.8s linear infinite; margin:0 auto;"></div>
-      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在全自動同步結帳...</p>
-    </div>
+  <div class="hdr"><h2>無名牛排會員優惠系統</h2></div>
+  <div class="body" id="scn">
+    <div class="spinner"></div>
+    <p class="loading-text">正在讀取會員資料…</p>
   </div>
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
-const LIFF_ID = "2004223422-C2DD295";
+// ── 設定區 ──────────────────────────────────────
+const GAS_URL  = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
+const LIFF_ID  = "2004223422-C2DD295";
+const EXP_DAYS = 10; // 半價券有效天數
+// ────────────────────────────────────────────────
 
 function getParam(name) {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(name) || new URLSearchParams(window.location.hash.split('?')[1]).get(name);
+  return urlParams.get(name) ||
+    new URLSearchParams((window.location.hash.split('?')[1] || '')).get(name);
 }
 
-const _sessionKey = getParam('sessionKey');
-const _issueQty = parseInt(getParam('issueQty') || 1);
-const _unitPrice = parseInt(getParam('unitPrice') || 399);
-const _baseDisc = Math.round(_unitPrice / 2);
+const _sessionKey = getParam('sessionKey') || '';
+const _issueQty   = Math.max(1, parseInt(getParam('issueQty') || 1));
+const _unitPrice  = parseInt(getParam('unitPrice') || 399);
+const _baseDisc   = Math.round(_unitPrice / 2);
 
+// ── UI helpers ──────────────────────────────────
+function setHtml(html) { document.getElementById('scn').innerHTML = html; }
+
+function showLoading(msg) {
+  setHtml(`<div class="spinner"></div><p class="loading-text">${msg}</p>`);
+}
+
+function showResult({ icon, titleColor, title, badgeBg, badgeColor, badge, details, tag, tagColor }) {
+  setHtml(`
+    <div class="icon">${icon}</div>
+    <div class="title" style="color:${titleColor}">${title}</div>
+    <div class="badge" style="background:${badgeBg};color:${badgeColor}">${badge}</div>
+    ${details ? `<div class="detail">${details}</div>` : ''}
+    ${tag ? `<div class="tag" style="color:${tagColor||'#dc3545'}">${tag}</div>` : ''}
+  `);
+}
+
+// ── 送出決定到 GAS ──────────────────────────────
+async function submitDecision(uid, choice, qty, disc, extra) {
+  const params = new URLSearchParams({
+    action: 'submit_promo',
+    uid, choice,
+    qty: String(qty),
+    disc: String(disc),
+    sessionKey: _sessionKey,
+    t: Date.now()
+  });
+  if (extra) Object.entries(extra).forEach(([k,v]) => params.set(k, v));
+  const url = `${GAS_URL}?${params}`;
+  // 雙保險：fetch + Image 防止 CORS 攔截
+  try { await fetch(url, { mode: 'no-cors' }); } catch(_) {}
+  try { new Image().src = url; } catch(_) {}
+}
+
+// ── 補發額度（issue_quota 動作） ─────────────────
+async function issueQuota(uid, qty) {
+  const url = `${GAS_URL}?action=issue_quota&lineuid=${encodeURIComponent(uid)}&qty=${qty}&_t=${Date.now()}`;
+  try { await fetch(url, { mode: 'no-cors' }); } catch(_) {}
+  try { new Image().src = url; } catch(_) {}
+}
+
+// ── 自動關閉 ────────────────────────────────────
+function autoClose(delay = 3500) {
+  setTimeout(() => {
+    try { liff.closeWindow(); } catch(_) {}
+  }, delay);
+}
+
+// ── 主流程 ──────────────────────────────────────
+async function run(uid) {
+  // Step 1: 取得會員狀態
+  showLoading('正在檢查半價券額度…');
+  let status = {};
+  try {
+    const res = await fetch(`${GAS_URL}?action=member_status&uid=${encodeURIComponent(uid)}`);
+    status = await res.json();
+  } catch(_) {
+    status = {};
+  }
+
+  const quota  = parseInt(status.halfPriceQuota || 0);  // 帳戶現有額度
+  const qDisc  = parseInt(status.halfPriceDiscount || _baseDisc);
+  const need   = _issueQty;  // 本次需要份數
+
+  console.log(`[LIFF] uid=${uid} quota=${quota} need=${need}`);
+
+  // ── 情況判斷 ────────────────────────────────────
+  // A. 額度足夠（有就核消；多就退：只用需要的，多的留帳戶）
+  if (quota >= need) {
+    const remain = quota - need;
+    showResult({
+      icon: '✅',
+      titleColor: '#1a7c2a',
+      title: '半價券核消成功',
+      badgeBg: '#d4edda',
+      badgeColor: '#155724',
+      badge: `本次使用 ${need} 份`,
+      details: remain > 0
+        ? `✨ 帳戶剩餘：<b>${remain}</b> 份（已退回多餘額度）`
+        : `✨ 本次剛好全部使用`,
+      tag: '優惠已套用，稍後自動結帳',
+      tagColor: '#1a7c2a'
+    });
+    await submitDecision(uid, 'quota_redeem', need, qDisc, { useQty: need });
+
+  // B. 有額度但不夠（少就補：補發差額後再全部核消）
+  } else if (quota > 0 && quota < need) {
+    const topUp = need - quota;
+    showLoading(`額度不足，正在補發 ${topUp} 份…`);
+    // 先補發缺額
+    await issueQuota(uid, topUp);
+    // 再提交核消全量
+    showResult({
+      icon: '🔄',
+      titleColor: '#0a4fa3',
+      title: '已補發並核消',
+      badgeBg: '#cfe2ff',
+      badgeColor: '#084298',
+      badge: `補發 ${topUp} 份 ＋ 核消 ${need} 份`,
+      details: `原有額度：${quota} 份　補發：${topUp} 份<br>本次使用：${need} 份，帳戶剩餘：0 份`,
+      tag: '優惠已套用，稍後自動結帳',
+      tagColor: '#0a4fa3'
+    });
+    await submitDecision(uid, 'quota_redeem', need, qDisc, { useQty: need, topUp });
+
+  // C. 沒有額度（沒有就領）
+  } else {
+    showResult({
+      icon: '🎁',
+      titleColor: '#7c4a00',
+      title: '已領取半價券額度',
+      badgeBg: '#fff3cd',
+      badgeColor: '#664d03',
+      badge: `獲得 ${need} 份額度`,
+      details: `下次到店出示即可折抵`,
+      tag: `⏰ 明日起 ${EXP_DAYS} 天內有效`,
+      tagColor: '#c0392b'
+    });
+    await submitDecision(uid, 'half_issue', need, _baseDisc);
+  }
+
+  autoClose();
+}
+
+// ── LIFF 初始化 ─────────────────────────────────
 async function initLiff() {
   try {
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) { liff.login(); return; }
     const profile = await liff.getProfile();
-    
-    // 1. 立即獲取會員狀態
-    const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}`);
-    const status = await res.json();
-    
-    // 2. 執行自動化決策並渲染
-    renderOptions(status, profile.userId);
-  } catch (err) { 
-    console.error(err);
-    renderFallback("unknown"); 
+    await run(profile.userId);
+  } catch(err) {
+    console.error('[LIFF] 初始化失敗', err);
+    // LIFF 失敗：仍送出 unknown 讓 POS 可以繼續結帳
+    showResult({
+      icon: '⚠️',
+      titleColor: '#856404',
+      title: '無法取得會員資料',
+      badgeBg: '#fff3cd',
+      badgeColor: '#664d03',
+      badge: '本次不套用優惠',
+      tag: '請告知店員手動處理',
+      tagColor: '#856404'
+    });
+    await submitDecision('unknown', 'half_issue', _issueQty, _baseDisc);
+    autoClose();
   }
-}
-
-function renderOptions(status, uid) {
-  const container = document.getElementById('scn-options');
-  const _quotaRemain = parseInt(status.halfPriceQuota || 0);
-  const _qDisc = parseInt(status.halfPriceDiscount || 0);
-
-  if (_quotaRemain > 0) {
-    container.innerHTML = `
-      <div class="status-panel">
-        <div style="font-size:50px;">✅</div>
-        <h2 style="color:#28a745; margin:10px 0;">已自動套用優惠</h2>
-        <div style="font-size:24px; font-weight:900;">使用 ${_quotaRemain} 份額度</div>
-        <p style="color:#666;">✨ 剩餘總額度：${_quotaRemain} 份</p>
-        <p style="margin-top:10px; color:#007bff; font-weight:bold;">🚀 POS 機正在自動結帳中...</p>
-        <button id="closeBtn" class="btn-close" onclick="liff.closeWindow()">完成並關閉</button>
-      </div>
-    `;
-    // 自動執行核銷並同步給 POS
-    submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
-  } else {
-    renderFallback(uid);
-  }
-}
-
-function renderFallback(uid) {
-  const container = document.getElementById('scn-options');
-  container.innerHTML = `
-    <div class="status-panel">
-      <div style="font-size:50px;">🎁</div>
-      <h2 style="color:#856404; margin:10px 0;">已自動領取優惠</h2>
-      <div style="font-size:24px; font-weight:900;">獲得 ${_issueQty} 份額度</div>
-      <p style="color:#dc3545; font-weight:bold;">⏰ 隔日起 10 天內有效</p>
-      <p style="margin-top:10px; color:#007bff; font-weight:bold;">🚀 POS 機正在自動結帳中...</p>
-      <button id="closeBtn" class="btn-close" onclick="liff.closeWindow()">完成並關閉</button>
-    </div>
-  `;
-  // 自動執行領券並同步給 POS
-  submitToGas(uid, 'half_issue', _issueQty, _baseDisc);
-}
-
-async function submitToGas(uid, choice, qty, disc) {
-  // ★ 關鍵修改：同時發送 submit_promo (寫入資料) 與 set_decision (通知 POS)
-  // 這樣 POS 的輪詢才能抓到 status: 'OK' 並自動跳轉
-  const submitUrl = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&sessionKey=${encodeURIComponent(_sessionKey || '')}&t=${Date.now()}`;
-  const decisionUrl = `${GAS_URL}?action=set_decision&sessionKey=${encodeURIComponent(_sessionKey || '')}&decision=use&lineuid=LINE_${uid}&promoChoice=${choice}&t=${Date.now()}`;
-  
-  try {
-    // 使用 Promise.all 確保兩個請求都發出
-    await Promise.all([
-      fetch(submitUrl, { mode: 'no-cors' }),
-      fetch(decisionUrl, { mode: 'no-cors' })
-    ]);
-    
-    // 備用方案：使用 Image beacon 確保請求送出
-    new Image().src = submitUrl;
-    new Image().src = decisionUrl;
-  } catch (e) {
-    console.error("Sync failed", e);
-  }
-
-  setTimeout(() => { 
-    document.getElementById('closeBtn').style.display = 'inline-block';
-    // 3秒後自動關閉，給客人足夠時間看結果
-    setTimeout(() => liff.closeWindow(), 3000);
-  }, 1000);
 }
 
 initLiff();
