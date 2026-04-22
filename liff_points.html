@@ -42,14 +42,18 @@
 </div>
 
 <script>
-const VERSION = "14.0." + Math.floor(Date.now() / 1000);
+const VERSION = "15.0." + Math.floor(Date.now() / 1000);
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
 const LIFF_ID = "2004223422-C2DD295";
 
-// 終極相容邏輯：不論發生什麼事，最後都要有一個結果
+// 1. 優先從 URL 獲取參數，確保不會顯示 0 份
+const urlParams = new URLSearchParams(window.location.search);
+const _issueQty = parseInt(urlParams.get('issueQty') || urlParams.get('qty') || 0);
+const _unitPrice = parseInt(urlParams.get('unitPrice') || urlParams.get('price') || 0);
+const _baseDisc = Math.round(_unitPrice / 2);
+
 async function initLiff() {
   try {
-    // 1. 初始化 LIFF
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -57,16 +61,13 @@ async function initLiff() {
     }
     const profile = await liff.getProfile();
     
-    // 2. 嘗試獲取狀態，但設定「保底」機制
     let hasResponded = false;
-    
-    // 啟動保底定時器：10 秒後如果沒反應，直接進入領取流程
     const fallbackTimer = setTimeout(() => {
       if (!hasResponded) {
-        console.warn("GAS slow, using fallback");
+        hasResponded = true;
         renderFallback(profile.userId);
       }
-    }, 10000);
+    }, 6000);
 
     try {
       const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`);
@@ -75,7 +76,6 @@ async function initLiff() {
       clearTimeout(fallbackTimer);
       renderOptions(status, profile.userId);
     } catch (err) {
-      console.error("Fetch failed", err);
       if (!hasResponded) {
         hasResponded = true;
         clearTimeout(fallbackTimer);
@@ -83,8 +83,6 @@ async function initLiff() {
       }
     }
   } catch (err) {
-    console.error("LIFF Init Error", err);
-    // 初始化失敗也嘗試顯示領取畫面，讓客人至少能領
     renderFallback("unknown");
   }
 }
@@ -93,9 +91,6 @@ function renderOptions(status, uid) {
   const container = document.getElementById('scn-options');
   const _quotaRemain = parseInt(status.halfPriceQuota || 0);
   const _qDisc = parseInt(status.halfPriceDiscount || 0);
-  const urlParams = new URLSearchParams(window.location.search);
-  const _cartQty = parseInt(urlParams.get('issueQty') || 0);
-  const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
 
   if (_quotaRemain > 0) {
     container.innerHTML = `
@@ -107,6 +102,7 @@ function renderOptions(status, uid) {
           每份現折 $${_qDisc} 元
         </div>
         <p style="font-size:15px; color:#333; font-weight:bold; margin-top:12px;">✨ 剩餘總額度：${_quotaRemain} 份</p>
+        <p style="font-size:12px; color:#999; margin-top:10px;">正在通知 POS 機，請稍候...</p>
       </div>
     `;
     submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
@@ -117,35 +113,42 @@ function renderOptions(status, uid) {
 
 function renderFallback(uid) {
   const container = document.getElementById('scn-options');
-  const urlParams = new URLSearchParams(window.location.search);
-  const _cartQty = parseInt(urlParams.get('issueQty') || 0);
-  const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
-
   container.innerHTML = `
     <div class="status-panel">
       <div style="font-size:50px; margin-bottom:10px;">🎁</div>
       <h2 style="color:#856404; margin-bottom:10px; font-size:20px;">已自動領取優惠</h2>
-      <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">獲得 ${_cartQty} 份額度</div>
+      <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">獲得 ${_issueQty} 份額度</div>
       <div style="display:inline-block; background:#fff9ee; padding:8px 20px; border-radius:30px; color:#d39e00; font-weight:bold; font-size:18px;">
         下次每份抵 $${_baseDisc} 元
       </div>
       <p style="font-size:15px; color:#dc3545; font-weight:bold; margin-top:12px;">⏰ 隔日起 10 天內有效</p>
+      <p style="font-size:12px; color:#999; margin-top:10px;">正在通知 POS 機，請稍候...</p>
     </div>
   `;
-  submitToGas(uid, 'half_issue', _cartQty, _baseDisc);
+  submitToGas(uid, 'half_issue', _issueQty, _baseDisc);
 }
 
 async function submitToGas(uid, choice, qty, disc) {
   try {
-    // 使用 img beacon 方式發送請求，這是最相容且不會被 CORS 擋掉的方式
+    // 強化通訊：同時使用 fetch 與 Image Beacon 確保指令發出
+    const finalUrl = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}&t=${Date.now()}`;
+    
+    // 1. 先用 fetch 發送
+    fetch(finalUrl, { mode: 'no-cors' });
+    
+    // 2. 再用 Image Beacon 備援
     const img = new Image();
-    img.src = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}&t=${Date.now()}`;
-    // 2.5 秒後自動關閉
-    setTimeout(() => { liff.closeWindow(); }, 2500);
-  } catch (err) { console.error(err); }
+    img.src = finalUrl;
+
+    // 3. 延長關閉時間，確保 POS 有足夠時間輪詢到結果
+    setTimeout(() => {
+      liff.closeWindow();
+    }, 4500);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
-// 啟動
 initLiff();
 </script>
 </body>
