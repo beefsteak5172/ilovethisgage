@@ -42,49 +42,44 @@
 </div>
 
 <script>
-const VERSION = "15.0." + Math.floor(Date.now() / 1000);
+const VERSION = "16.0." + Math.floor(Date.now() / 1000);
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
 const LIFF_ID = "2004223422-C2DD295";
 
-// 1. 優先從 URL 獲取參數，確保不會顯示 0 份
-const urlParams = new URLSearchParams(window.location.search);
-const _issueQty = parseInt(urlParams.get('issueQty') || urlParams.get('qty') || 0);
-const _unitPrice = parseInt(urlParams.get('unitPrice') || urlParams.get('price') || 0);
+// 終極參數解析邏輯
+function getParam(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  let val = urlParams.get(name);
+  if (val) return val;
+  // 備援：從 hash 中解析（有時 LIFF 會把參數丟到 hash）
+  const hashParams = new URLSearchParams(window.location.hash.substring(window.location.hash.indexOf('?')));
+  return hashParams.get(name);
+}
+
+const _issueQty = parseInt(getParam('issueQty') || getParam('useQty') || getParam('qty') || 0);
+const _unitPrice = parseInt(getParam('unitPrice') || getParam('price') || 0);
 const _baseDisc = Math.round(_unitPrice / 2);
 
 async function initLiff() {
   try {
     await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    if (!liff.isLoggedIn()) { liff.login(); return; }
     const profile = await liff.getProfile();
     
     let hasResponded = false;
     const fallbackTimer = setTimeout(() => {
-      if (!hasResponded) {
-        hasResponded = true;
-        renderFallback(profile.userId);
-      }
-    }, 6000);
+      if (!hasResponded) { hasResponded = true; renderFallback(profile.userId); }
+    }, 7000);
 
     try {
       const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`);
       const status = await res.json();
-      hasResponded = true;
-      clearTimeout(fallbackTimer);
+      hasResponded = true; clearTimeout(fallbackTimer);
       renderOptions(status, profile.userId);
     } catch (err) {
-      if (!hasResponded) {
-        hasResponded = true;
-        clearTimeout(fallbackTimer);
-        renderFallback(profile.userId);
-      }
+      if (!hasResponded) { hasResponded = true; clearTimeout(fallbackTimer); renderFallback(profile.userId); }
     }
-  } catch (err) {
-    renderFallback("unknown");
-  }
+  } catch (err) { renderFallback("unknown"); }
 }
 
 function renderOptions(status, uid) {
@@ -98,11 +93,8 @@ function renderOptions(status, uid) {
         <div style="font-size:50px; margin-bottom:10px;">✅</div>
         <h2 style="color:#28a745; margin-bottom:10px; font-size:20px;">已自動套用優惠</h2>
         <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">使用 ${_quotaRemain} 份額度</div>
-        <div style="display:inline-block; background:#eef9f0; padding:8px 20px; border-radius:30px; color:#28a745; font-weight:bold; font-size:18px;">
-          每份現折 $${_qDisc} 元
-        </div>
+        <div style="display:inline-block; background:#eef9f0; padding:8px 20px; border-radius:30px; color:#28a745; font-weight:bold; font-size:18px;">每份現折 $${_qDisc} 元</div>
         <p style="font-size:15px; color:#333; font-weight:bold; margin-top:12px;">✨ 剩餘總額度：${_quotaRemain} 份</p>
-        <p style="font-size:12px; color:#999; margin-top:10px;">正在通知 POS 機，請稍候...</p>
       </div>
     `;
     submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
@@ -113,16 +105,26 @@ function renderOptions(status, uid) {
 
 function renderFallback(uid) {
   const container = document.getElementById('scn-options');
+  // 如果份數真的是 0，顯示警告而不是領取 0 份
+  if (_issueQty <= 0) {
+    container.innerHTML = `
+      <div class="status-panel">
+        <div style="font-size:50px; margin-bottom:10px;">⚠️</div>
+        <h2 style="color:#dc3545; margin-bottom:10px; font-size:20px;">未偵測到套餐</h2>
+        <p style="font-size:15px; color:#666; line-height:1.6;">本次訂單似乎未包含符合條件的套餐，<br>請告知店員確認訂單內容。</p>
+        <button onclick="liff.closeWindow()" style="margin-top:20px; padding:10px 20px; background:#6c757d; color:white; border:none; border-radius:8px;">關閉頁面</button>
+      </div>
+    `;
+    return;
+  }
+
   container.innerHTML = `
     <div class="status-panel">
       <div style="font-size:50px; margin-bottom:10px;">🎁</div>
       <h2 style="color:#856404; margin-bottom:10px; font-size:20px;">已自動領取優惠</h2>
       <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">獲得 ${_issueQty} 份額度</div>
-      <div style="display:inline-block; background:#fff9ee; padding:8px 20px; border-radius:30px; color:#d39e00; font-weight:bold; font-size:18px;">
-        下次每份抵 $${_baseDisc} 元
-      </div>
+      <div style="display:inline-block; background:#fff9ee; padding:8px 20px; border-radius:30px; color:#d39e00; font-weight:bold; font-size:18px;">下次每份抵 $${_baseDisc} 元</div>
       <p style="font-size:15px; color:#dc3545; font-weight:bold; margin-top:12px;">⏰ 隔日起 10 天內有效</p>
-      <p style="font-size:12px; color:#999; margin-top:10px;">正在通知 POS 機，請稍候...</p>
     </div>
   `;
   submitToGas(uid, 'half_issue', _issueQty, _baseDisc);
@@ -130,23 +132,11 @@ function renderFallback(uid) {
 
 async function submitToGas(uid, choice, qty, disc) {
   try {
-    // 強化通訊：同時使用 fetch 與 Image Beacon 確保指令發出
     const finalUrl = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}&t=${Date.now()}`;
-    
-    // 1. 先用 fetch 發送
     fetch(finalUrl, { mode: 'no-cors' });
-    
-    // 2. 再用 Image Beacon 備援
-    const img = new Image();
-    img.src = finalUrl;
-
-    // 3. 延長關閉時間，確保 POS 有足夠時間輪詢到結果
-    setTimeout(() => {
-      liff.closeWindow();
-    }, 4500);
-  } catch (err) {
-    console.error(err);
-  }
+    const img = new Image(); img.src = finalUrl;
+    setTimeout(() => { liff.closeWindow(); }, 4000);
+  } catch (err) { console.error(err); }
 }
 
 initLiff();
