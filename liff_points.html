@@ -319,6 +319,36 @@ body {
     </div>
   </div>
 
+  <!-- ★ v9.3-fix5：帳號有券 → 只問用或略過 -->
+  <div class="scn" id="coupon-ask">
+    <div class="hdr">
+      <div class="hdr-icon">🎫</div>
+      <h2>您有優惠券！</h2>
+      <p id="coupon-ask-sub">是否本次使用？</p>
+    </div>
+    <div style="padding:20px 16px 0;">
+      <div style="background:#F5F3FF;border:2px solid #7C3AED;border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:8px;" id="coupon-ask-icon">🎫</div>
+        <div style="font-size:17px;font-weight:800;color:#5B21B6;margin-bottom:4px;" id="coupon-ask-name">第二件半價券</div>
+        <div style="font-size:12px;color:#6D28D9;line-height:1.7;" id="coupon-ask-desc">使用後折抵本次消費</div>
+      </div>
+      <div style="background:#FFF8E1;border:1.5px solid #FFE082;border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#B45309;line-height:1.7;">
+        ⚠️ 使用後券即核銷，本次<strong>不另外集點</strong>。<br>略過則保留券，下次仍可使用。
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="useCouponNow()">
+          <div style="font-size:15px;font-weight:800;color:#1B5E20;margin-bottom:3px;">✅ 是，本次使用優惠券</div>
+          <div style="font-size:12px;color:#888;">核銷後立即折抵，不集點</div>
+        </div>
+        <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="skipCouponNow()">
+          <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 略過，保留券下次用</div>
+          <div style="font-size:12px;color:#888;">本次直接結帳，券繼續保留</div>
+        </div>
+      </div>
+      <div id="coupon-ask-user" class="user-info" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
   <div class="scn" id="si-main">
     <div class="hdr">
       <div class="hdr-icon" id="si-icon">🎮</div>
@@ -544,6 +574,33 @@ async function startCheckoutPromoFlow() {
     if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
     else { redeemTierPoints = lo.threshold; redeemTierDisc = lo.discount; }
 
+    // ★ v9.3-fix5：偵測帳號是否有可用券（half_redeem 或 quota_redeem 額度 > 0）
+    //   有券 → 鎖定，只顯示「用券」或「略過」，不進一般優惠流程
+    const _halfCouponStatusCheck = (data.halfCoupon && data.halfCoupon.status) || '';
+    const _hasActiveCoupon = _halfCouponStatusCheck === 'active' || _halfCouponStatusCheck === 'issued';
+    const _hasQuotaCoupon  = (_quotaRemain > 0);
+
+    if (_hasActiveCoupon || _hasQuotaCoupon) {
+      // 決定券的顯示資訊
+      let couponIcon = '🎫', couponName = '第二件半價券', couponDesc = '使用後，第二件（較便宜）套餐半價折抵';
+      if (_hasQuotaCoupon && _issueItemName) {
+        const _qDisc = Math.floor(_issueUnitPrice / 2);
+        const _effectiveQty = Math.min(_issueQtyFromUrl, _quotaRemain);
+        couponIcon = '🥩';
+        couponName = '半價折扣額度';
+        couponDesc = '[' + _issueItemName + '] 本次用 ' + _effectiveQty + ' 份，共折 $' + (_qDisc * _effectiveQty) + '\n剩餘總額度：' + _quotaRemain + ' 份';
+      }
+      document.getElementById("coupon-ask-icon").textContent = couponIcon;
+      document.getElementById("coupon-ask-name").textContent = couponName;
+      document.getElementById("coupon-ask-desc").innerHTML   = couponDesc.replace(/\n/g,'<br>');
+      document.getElementById("coupon-ask-sub").textContent  = "帳號有未使用的優惠券";
+      document.getElementById("coupon-ask-user").textContent = "👤 " + profile.displayName;
+      // 儲存券種類供按鈕使用
+      window._activeCouponType = _hasQuotaCoupon ? 'quota_redeem' : 'half_redeem';
+      goScreen("coupon-ask");
+      return;
+    }
+
     buildPromoOptionsFromGAS(data);
     goScreen("co-promo");
 
@@ -693,6 +750,19 @@ function buildPromoOptionsFromGAS(data) {
       setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
     }
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.3-fix5：券詢問畫面的兩個按鈕
+// ══════════════════════════════════════════════════════════════
+async function useCouponNow() {
+  const couponType = window._activeCouponType || 'half_redeem';
+  await submitPromoChoice(couponType, 0, 0);
+}
+
+async function skipCouponNow() {
+  // 略過券：直接送 skip，不集點
+  await submitPromoChoice('skip', 0, 0);
 }
 
 function makeOpt({ id, key, cls, icon, title, sub, dis }) {
