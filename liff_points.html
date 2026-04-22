@@ -175,409 +175,955 @@ body {
       <div class="terms-section">
         <div class="terms-section-title">四、內用回購半價券</div>
         <ul class="terms-item">
-          <li>結帳時可選擇領取，<span class="terms-tag tag-org">限下次內用</span> 使用。</li>
-          <li>每人每次限用一張，限折抵一份套餐半價。</li>
+          <li>結帳時可選擇領取，<span class="terms-tag tag-org">限下次內用</span>使用。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">14 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>需至少點 <strong>2 件主餐</strong>，折抵最低價套餐半價。</li>
         </ul>
       </div>
       <div class="terms-section">
-        <div class="terms-section-title">五、注意事項</div>
+        <div class="terms-section-title">五、第二件半價券</div>
         <ul class="terms-item">
-          <li>店家保有活動最終解釋、修改及終止之權利。</li>
-          <li>若有不正當行為，店家有權取消其會員資格與優惠。</li>
+          <li>每人限持一張，使用後才可重新領取。</li>
+          <li>自領取日起 <span class="terms-tag tag-org">10 天內有效</span>，逾期自動失效，恕不補發。</li>
+          <li>適用 <span class="terms-tag tag-grn">內用</span><span class="terms-tag tag-blu">外帶</span>，需至少點 <strong>2 件主餐</strong>。</li>
         </ul>
       </div>
-      <div class="terms-disclaimer">
-        <div class="terms-section-title">⚠️ 點數歸零提醒</div>
+      <div class="terms-section terms-disclaimer">
+        <div class="terms-section-title">六、系統免責聲明</div>
         <ul class="terms-item">
-          <li>為維護會員權益，若 <span class="terms-tag tag-red">超過 30 天</span> 未到店消費，系統將自動清除所有累積點數。</li>
-          <li>請務必於期限內到店用餐以維持點數效期。</li>
+          <li>本優惠方案屬商家 <span class="terms-tag tag-grn">純善意提供</span>，不具任何盈利性質，亦非商業契約之一部分。</li>
+          <li>若因系統故障、網路中斷、斷電或其他不可抗力因素，導致優惠未能正常使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不另行補發或折換現金。</li>
+          <li>客人 <span class="terms-tag tag-red">不得以口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
+          <li>如遇系統異常，客人可持 <span class="terms-tag tag-blu">當次有效收據或發票</span> 向現場店員出示，依 <span class="terms-tag tag-org">收據票面所載優惠</span> 辦理，不另提供收據以外之任何補償或優惠。</li>
+          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本優惠方案，恕不另行通知。</li>
         </ul>
       </div>
     </div>
     <div class="terms-footer">
-      <button class="terms-agree-btn" onclick="agreeTerms()">我已詳閱並同意</button>
-      <button class="terms-disagree-btn" onclick="liff.closeWindow()">不同意</button>
+      <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
+      <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
     </div>
   </div>
 
-  <!-- 載入中 -->
-  <div class="scn active" id="loading-screen">
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>正在讀取會員資料...</p>
+  <div class="scn" id="co-checking">
+    <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
+    <div class="loading" style="padding:48px 20px;">
+      <div class="spinner"></div>正在查詢您的優惠資格…
     </div>
   </div>
 
-  <!-- 主畫面：選擇操作 -->
-  <div class="scn" id="main-screen">
-    <div class="hdr">
-      <div class="hdr-icon">🥩</div>
-      <h2>無名牛排 會員中心</h2>
-      <p id="user-name">載入中...</p>
-    </div>
-    <div style="padding: 20px;">
-      <div class="activity-badge">✨ 點數與優惠</div>
-      
-      <!-- 累積點數 -->
-      <div class="opt" id="opt-points" onclick="selOpt('points')">
-        <div class="opt-icon">⭐</div>
-        <div>
-          <div class="opt-title">累積點數 / 抽獎</div>
-          <div class="opt-sub">目前點數：<span id="cur-pts">0</span></div>
-        </div>
-        <div class="opt-check">✓</div>
-      </div>
-
-      <!-- 外帶第二件半價 -->
-      <div class="opt half-opt" id="opt-half" onclick="selOpt('half')">
-        <div class="opt-icon">🛍️</div>
-        <div>
-          <div class="opt-title">外帶第二件半價</div>
-          <div class="opt-sub">限外帶使用，折抵低價者</div>
-        </div>
-        <div class="opt-check">✓</div>
-      </div>
-
-      <!-- 內用回購半價券 -->
-      <div class="opt half-issue" id="opt-issue" onclick="selOpt('issue')">
-        <div class="opt-icon">🎫</div>
-        <div>
-          <div class="opt-title">領取內用回購半價券</div>
-          <div class="opt-sub">結帳後領取，限下次使用</div>
-        </div>
-        <div class="opt-check">✓</div>
-      </div>
-
-      <div id="notice-area"></div>
-      <button class="btn-confirm disabled" id="btn-go" onclick="goNext()" disabled>下一步</button>
-      <div class="user-info" id="user-id-display"></div>
-    </div>
-  </div>
-
-  <!-- 點數詳情 -->
-  <div class="scn" id="points-screen">
-    <div class="hdr">
-      <div class="hdr-icon">⭐</div>
-      <h2 id="pts-title">我的點數</h2>
-      <p>集滿 10 點即可參加抽獎</p>
-    </div>
-    <div style="padding: 24px 0 10px; text-align: center;">
-      <div class="pts-big-num" id="pts-num">0</div>
-      <div class="pts-big-label">CURRENT POINTS</div>
-    </div>
-    <div class="stars" id="stars-wrap"></div>
-    <div class="bar-wrap">
-      <div class="bar-bg"><div class="bar-fill" id="bar-fill"></div></div>
-      <div class="bar-row"><span>0</span><span id="pts-needed">還差 10 點</span><span>10</span></div>
-    </div>
-    <div class="redeem-box" id="redeem-box" style="display:none">
-      <p>🎉 恭喜！您已達抽獎門檻</p>
-      <small>點擊下方按鈕開始抽獎</small>
-    </div>
-    <div style="padding: 10px 20px;">
-      <button class="btn-main" id="btn-draw" onclick="startDraw()" style="display:none; width:100%; margin:0;">立即抽獎</button>
-      <button class="btn-main" onclick="backMain()" style="background:#f5f5f5; color:#666; width:100%; margin:10px 0 0;">返回主選單</button>
-    </div>
-  </div>
-
-  <!-- 抽獎動畫 -->
-  <div class="scn" id="draw-screen">
+  <div class="scn" id="co-promo">
     <div class="hdr">
       <div class="hdr-icon">🎁</div>
-      <h2>幸運大抽獎</h2>
-      <p>好運降臨中...</p>
+      <h2>請選擇本次優惠</h2>
+      <p id="co-promo-sub">選擇後即完成確認</p>
     </div>
-    <div style="padding: 40px 20px; text-align: center;">
-      <div class="drum"><div class="drum-face spinning" id="drum-val">?</div></div>
-      <p style="color:#666; font-size:14px;">正在為您抽取獎項...</p>
+    <div style="padding: 16px 16px 0;" id="promo-options-container"></div>
+    <div style="padding: 8px 16px 0;">
+      <button class="btn-confirm disabled" id="btn-confirm" onclick="confirmPromo()">👆 點選優惠後，再點一次確認</button>
+    </div>
+    <div id="co-user-info" class="user-info"></div>
+  </div>
+
+  <div class="scn" id="co-sending">
+    <div class="hdr"><div class="hdr-icon">📡</div><h2>送出中</h2><p>請稍候…</p></div>
+    <div class="loading" style="padding:48px 20px;">
+      <div class="spinner"></div>正在確認您的選擇…
     </div>
   </div>
 
-  <!-- 抽獎結果 -->
-  <div class="scn" id="prize-screen">
+  <div class="scn" id="co-waiting">
     <div class="hdr">
-      <div class="hdr-icon">🎊</div>
-      <h2>抽獎結果</h2>
-      <p>恭喜獲得獎項！</p>
+      <div class="hdr-icon">✅</div><h2>選擇完成！</h2><p>請等候店員完成結帳</p>
     </div>
-    <div style="padding: 24px 0;">
+    <div class="done-wrap">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">已送出您的選擇</div>
+      <div class="done-sub" id="co-wait-sub">店員正在為您結帳<br>請勿關閉此頁面</div>
+      <div style="margin-top:16px;font-size:13px;color:#888;">
+        <span class="pulse-dot"></span>收銀台正在處理中…
+      </div>
+      <div id="co-user-info2" class="user-info"></div>
+    </div>
+  </div>
+
+  <!-- ★ 修復 A：集點確認畫面（僅在 promoPoints=1 時才會到達） -->
+  <div class="scn" id="pt-confirm">
+    <div class="hdr">
+      <div class="hdr-icon">🎁</div><h2>消費集點</h2>
+      <p id="pt-confirm-sub">本次可獲得點數</p>
+    </div>
+    <div style="padding:20px 20px 0;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <span class="activity-badge" id="pt-earn-badge">本次 +0 點</span>
+      </div>
+      <div style="background:#F1F8E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px 16px;font-size:13px;line-height:2;color:#444;">
+        <div style="display:flex;justify-content:space-between;">
+          <span>目前點數</span><strong id="pt-cur-show" style="color:#1B5E20;">— 點</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span>本次獲得</span><strong id="pt-earn-show" style="color:#E65100;">+0 點</strong>
+        </div>
+        <div style="height:.5px;background:#cde8c5;margin:6px 0;"></div>
+        <div style="display:flex;justify-content:space-between;">
+          <span>集點後合計</span>
+          <strong id="pt-after-show" style="color:#1B5E20;font-size:15px;">0 點</strong>
+        </div>
+      </div>
+      <div id="pt-user-info" class="user-info"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:18px 20px 0;">
+      <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="confirmCollect()">
+        <div style="font-size:15px;font-weight:700;color:#1B5E20;margin-bottom:3px;">✅ 是，幫我集點</div>
+        <div style="font-size:12px;color:#888;">累積點數，集滿門檻可折抵</div>
+      </div>
+      <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="skipCollect()">
+        <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 不用，直接結帳</div>
+        <div style="font-size:12px;color:#888;">跳過集點，直接付款結束</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scn" id="pt-collecting">
+    <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點中…</h2><p>正在寫入點數</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在為您累積點數…</div>
+  </div>
+
+  <div class="scn" id="pt-balance">
+    <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點成功！</h2><p>點數已更新</p></div>
+    <div style="text-align:center;padding:24px 20px 16px;" class="anim-in">
+      <div class="pts-big-num" id="bal-num">0</div>
+      <div class="pts-big-label">累積點數</div>
+      <div class="stars" id="bal-stars"></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fill" id="bal-bar"></div></div>
+      <div class="bar-row"><span>0</span><span id="bal-goal-label">目標 5 點</span></div>
+    </div>
+    <div id="bal-action"></div>
+  </div>
+
+  <div class="scn" id="pt-draw">
+    <div class="hdr"><div class="hdr-icon">🎰</div><h2>幸運抽獎！</h2><p id="pt-draw-sub">使用門檻點數抽獎</p></div>
+    <div style="padding:24px 20px;text-align:center;">
+      <div style="font-size:13px;color:#666;margin-bottom:16px;">正在抽出你的獎品…</div>
+      <div class="drum"><div class="drum-face" id="drum-face">?</div></div>
+      <div id="draw-hint" style="font-size:12px;color:#aaa;margin-bottom:20px;min-height:18px;"></div>
+      <button class="btn-main" id="draw-btn" onclick="startDraw()" style="width:auto;padding:14px 48px;display:inline-block;">開始抽獎</button>
+    </div>
+  </div>
+
+  <div class="scn" id="pt-prize">
+    <div class="hdr"><div class="hdr-icon">🎉</div><h2>恭喜獲獎！</h2><p>請向店員出示兌換</p></div>
+    <div style="padding:20px 0 0;">
       <div class="prize-badge">
-        <div class="prize-icon" id="prize-icon">🎁</div>
-        <div class="prize-name" id="prize-name">---</div>
-        <div class="prize-desc">請向店員出示此畫面兌換</div>
+        <div class="prize-icon" id="prize-icon">🎫</div>
+        <div class="prize-name" id="prize-name">—</div>
+        <div class="prize-desc" id="prize-desc">—</div>
       </div>
-      <div style="padding: 0 20px;">
-        <div class="info-row"><span class="info-label">兌換代碼</span><span class="info-val" id="prize-code">---</span></div>
-        <div class="info-row"><span class="info-label">抽獎時間</span><span class="info-val" id="prize-time">---</span></div>
-      </div>
-      <button class="btn-main" onclick="liff.closeWindow()">確認並關閉</button>
+      <div style="padding:0 20px;" id="prize-bill"></div>
     </div>
+    <button class="btn-main" onclick="ptDone()">完成結帳 ✓</button>
   </div>
 
-  <!-- 確認使用優惠 -->
-  <div class="scn" id="confirm-screen">
-    <div class="hdr">
-      <div class="hdr-icon">⚠️</div>
-      <h2>確認使用優惠</h2>
-      <p id="confirm-sub">請確認是否現在使用</p>
-    </div>
-    <div style="padding: 24px 20px;">
-      <div class="coupon-card">
-        <div class="title" id="confirm-title">優惠名稱</div>
-        <div class="detail" id="confirm-desc">優惠詳細說明內容</div>
-      </div>
-      <div class="notice-box">
-        <strong>💡 注意事項</strong>
-        請務必在<strong>結帳櫃檯前</strong>，經由<strong>店員確認</strong>後再點擊「確認使用」。自行點擊導致優惠失效恕不補發。
-      </div>
-      <div class="use-btns">
-        <button class="use-no" onclick="backMain()">取消</button>
-        <button class="use-yes" id="btn-final-confirm" onclick="doAction()">確認使用</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 領取半價券確認 -->
-  <div class="scn" id="issue-screen">
-    <div class="hdr">
-      <div class="hdr-icon">🎫</div>
-      <h2>領取回購半價券</h2>
-      <p>結帳後領取，限下次使用</p>
-    </div>
-    <div style="padding: 24px 20px;">
-      <div class="coupon-card" style="border-color: #0369A1; background: #F0F9FF;">
-        <div class="title" style="color: #0369A1;">內用回購半價券</div>
-        <div class="detail" style="color: #075985;">本券限下次內用使用，折抵一份套餐半價。</div>
-      </div>
-      <div class="notice-box" style="background: #F0F9FF; border-color: #BAE6FD; color: #0369A1;">
-        <strong>💡 領取說明</strong>
-        請於<strong>本次結帳完成後</strong>，由店員確認並點擊領取。
-      </div>
-      <div class="use-btns">
-        <button class="use-no" onclick="backMain()">取消</button>
-        <button class="use-yes" style="background: #0369A1;" onclick="doAction()">確認領取</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 完成畫面 -->
-  <div class="scn" id="done-screen">
+  <div class="scn" id="pt-done">
     <div class="done-wrap">
       <div class="done-icon">✅</div>
-      <div class="done-title">處理完成</div>
-      <div class="done-sub" id="done-msg">已成功更新您的會員資料</div>
-      <div class="result" id="result-box"></div>
-      <button class="btn-main" onclick="liff.closeWindow()" style="width:100%; margin-top:24px;">關閉視窗</button>
+      <div class="done-title">付款完成！</div>
+      <div class="done-sub">感謝惠顧，期待下次再見 🥩</div>
+      <div style="background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:16px 24px;width:100%;margin-top:0;">
+        <div style="font-size:12px;color:#666;margin-bottom:4px;">剩餘點數</div>
+        <div style="font-size:34px;font-weight:900;color:#1B5E20;" id="done-pts">—</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;" id="done-pts-sub"></div>
+      </div>
     </div>
+  </div>
+
+  <div class="scn" id="pt-skip">
+    <div class="hdr"><div class="hdr-icon">💳</div><h2>結帳完成</h2><p>感謝您的光臨</p></div>
+    <div class="done-wrap" style="padding:36px 24px 20px;">
+      <div class="done-icon">👋</div>
+      <div class="done-title" style="font-size:16px;">下次歡迎光臨！</div>
+      <div class="done-sub">感謝您的消費</div>
+    </div>
+  </div>
+
+  <div class="scn" id="si-main">
+    <div class="hdr">
+      <div class="hdr-icon" id="si-icon">🎮</div>
+      <h2>無名牛排</h2><p>每日簽到 · 天天好康</p>
+    </div>
+    <div style="padding:20px 20px 0;text-align:center;">
+      <div class="activity-badge" id="si-label">活動名稱</div>
+      <div id="si-user" class="user-info"></div>
+    </div>
+    <button class="btn-main" id="si-btn" onclick="doCheckin()">立即簽到 ✓</button>
+    <div class="result" id="si-result"></div>
   </div>
 
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxzXg3UHs2Fjzzh-bul_otTGound6t7IJKr5qTWDuWaQoo1ML07k7vdMVsdnX7U0Qk2AQ/exec";
-let userData = null;
-let selectedOpt = null;
+const GAS_URL = "https://script.google.com/macros/s/AKfycbye9U_ITwt2d59ENdDEu3nebHuFjWjtyhEUN4wNeA-pHRnOYBl9qPVqy5nYec-dC0AyPw/exec";
+const LIFF_ID = "2009772018-M8WxXgeO";
+const PRIZES  = [
+  { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
+  { icon:"🎟", name:"9 折優惠",   desc:"本次消費享 9 折，現場折抵",     disc: 0.90 },
+  { icon:"🍰", name:"免費甜點",   desc:"本單贈送甜點一份，請向店員領取", disc: 1, extra:"贈甜點" },
+  { icon:"🎁", name:"下次 85 折", desc:"下次到店享 85 折",              disc: 1, next: true }
+];
+const SIGNIN_INFO = {
+  chicken: { icon:"🍗", label:"炸雞活動" },
+  shake:   { icon:"🎲", label:"搖骰子"   },
+  dice:    { icon:"🎮", label:"每日遊戲"  }
+};
 
-async function initLIFF() {
+let profile = null, earnPts = 0, curPts = 0, newTotal = 0, finalPts = 0;
+let drawnPrize = null, drawTimer = null;
+let sessionKey = null, goalThreshold = 5, redeemDisc = 50, redeemTiers = [];
+let promoSelected = null;
+let indoorExpDays = 14;
+let redeemTierPoints = 0, redeemTierDisc = 0;
+let customPromos = [];
+
+// ── 優惠開關旗標（從 URL 參數讀入，預設全關）
+let _flags = {
+  promoHalf    : false,
+  promoCarryout: false,
+  promoIndoor  : false,
+  promoRedeem  : false,
+  promoPoints  : false   // ★ 集點功能開關
+};
+
+// ══════════════════════════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════════════════════════
+async function init() {
   try {
-    await liff.init({ liffId: "2006520204-Vv78m9p4" });
-    if (!liff.isLoggedIn()) {
-      liff.login();
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    profile = await liff.getProfile();
+    const p = new URL(location.href).searchParams;
+
+    // ── 讀取 tiers ──
+    const tiersParam = p.get("tiers");
+    if (tiersParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(tiersParam));
+        if (Array.isArray(parsed) && parsed.length > 0)
+          redeemTiers = parsed.map(t => ({ threshold: Math.max(1, parseInt(t.threshold)||1), discount: Math.max(0, parseInt(t.discount)||0) })).sort((a,b)=>a.threshold-b.threshold);
+      } catch(_) {}
+    }
+    goalThreshold = Math.max(1, parseInt(p.get("threshold")||"5")||5);
+    redeemDisc    = Math.max(0, parseInt(p.get("discount")||"50")||50);
+    if (redeemTiers.length === 0) redeemTiers = [{ threshold: goalThreshold, discount: redeemDisc }];
+
+    indoorExpDays = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
+
+    // ★ 修復：所有旗標改為「=== '1'」，缺少時預設 false（關閉）
+    _flags.promoHalf     = p.get("promoHalf")     === '1';
+    _flags.promoCarryout = p.get("promoCarryout") === '1';
+    _flags.promoIndoor   = p.get("promoIndoor")   === '1';
+    _flags.promoRedeem   = p.get("promoRedeem")   === '1';
+    _flags.promoPoints   = p.get("promoPoints")   === '1';  // ★ 集點開關
+
+    // ── 讀取 customPromos ──
+    const cpParam = p.get("customPromos");
+    if (cpParam) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(cpParam));
+        if (Array.isArray(parsed)) {
+          customPromos = parsed.map((item, idx) => ({
+            key   : item.key   || ('custom_' + idx),
+            label : item.label || '促銷活動',
+            icon  : item.icon  || '🎁',
+            desc  : item.desc  || '',
+            type  : item.type  || 'custom'
+          }));
+        }
+      } catch(_) {}
+    }
+
+    const skParam    = p.get("sessionKey");
+    const ptsParam   = p.get("points");
+    const orderParam = p.get("orderId");
+    const typeParam  = p.get("type");
+
+    hideLoading();
+
+    if (skParam && !ptsParam) {
+      sessionKey = skParam;
+      earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
+      window._pendingFlow = "checkout";
+    } else if (ptsParam && orderParam) {
+      // ★ 修復 A：points 流程進入點，記錄 earnPts，但先不決定路徑
+      earnPts = Math.max(0, parseInt(ptsParam)||0);
+      window._pendingFlow = "points";
+    } else if (typeParam && SIGNIN_INFO[typeParam]) {
+      window._pendingFlow = "signin_" + typeParam;
+    } else {
+      showFatalError("未知的進入方式，請重新掃描 QR Code");
       return;
     }
-    const profile = await liff.getProfile();
-    userData = {
-      userId: profile.userId,
-      displayName: profile.displayName,
-      pictureUrl: profile.pictureUrl
-    };
-    document.getElementById('user-name').textContent = userData.displayName;
-    document.getElementById('user-id-display').textContent = "ID: " + userData.userId;
-    
-    checkTerms();
-  } catch (err) {
-    console.error("LIFF Init Error", err);
-    const errorMsg = `LIFF 初始化失敗\n錯誤代碼: ${err.code || 'unknown'}\n訊息: ${err.message || '無'}\n網址: ${window.location.href}`;
-    console.error("LIFF Init Error", err);
-    // 強制顯示在畫面上，避免被其他樣式蓋住
-    const debugDiv = document.createElement('div');
-    debugDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:rgba(255,0,0,0.9);color:white;padding:20px;z-index:99999;font-size:12px;word-break:break-all;';
-    debugDiv.innerText = errorMsg;
-    document.body.appendChild(debugDiv);
-    showError(errorMsg);
-  }
+    goScreen("terms-screen");
+
+  } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
 }
 
-function checkTerms() {
-  const agreed = localStorage.getItem('unnamed_steak_terms_agreed');
-  if (agreed === 'true') {
-    fetchUserData();
-  } else {
-    showScreen('terms-screen');
-  }
-}
+// ══════════════════════════════════════════════════════════════
+//  同意規則 → 根據 flow 跳轉
+// ══════════════════════════════════════════════════════════════
+async function agreeTerms() {
+  const f = window._pendingFlow || '';
 
-function agreeTerms() {
-  localStorage.setItem('unnamed_steak_terms_agreed', 'true');
-  fetchUserData();
-}
+  if (f === "checkout") {
+    await startCheckoutPromoFlow();
 
-async function fetchUserData() {
-  showScreen('loading-screen');
-  try {
-    const res = await fetch(`${GAS_URL}?action=getUser&userId=${userData.userId}&name=${encodeURIComponent(userData.displayName)}`);
-    const data = await res.json();
-    if (data.success) {
-      userData = { ...userData, ...data.user };
-      renderMain();
-      showScreen('main-screen');
-    } else {
-      showError("讀取資料失敗: " + data.msg);
+  } else if (f === "points") {
+    // ★ 修復 A（核心）：集點功能關閉時，直接顯示結帳完成，不進入集點流程
+    if (!_flags.promoPoints) {
+      goScreen("pt-skip");
+      return;
     }
-  } catch (err) {
-    showError("網路連線錯誤，請稍後再試");
+    await startPointsFlow();
+
+  } else if (f.startsWith("signin_")) {
+    startSigninFlow(f.replace("signin_", ""));
   }
 }
 
-function renderMain() {
-  document.getElementById('cur-pts').textContent = userData.points + " 點";
-  
-  // 點數畫面更新
-  document.getElementById('pts-num').textContent = userData.points;
-  const needed = 10 - (userData.points % 10);
-  const isReady = userData.points >= 10;
-  
-  document.getElementById('pts-needed').textContent = isReady ? "已達抽獎門檻" : `還差 ${needed} 點`;
-  document.getElementById('bar-fill').style.width = Math.min((userData.points / 10) * 100, 100) + "%";
-  
-  const starsWrap = document.getElementById('stars-wrap');
-  starsWrap.innerHTML = '';
-  for (let i = 1; i <= 10; i++) {
-    const star = document.createElement('div');
-    star.className = 'star' + (i <= userData.points ? ' filled' : '');
-    star.textContent = '★';
-    starsWrap.appendChild(star);
-  }
-  
-  document.getElementById('redeem-box').style.display = isReady ? 'block' : 'none';
-  document.getElementById('btn-draw').style.display = isReady ? 'block' : 'none';
+function disagreeTerms() {
+  goScreen("pt-skip");
 }
 
-function selOpt(opt) {
-  selectedOpt = opt;
-  document.querySelectorAll('.opt').forEach(el => el.classList.remove('sel'));
-  document.getElementById('opt-' + opt).classList.add('sel');
-  
-  const btn = document.getElementById('btn-go');
-  btn.classList.add('active');
-  btn.classList.remove('disabled');
-  btn.disabled = false;
-  
-  const notice = document.getElementById('notice-area');
-  if (opt === 'half') {
-    notice.innerHTML = `<div class="notice-box anim-in"><strong>🛍️ 外帶優惠確認</strong>此操作將扣除「外帶第二件半價」使用資格。請確認您目前正在櫃檯結帳。</div>`;
-  } else if (opt === 'issue') {
-    notice.innerHTML = `<div class="notice-box anim-in" style="background:#F0F9FF; border-color:#BAE6FD; color:#0369A1;"><strong>🎫 領取半價券</strong>此操作將發放一張「內用回購半價券」至您的帳戶（限下次使用）。</div>`;
-  } else {
-    notice.innerHTML = '';
-  }
-}
+// ══════════════════════════════════════════════════════════════
+//  結帳優惠流程
+// ══════════════════════════════════════════════════════════════
+async function startCheckoutPromoFlow() {
+  hideLoading();
+  document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
+  document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
+  goScreen("co-checking");
 
-function goNext() {
-  if (selectedOpt === 'points') {
-    showScreen('points-screen');
-  } else if (selectedOpt === 'half') {
-    document.getElementById('confirm-title').textContent = "外帶第二件半價";
-    document.getElementById('confirm-desc').textContent = "適用於外帶訂單，折抵兩件主餐中較低價者之半價。";
-    showScreen('confirm-screen');
-  } else if (selectedOpt === 'issue') {
-    showScreen('issue-screen');
+  try {
+    const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+    const url = GAS_URL
+      + "?action=member_status"
+      + "&lineuid="       + encodeURIComponent(profile.userId)
+      + "&earnPts="       + earnPts
+      + "&threshold="     + lo.threshold
+      + "&discount="      + lo.discount
+      + "&indoorExpDays=" + indoorExpDays;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status !== 'OK') {
+      showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
+      return;
+    }
+
+    window._memberStatus = data;
+    curPts = (data.points && data.points.current) || 0;
+
+    const bestTier = [...redeemTiers].reverse().find(t => (data.points.totalAfterEarn || 0) >= t.threshold);
+    if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
+    else { redeemTierPoints = lo.threshold; redeemTierDisc = lo.discount; }
+
+    buildPromoOptionsFromGAS(data);
+    goScreen("co-promo");
+
+  } catch(err) {
+    showFatalError("網路錯誤，請告知店員：\n" + err.message);
   }
 }
 
-async function doAction() {
-  const btn = document.getElementById('btn-final-confirm');
+// ══════════════════════════════════════════════════════════════
+//  建立優惠選項（結帳流程）
+// ══════════════════════════════════════════════════════════════
+function buildPromoOptionsFromGAS(data) {
+  const container = document.getElementById("promo-options-container");
+  container.innerHTML = "";
+  document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
+
+  // ── 各 type → 開關對照表 ──
+  const TYPE_FLAG = {
+    'redeem'          : _flags.promoRedeem,
+    'carryout'        : _flags.promoCarryout,
+    'indoor_redeem'   : _flags.promoIndoor,
+    'indoor_issue'    : _flags.promoIndoor,
+    'indoor_redeemed' : _flags.promoIndoor,
+    'half_redeem'     : _flags.promoHalf,
+    'half_issue'      : _flags.promoHalf,
+    'half_keep'       : _flags.promoHalf,
+    'quota_redeem'    : _flags.promoHalf,    // ★ v9.2 額度半價，跟隨半價開關
+    'points'          : _flags.promoPoints  // ★ 集點開關也管「只集點」選項
+  };
+
+  // ── warnings / notices ──
+  (data.warnings || []).forEach(w => {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
+    warn.innerHTML = w;
+    container.appendChild(warn);
+  });
+
+  (data.notices || []).forEach(n => {
+    const note = document.createElement('div');
+    note.style.cssText = 'background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;';
+    note.innerHTML = n;
+    container.appendChild(note);
+  });
+
+  // ── 先過濾非 points 的可用選項，判斷是否有其他優惠 ──
+  const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
+    const t = opt.type || '';
+    if (t === 'points') return false;
+    if (t in TYPE_FLAG) return TYPE_FLAG[t];
+    return true;
+  });
+  const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
+
+  // ── 「只集點」只在以下條件全成立時才顯示：
+  //    1. promoPoints 旗標開啟
+  //    2. 有其他可用優惠（讓客人可選擇不用優惠）
+  let options = (data.eligibleOptions || []).filter(opt => {
+    const t = opt.type || '';
+    if (t === 'points') return _flags.promoPoints && hasOtherUsable;
+    if (t in TYPE_FLAG) return TYPE_FLAG[t];
+    return true;
+  });
+
+  // ── 半價券：若有有效券但 GAS 未回傳 half_redeem，自動補上 ──
+  const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
+  const _hasIssuedHalf    = _halfCouponStatus === 'issued';
+  const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
+
+  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf) {
+    options.push({
+      type : 'half_redeem',
+      key  : 'half_redeem',
+      icon : '🎫',
+      title: '核銷第二件半價券',
+      sub  : '使用帳號內的第二件半價券，較便宜那份半價折抵',
+      disabled: false
+    });
+  }
+
+  // ── 渲染選項 ──
+  options.forEach(opt => {
+    if (_hasIssuedHalf && opt.type === 'half_issue') {
+      const warn = document.createElement('div');
+      warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
+      warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
+        '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
+        '請選擇下方「核銷第二件半價券」選項使用，或選其他優惠。';
+      container.appendChild(warn);
+      return;
+    }
+
+    let cls = '';
+    if (opt.type === 'redeem')      cls = 'redeem-opt';
+    if (opt.type === 'half_redeem') cls = 'half-opt';
+    if (opt.type === 'half_issue')  cls = 'half-issue';
+    container.appendChild(makeOpt({
+      id   : 'opt-' + opt.key,
+      key  : opt.key,
+      cls,
+      icon : opt.icon,
+      title: opt.title,
+      sub  : opt.sub,
+      dis  : !!opt.disabled
+    }));
+  });
+
+  // ── 自訂促銷選項 ──
+  customPromos.forEach(cp => {
+    container.appendChild(makeOpt({
+      id   : 'opt-' + cp.key,
+      key  : cp.key,
+      icon : cp.icon,
+      title: cp.label,
+      sub  : cp.desc,
+      dis  : false
+    }));
+  });
+
+  // ★ 修復 B：無可選項時的處理
+  //   若沒有任何可點選選項，且 promoPoints 開啟 → 自動送 'points'（只集點，原價結帳）
+  //   若 promoPoints 也關閉 → 直接送 'skip'（什麼都不做）
+  const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
+  if (!hasSelectable) {
+    if (_flags.promoPoints) {
+      // 集點開啟但沒有促銷選項 → 靜默送出只集點
+      setTimeout(() => submitPromoChoice('points', 0, 0), 300);
+    } else {
+      // 集點也關閉 → 直接送 skip，通知 POS 正常結帳
+      setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
+    }
+  }
+}
+
+function makeOpt({ id, key, cls, icon, title, sub, dis }) {
+  const div = document.createElement("div");
+  div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
+  div.id = id;
+  if (!dis) div.onclick = () => selectPromo(key);
+  div.innerHTML =
+    '<div class="opt-icon">' + icon + '</div>' +
+    '<div style="flex:1;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
+    '<div class="opt-check" id="chk-' + key + '">✅</div>';
+  return div;
+}
+
+function selectPromo(key) {
+  const el = document.getElementById("opt-" + key);
+  if (!el || el.classList.contains("dis")) return;
+
+  if (promoSelected === key) {
+    confirmPromo();
+    return;
+  }
+
+  promoSelected = key;
+
+  document.querySelectorAll(".opt").forEach(e => {
+    const k = e.id.replace("opt-", "");
+    const ch = document.getElementById("chk-" + k);
+    if (k === promoSelected) {
+      e.classList.add("sel"); if (ch) ch.style.display = "block";
+    } else {
+      e.classList.remove("sel"); if (ch) ch.style.display = "none";
+    }
+  });
+
+  const btn = document.getElementById("btn-confirm");
   if (btn) {
-    btn.disabled = true;
-    btn.textContent = "處理中...";
-  }
-  
-  try {
-    const action = selectedOpt === 'half' ? 'useHalf' : 'issueHalf';
-    const res = await fetch(`${GAS_URL}?action=${action}&userId=${userData.userId}`);
-    const data = await res.json();
-    
-    showScreen('done-screen');
-    const msgEl = document.getElementById('done-msg');
-    const resBox = document.getElementById('result-box');
-    resBox.style.display = 'block';
-    
-    if (data.success) {
-      msgEl.textContent = "操作成功！";
-      resBox.className = "result success";
-      resBox.textContent = data.msg;
-    } else {
-      msgEl.textContent = "操作失敗";
-      resBox.className = "result error";
-      resBox.textContent = data.msg;
+    btn.className = "btn-confirm active";
+    let label = "✅ 再點一次確認";
+    if      (promoSelected === 'redeem')       label = "✅ 再點一次：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
+    else if (promoSelected === 'carryout')     label = "✅ 再點一次：外帶第二件半價";
+    else if (promoSelected === 'indoor')       label = "✅ 再點一次：內用回購半價券";
+    else if (promoSelected === 'half_redeem')  label = "✅ 再點一次：使用第二件半價券";
+    else if (promoSelected === 'half_issue')   label = "✅ 再點一次：領取第二件半價券";
+    else if (promoSelected === 'half_keep')    label = "✅ 再點一次：保留券，只集點";
+    else if (promoSelected === 'points')       label = "✅ 再點一次：只集點";
+    else {
+      const cp = customPromos.find(c => c.key === promoSelected);
+      if (cp) label = "✅ 再點一次：" + cp.label;
     }
-  } catch (err) {
-    showError("網路錯誤");
+    btn.textContent = label;
   }
 }
 
-async function startDraw() {
-  showScreen('draw-screen');
-  const drumVal = document.getElementById('drum-val');
-  const prizes = ["🎁", "💎", "⭐", "🔥", "✨"];
-  let i = 0;
-  const timer = setInterval(() => {
-    drumVal.textContent = prizes[i % prizes.length];
-    i++;
-  }, 100);
-  
-  try {
-    const res = await fetch(`${GAS_URL}?action=draw&userId=${userData.userId}`);
-    const data = await res.json();
-    
-    clearInterval(timer);
-    if (data.success) {
-      setTimeout(() => {
-        document.getElementById('prize-icon').textContent = data.prize.icon;
-        document.getElementById('prize-name').textContent = data.prize.name;
-        document.getElementById('prize-code').textContent = data.prize.code;
-        document.getElementById('prize-time').textContent = new Date().toLocaleString();
-        showScreen('prize-screen');
-      }, 500);
-    } else {
-      showError(data.msg);
-    }
-  } catch (err) {
-    clearInterval(timer);
-    showError("抽獎失敗，請檢查網路");
+async function confirmPromo() {
+  if (!promoSelected) return;
+
+  const ms = window._memberStatus || {};
+
+  let promoKey = promoSelected;
+
+  if (promoSelected === 'indoor') {
+    const indoorStatus = (ms.indoorCoupon && ms.indoorCoupon.status) || 'unused';
+    promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
+  } else if (promoSelected === 'half_issue') {
+    const halfStatus = (ms.halfCoupon && ms.halfCoupon.status) || 'unused';
+    promoKey = (halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
+  } else if (promoSelected === 'redeem') {
+    promoKey = 'redeem';
   }
+
+  await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
 }
 
-function showScreen(id) {
-  document.querySelectorAll('.scn').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
+  goScreen("co-sending");
+  tierPoints = tierPoints || 0; tierDisc = tierDisc || 0;
+
+  if (promoKey === 'half_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("領取失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'half_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'indoor_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId) + "&expDays=" + indoorExpDays);
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("領取失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'indoor_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  // ★ v9.3 fix quota_redeem：先查實際剩餘份數，再以 min(useQty, remaining) 核銷
+  if (promoKey === 'quota_redeem') {
+    const _urlUseQty = parseInt((new URL(location.href)).searchParams.get("useQty") || "1") || 1;
+    try {
+      // step1：查詢實際剩餘額度（避免 issue_quota 補差額邏輯導致 B 欄被歸零後仍依舊值核銷）
+      const _chkRes  = await fetch(GAS_URL + "?action=check_quota&lineuid=" + encodeURIComponent(profile.userId));
+      const _chkData = await _chkRes.json();
+      if (!_chkData.hasQuota || (_chkData.remaining || 0) <= 0) {
+        showFatalError("額度核銷失敗：剩餘額度不足（" + (_chkData.message || "請告知店員") + ")"); return;
+      }
+      // step2：實際核銷份數 = min(URL帶入份數, 實際剩餘份數)
+      const _actualUseQty = Math.min(_urlUseQty, _chkData.remaining);
+      const _redeemRes  = await fetch(GAS_URL + "?action=redeem_quota&lineuid=" + encodeURIComponent(profile.userId) + "&useQty=" + _actualUseQty);
+      const _redeemData = await _redeemRes.json();
+      if (_redeemData.status !== 'OK') {
+        showFatalError("額度核銷失敗：" + (_redeemData.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
+    try {
+      const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("集點失敗，無法折抵：" + (data.message || "請告知店員")); return;
+      }
+      curPts = data.newTotal || (curPts + earnPts);
+      earnPts = 0;
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  let decisionValue = 'use';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue' || promoKey === 'skip') decisionValue = 'skip';
+  if (promoKey === 'redeem') decisionValue = 'redeem';
+
+  const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
+
+  try {
+    const url = GAS_URL
+      + "?action=set_decision"
+      + "&sessionKey="  + encodeURIComponent(sessionKey)
+      + "&lineuid="     + encodeURIComponent(profile.userId)
+      + "&decision="    + encodeURIComponent(decisionValue)
+      + "&tierPoints="  + tierPoints
+      + "&tierDisc="    + tierDisc
+      + "&promoChoice=" + encodeURIComponent(finalPromoChoice);
+    const res  = await fetch(url);
+    const data = await res.json().catch(() => ({}));
+
+    if (data.status === "OK") {
+      let waitText = "已送出選擇";
+      if      (promoKey === 'redeem')        waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
+      else if (promoKey === 'carryout')      waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
+      else if (promoKey === 'indoor_issue')  waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
+      else if (promoKey === 'indoor_redeem') waitText = "已選擇：核銷內用回購券\n最低價套餐半價折抵";
+      else if (promoKey === 'half_issue')    waitText = "✅ 第二件半價券已發出！\n請保留收據，10天內到店使用\n本次照原價結帳";
+      else if (promoKey === 'half_redeem')   waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
+      else if (promoKey === 'half_keep')     waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
+      else if (promoKey === 'quota_redeem')  waitText = "✅ 半價額度已核銷！\n折扣已套用，請等候店員確認";
+      else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
+      else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
+      else {
+        const cp = customPromos.find(c => c.key === promoKey);
+        if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
+      }
+      document.getElementById("co-wait-sub").textContent = waitText + "\n\n請勿關閉此頁面";
+      goScreen("co-waiting");
+    } else {
+      showFatalError("送出失敗：" + (data.message || "請告知店員"));
+    }
+  } catch (_) { showFatalError("網路錯誤，請告知店員"); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ 修復 A：集點流程（只有 promoPoints=1 時才會執行到這裡）
+// ══════════════════════════════════════════════════════════════
+async function startPointsFlow() {
+  // 雙重保險：若旗標關閉，直接跳走
+  if (!_flags.promoPoints) {
+    goScreen("pt-skip");
+    return;
+  }
+
+  hideLoading();
+  curPts = 0;
+  try {
+    const res  = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
+    const data = await res.json();
+    if (data.status === "OK") curPts = data.currentPoints || 0;
+  } catch(_) {}
+  newTotal = curPts + earnPts;
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("pt-cur-show").textContent   = curPts + " 點";
+  document.getElementById("pt-earn-show").textContent  = "+" + earnPts + " 點";
+  document.getElementById("pt-after-show").textContent = newTotal + " 點";
+  document.getElementById("pt-earn-badge").textContent = "本次 +" + earnPts + " 點";
+  document.getElementById("pt-confirm-sub").textContent= "本次可獲得 " + earnPts + " 點";
+  document.getElementById("pt-user-info").textContent  = "👤 " + profile.displayName;
+  document.getElementById("pt-draw-sub").textContent   = "使用 " + lo.threshold + " 點抽取本次優惠";
+  document.getElementById("bal-goal-label").textContent= "目標 " + lo.threshold + " 點";
+  goScreen("pt-confirm");
+}
+
+async function confirmCollect() {
+  // ★ 修復 A（防護層）：此函式只應在 promoPoints=1 時被呼叫到
+  if (!_flags.promoPoints) { goScreen("pt-skip"); return; }
+
+  goScreen("pt-collecting");
+  try {
+    const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
+    const data = await res.json();
+    if (data.status === "OK") {
+      newTotal = data.newTotal || newTotal;
+      showBalance();
+      printPointsReceipt(newTotal);
+    } else {
+      showError("集點失敗：" + (data.message || "請向店員確認"));
+    }
+  } catch(_) { showError("網路錯誤，請向店員確認"); }
+}
+
+function printPointsReceipt(total) {
+  const lo     = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+  const left   = Math.max(0, lo.threshold - total);
+  const now    = new Date();
+  const nowStr = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  const name   = profile ? profile.displayName : '';
+
+  const win = window.open('', '_blank', 'width=360,height=420');
+  if (!win) {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:12px;padding:10px 18px;border-radius:20px;z-index:9999;';
+    tip.textContent = '⚠️ 請允許彈出視窗以列印集點明細';
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 4000);
+    return;
+  }
+
+  win.document.write(`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: monospace; font-size: 14px; padding: 20px 16px; background: #fff; color: #111; }
+  .center { text-align: center; }
+  .logo   { font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 2px; }
+  .sub    { font-size: 11px; color: #888; margin-bottom: 12px; }
+  hr      { border: none; border-top: 1px dashed #bbb; margin: 10px 0; }
+  .row    { display: flex; justify-content: space-between; align-items: center; margin: 7px 0; font-size: 13px; }
+  .label  { color: #666; }
+  .val    { font-weight: 700; }
+  .big    { text-align: center; font-size: 36px; font-weight: 900; color: #1B5E20; margin: 14px 0 4px; }
+  .hint   { text-align: center; font-size: 12px; color: #E65100; font-weight: 700; padding: 6px 10px; background: #FFF8E1; border-radius: 6px; margin-bottom: 10px; }
+  .foot   { font-size: 10px; color: #aaa; text-align: center; margin-top: 14px; line-height: 1.8; }
+  @media print { body { padding: 8px; } .no-print { display: none; } }
+</style>
+</head><body>
+  <div class="center">
+    <div class="logo">🥩 無名牛排</div>
+    <div class="sub">集點明細 · Member Points Receipt</div>
+  </div>
+  <hr>
+  <div class="row"><span class="label">會員</span><span class="val">${name}</span></div>
+  <div class="row"><span class="label">消費日期</span><span class="val">${nowStr}</span></div>
+  <hr>
+  <div class="row"><span class="label">本次獲得</span><span class="val" style="color:#E65100;">＋${earnPts} 點</span></div>
+  <div class="row"><span class="label">折抵門檻</span><span class="val">${lo.threshold} 點</span></div>
+  <hr>
+  <div class="big">${total}</div>
+  <div class="center" style="font-size:12px;color:#888;margin-bottom:10px;">累積點數</div>
+  <div class="hint">${left > 0 ? '再集 ' + left + ' 點可折抵 $' + lo.discount : '✅ 已達門檻，可折抵 $' + lo.discount + '！'}</div>
+  <hr>
+  <div class="foot">感謝惠顧，期待下次光臨 🥩<br>點數 30 天內無消費自動歸零<br>如有疑問請洽現場店員</div>
+  <br>
+  <div class="no-print" style="text-align:center;">
+    <button onclick="window.print();window.close();" style="padding:10px 32px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">🖨️ 列印</button>
+  </div>
+</body></html>`);
+  win.document.close();
+  setTimeout(() => {
+    try { win.print(); } catch(_) {}
+    setTimeout(() => { try { win.close(); } catch(_) {} }, 1000);
+  }, 400);
+}
+
+function skipCollect() { goScreen("pt-skip"); }
+
+function showBalance() {
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("bal-num").textContent = newTotal;
+  const starsEl = document.getElementById("bal-stars"); starsEl.innerHTML = "";
+  for (let i = 1; i <= lo.threshold; i++) {
+    const s = document.createElement("div"); s.className = "star";
+    s.textContent = i <= newTotal ? "★" : "☆"; s.style.color = i <= newTotal ? "#fff" : "#bbb";
+    if (i <= newTotal) setTimeout(() => s.classList.add("filled"), i * 80);
+    starsEl.appendChild(s);
+  }
+  const pct = newTotal >= lo.threshold ? 100 : (newTotal / lo.threshold * 100);
+  setTimeout(() => { document.getElementById("bal-bar").style.width = pct + "%"; }, 100);
+  const eligible = redeemTiers.find(t => newTotal >= t.threshold);
+  const action = document.getElementById("bal-action");
+  if (eligible) {
+    const remain = newTotal - eligible.threshold;
+    action.innerHTML =
+      '<div style="padding:0 20px;margin-bottom:16px;"><div class="redeem-box">' +
+        '<p>🎰 已集滿 ' + eligible.threshold + ' 點！可以參加抽獎</p>' +
+        '<small>使用 ' + eligible.threshold + ' 點抽獎 → 剩 ' + remain + ' 點</small>' +
+      '</div><div class="use-btns">' +
+        '<button class="use-yes" onclick="goDraw()">🎰 參加抽獎</button>' +
+        '<button class="use-no" onclick="skipDraw()">繼續累積</button>' +
+      '</div></div>';
+  } else {
+    const left = lo.threshold - newTotal;
+    action.innerHTML = '<div style="text-align:center;padding:0 20px;"><p style="font-size:13px;color:#aaa;margin-bottom:14px;">再集 ' + left + ' 點可參加抽獎 🎁</p>' +
+      '<button class="btn-main" style="margin:0;" onclick="ptDone()">完成結帳 ✓</button></div>';
+  }
+  goScreen("pt-balance");
+}
+
+function goDraw()   { goScreen("pt-draw"); resetDrum(); }
+function skipDraw() { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
+function ptDone()   { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
+
+function renderDone() {
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("done-pts").textContent     = finalPts + " 點";
+  document.getElementById("done-pts-sub").textContent = finalPts >= lo.threshold ? "已可折抵優惠 🎁" : "再集 " + (lo.threshold - finalPts) + " 點可折抵";
+}
+
+function resetDrum() {
+  clearInterval(drawTimer); drawTimer = null; drawnPrize = null;
+  const face = document.getElementById("drum-face");
+  face.textContent = "?"; face.classList.remove("spinning");
+  document.getElementById("draw-hint").textContent = "";
+  const btn = document.getElementById("draw-btn");
+  btn.disabled = false; btn.textContent = "開始抽獎"; btn.onclick = startDraw;
+}
+function startDraw() {
+  const btn = document.getElementById("draw-btn"); btn.disabled = true; btn.textContent = "抽獎中…";
+  const face = document.getElementById("drum-face");
+  const emojis = ["🎫","🎟","🍰","🎁","✨","🎊","🎈","🌟"]; let count = 0;
+  face.classList.add("spinning");
+  drawTimer  = setInterval(() => { face.textContent = emojis[count % emojis.length]; count++; }, 100);
+  drawnPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+  setTimeout(async () => {
+    clearInterval(drawTimer); face.classList.remove("spinning"); face.textContent = drawnPrize.icon;
+    document.getElementById("draw-hint").textContent = "🎉 " + drawnPrize.name + "！";
+    const useT = (redeemTiers[0] || { threshold: goalThreshold }).threshold;
+    try {
+      const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=-" + useT);
+      const data = await res.json();
+      finalPts = data.status === "OK" ? (data.newTotal || 0) : Math.max(0, newTotal - useT);
+    } catch(_) { finalPts = Math.max(0, newTotal - useT); }
+    btn.disabled = false; btn.textContent = "查看獎品"; btn.onclick = showPrize;
+  }, 2800);
+}
+function showPrize() {
+  if (!drawnPrize) return;
+  const useT = (redeemTiers[0] || { threshold: goalThreshold }).threshold;
+  document.getElementById("prize-icon").textContent = drawnPrize.icon;
+  document.getElementById("prize-name").textContent = drawnPrize.name;
+  document.getElementById("prize-desc").textContent = drawnPrize.desc;
+  let html = "";
+  if      (drawnPrize.disc < 1) { html += row("折扣優惠","<span style='color:#E65100;'>"+drawnPrize.name+"</span>"); html += row("套用方式","現場直接折抵"); }
+  else if (drawnPrize.extra)     { html += row("贈品","<span style='color:#1B5E20;'>"+drawnPrize.extra+" 🍰</span>"); html += row("套用方式","向店員領取"); }
+  else                           { html += row("優惠","<span style='color:#1B5E20;'>"+drawnPrize.name+"</span>"); html += row("套用方式","下次到店使用"); }
+  html += row("扣除點數","<span style='color:#888;'>−"+useT+" 點</span>");
+  html += row("剩餘點數","<span style='color:#1B5E20;'>"+finalPts+" 點</span>");
+  document.getElementById("prize-bill").innerHTML = html;
+  goScreen("pt-prize");
+}
+function row(label, val) {
+  return '<div class="info-row"><span class="info-label">'+label+'</span><span class="info-val">'+val+'</span></div>';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  簽到流程
+// ══════════════════════════════════════════════════════════════
+function startSigninFlow(type) {
+  hideLoading();
+  document.getElementById("si-icon").textContent  = SIGNIN_INFO[type].icon;
+  document.getElementById("si-label").textContent = SIGNIN_INFO[type].label;
+  document.getElementById("si-user").textContent  = "👤 " + profile.displayName;
+  goScreen("si-main");
+  fetch(GAS_URL + "?action=check_today&lineuid=" + encodeURIComponent(profile.userId) + "&type=" + encodeURIComponent(type))
+    .then(r => r.json()).then(data => {
+      if (data.status === "DENY") {
+        showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
+        const btn = document.getElementById("si-btn"); btn.disabled = true; btn.textContent = "今日已簽到";
+      }
+    }).catch(()=>{});
+}
+async function doCheckin() {
+  const type = new URL(location.href).searchParams.get("type") || "";
+  const btn  = document.getElementById("si-btn"); btn.disabled = true; btn.textContent = "簽到中...";
+  try {
+    const p   = new URLSearchParams({ action:"sign_in", lineuid:profile.userId, displayName:profile.displayName, type });
+    const res  = await fetch(GAS_URL + "?" + p.toString()); const data = await res.json();
+    if (data.status === "OK") {
+      const today = new Date();
+      const dateStr = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0") + "-" + String(today.getDate()).padStart(2,"0");
+      showSiResult("success", "🎉 簽到成功！\n活動：" + SIGNIN_INFO[type].label + "\n日期：" + dateStr +
+        "\n玩家編號：" + (data.uid4||"----") + "\n" +
+        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "📅 第 " + data.visitCount + " 次參加此活動") +
+        "\n\n⚠️ 請勿關閉此視窗\n店員確認後方可離開");
+      btn.textContent = "已簽到 ✓";
+    } else if (data.status === "DENY") {
+      showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟"); btn.textContent = "今日已簽到";
+    } else {
+      showSiResult("error", "簽到失敗：" + (data.message||"未知錯誤")); btn.disabled = false; btn.textContent = "重試";
+    }
+  } catch(_) { showSiResult("error", "連線錯誤，請稍後再試"); btn.disabled = false; btn.textContent = "重試"; }
+}
+function showSiResult(type, msg) {
+  const box = document.getElementById("si-result"); box.className = "result " + type; box.textContent = msg; box.style.display = "block";
+}
+
+// ══════════════════════════════════════════════════════════════
+//  工具函式
+// ══════════════════════════════════════════════════════════════
+function goScreen(id) {
+  document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
+  const el = document.getElementById(id); if (el) el.classList.add("active");
   window.scrollTo(0, 0);
 }
-
-function backMain() {
-  showScreen('main-screen');
-}
-
+function hideLoading() { const el = document.getElementById("global-loading"); if (el) el.style.display = "none"; }
 function showError(msg) {
-  showScreen('done-screen');
-  document.getElementById('done-msg').textContent = "發生錯誤";
-  const resBox = document.getElementById('result-box');
-  resBox.style.display = 'block';
-  resBox.className = "result error";
-  resBox.textContent = msg;
+  hideLoading();
+  document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".err-block").forEach(e => e.remove());
+  const div = document.createElement("div");
+  div.className = "err-block";
+  div.style.cssText = "color:#B71C1C;font-size:14px;text-align:center;padding:40px 24px;line-height:1.8;";
+  div.innerHTML = "<div style='font-size:36px;margin-bottom:14px;'>⚠️</div><div style='font-weight:700;margin-bottom:8px;'>發生錯誤</div><div style='font-size:13px;color:#888;white-space:pre-line;'>" + msg + "</div>";
+  document.getElementById("app").appendChild(div);
 }
+function showFatalError(msg) { showError(msg); }
 
-initLIFF();
+init().catch(err => showFatalError("啟動失敗：" + err.message));
 </script>
 </body>
 </html>
