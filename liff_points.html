@@ -512,26 +512,6 @@ async function startCheckoutPromoFlow() {
   goScreen("co-checking");
 
   try {
-    // ★ v9.3-fix：先呼叫 issue_quota，確保額度在 member_status 查詢前已寫入
-    //   POS 已將 itemName / unitPrice 帶入 QR URL；LIFF 這裡在 member_status 之前發放，
-    //   解決舊版「POS 結帳後才補發 → member_status 查不到」的時序問題。
-    if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
-      try {
-        const _iqUrl = GAS_URL
-          + "?action=issue_quota"
-          + "&lineuid="   + encodeURIComponent(profile.userId)
-          + "&qty="       + _issueQtyFromUrl
-          + "&itemName="  + encodeURIComponent(_issueItemName)
-          + "&unitPrice=" + _issueUnitPrice;
-        const _iqRes  = await fetch(_iqUrl);
-        const _iqData = await _iqRes.json();
-        console.log('[v9.3 issue_quota]', _iqData.status, _iqData.message || '');
-      } catch (_iqe) {
-        // 失敗不中斷後續流程，僅記錄
-        console.warn('[v9.3 issue_quota] 呼叫失敗：', _iqe.message);
-      }
-    }
-
     const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
     const url = GAS_URL
       + "?action=member_status"
@@ -613,6 +593,23 @@ function buildPromoOptionsFromGAS(data) {
     if (t in TYPE_FLAG) return TYPE_FLAG[t];
     return true;
   });
+
+  // ★ v9.3-fix（同「扣點數」做法）：
+  //   quota_redeem 選項直接從 URL 參數建立，不依賴資料庫。
+  //   實際的 issue_quota + redeem_quota 由 POS 在收到決策後執行（如同點數由 POS 扣除）。
+  if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
+    // 移除 GAS 回傳的 quota_redeem（可能是舊資料），改用本次訂單的即時資訊
+    options = options.filter(opt => opt.type !== 'quota_redeem');
+    const _qDisc = Math.floor(_issueUnitPrice / 2);
+    options.unshift({
+      type : 'quota_redeem',
+      key  : 'quota_redeem',
+      icon : '🥩',
+      title: '使用半價額度（' + _issueQtyFromUrl + ' 份）',
+      sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _issueQtyFromUrl),
+      disabled: false
+    });
+  }
 
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
   const _hasIssuedHalf    = _halfCouponStatus === 'issued';
@@ -792,23 +789,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
-  // ★ v9.3 fix quota_redeem：先查實際剩餘份數，再以 min(useQty, remaining) 核銷
-  if (promoKey === 'quota_redeem') {
-    const _urlUseQty = _issueQtyFromUrl;
-    try {
-      const _chkRes  = await fetch(GAS_URL + "?action=check_quota&lineuid=" + encodeURIComponent(profile.userId));
-      const _chkData = await _chkRes.json();
-      if (!_chkData.hasQuota || (_chkData.remaining || 0) <= 0) {
-        showFatalError("額度核銷失敗：剩餘額度不足（" + (_chkData.message || "請告知店員") + ")"); return;
-      }
-      const _actualUseQty = Math.min(_urlUseQty, _chkData.remaining);
-      const _redeemRes  = await fetch(GAS_URL + "?action=redeem_quota&lineuid=" + encodeURIComponent(profile.userId) + "&useQty=" + _actualUseQty);
-      const _redeemData = await _redeemRes.json();
-      if (_redeemData.status !== 'OK') {
-        showFatalError("額度核銷失敗：" + (_redeemData.message || "請告知店員")); return;
-      }
-    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
-  }
+  // ★ v9.3-fix：quota_redeem 核銷改由 POS 執行（同「扣點數」做法），LIFF 只送出決策即可
 
   if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
     try {
