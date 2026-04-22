@@ -573,7 +573,7 @@ function buildPromoOptionsFromGAS(data) {
   const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
 
   // ★ v9.3-fix3c：套餐件數 < 2 時，隱藏 half_redeem（第二件半價需要至少2件）
-  const _cartQty = _issueQtyFromUrl || 1;
+  const _cartQty = _issueQtyFromUrl || 0; const _pairQty = Math.floor(_cartQty / 2);
   let options = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
     if (t === 'points') return _flags.promoPoints && hasOtherUsable;
@@ -626,8 +626,8 @@ function buildPromoOptionsFromGAS(data) {
       type : 'half_redeem',
       key  : 'half_redeem',
       icon : '🎫',
-      title: '🎫 核銷第二件半價券（已持有）',
-      sub  : '✨ 每一份套餐皆折抵「最低價套餐」之半價\n⚠️ 採「點幾客扣幾客」原則，扣完為止',
+      title: '🎫 核銷第二件半價（本次折抵 ' + _pairQty + ' 件）',
+      sub  : '✨ 每 2 件折 1 件（折抵最低價者）\n✨ 帳號剩餘總額度：' + (_quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 件',
       disabled: false
     });
   }
