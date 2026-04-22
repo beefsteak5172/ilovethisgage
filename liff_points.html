@@ -247,6 +247,7 @@ body {
     </div>
   </div>
 
+  <!-- ★ 修復 A：集點確認畫面（僅在 promoPoints=1 時才會到達） -->
   <div class="scn" id="pt-confirm">
     <div class="hdr">
       <div class="hdr-icon">🎁</div><h2>消費集點</h2>
@@ -363,7 +364,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxzXg3UHs2Fjzzh-bul_otTGound6t7IJKr5qTWDuWaQoo1ML07k7vdMVsdnX7U0Qk2AQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbye9U_ITwt2d59ENdDEu3nebHuFjWjtyhEUN4wNeA-pHRnOYBl9qPVqy5nYec-dC0AyPw/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -385,19 +386,13 @@ let indoorExpDays = 14;
 let redeemTierPoints = 0, redeemTierDisc = 0;
 let customPromos = [];
 
-let _issueQtyFromUrl  = 1;
-let _issueItemName    = '';
-let _issueUnitPrice   = 0;
-
-// ★ v9.3-fix2：新增 _quotaRemain，從 GAS 即時查詢，預設 -1 表示尚未查詢
-let _quotaRemain = -1;
-
+// ── 優惠開關旗標（從 URL 參數讀入，預設全關）
 let _flags = {
   promoHalf    : false,
   promoCarryout: false,
   promoIndoor  : false,
   promoRedeem  : false,
-  promoPoints  : false
+  promoPoints  : false   // ★ 集點功能開關
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -410,6 +405,7 @@ async function init() {
     profile = await liff.getProfile();
     const p = new URL(location.href).searchParams;
 
+    // ── 讀取 tiers ──
     const tiersParam = p.get("tiers");
     if (tiersParam) {
       try {
@@ -424,16 +420,14 @@ async function init() {
 
     indoorExpDays = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
 
+    // ★ 修復：所有旗標改為「=== '1'」，缺少時預設 false（關閉）
     _flags.promoHalf     = p.get("promoHalf")     === '1';
     _flags.promoCarryout = p.get("promoCarryout") === '1';
     _flags.promoIndoor   = p.get("promoIndoor")   === '1';
     _flags.promoRedeem   = p.get("promoRedeem")   === '1';
-    _flags.promoPoints   = p.get("promoPoints")   === '1';
+    _flags.promoPoints   = p.get("promoPoints")   === '1';  // ★ 集點開關
 
-    _issueQtyFromUrl = Math.max(1, parseInt(p.get("useQty")    || "1") || 1);
-    _issueItemName   = (p.get("itemName")  || "").trim();
-    _issueUnitPrice  = Math.max(0, parseInt(p.get("unitPrice") || "0") || 0);
-
+    // ── 讀取 customPromos ──
     const cpParam = p.get("customPromos");
     if (cpParam) {
       try {
@@ -462,6 +456,7 @@ async function init() {
       earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
       window._pendingFlow = "checkout";
     } else if (ptsParam && orderParam) {
+      // ★ 修復 A：points 流程進入點，記錄 earnPts，但先不決定路徑
       earnPts = Math.max(0, parseInt(ptsParam)||0);
       window._pendingFlow = "points";
     } else if (typeParam && SIGNIN_INFO[typeParam]) {
@@ -483,12 +478,15 @@ async function agreeTerms() {
 
   if (f === "checkout") {
     await startCheckoutPromoFlow();
+
   } else if (f === "points") {
+    // ★ 修復 A（核心）：集點功能關閉時，直接顯示結帳完成，不進入集點流程
     if (!_flags.promoPoints) {
       goScreen("pt-skip");
       return;
     }
     await startPointsFlow();
+
   } else if (f.startsWith("signin_")) {
     startSigninFlow(f.replace("signin_", ""));
   }
@@ -517,26 +515,8 @@ async function startCheckoutPromoFlow() {
       + "&discount="      + lo.discount
       + "&indoorExpDays=" + indoorExpDays;
 
-    // ★ v9.3-fix3：只查 member_status，quota 從回傳資料讀取
     const res  = await fetch(url);
     const data = await res.json();
-
-    // ★ v9.3-fix3：從 member_status 回傳讀取 quota 剩餘額度
-    // GAS 若有回傳 data.halfPriceQuota.remain 就用，否則從 eligibleOptions 找
-    // 找不到的話 _quotaRemain = -1（不限制，維持舊行為）
-    if (data.halfPriceQuota && typeof data.halfPriceQuota.remain === 'number') {
-      _quotaRemain = data.halfPriceQuota.remain;
-    } else {
-      const qOpt = (data.eligibleOptions || []).find(o => o.type === 'quota_redeem');
-      if (qOpt) {
-        // GAS 有回傳 quota_redeem，從 remain 欄位讀取（若有的話）
-        _quotaRemain = typeof qOpt.remain === 'number' ? qOpt.remain : -1;
-      } else {
-        // GAS 沒有回傳 quota_redeem：代表額度為 0 或功能未啟用
-        // 但為了向後相容，此處設為 -1（不由 LIFF 管，交給下方 URL 參數邏輯判斷）
-        _quotaRemain = -1;
-      }
-    }
 
     if (data.status !== 'OK') {
       showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
@@ -566,6 +546,7 @@ function buildPromoOptionsFromGAS(data) {
   container.innerHTML = "";
   document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
 
+  // ── 各 type → 開關對照表 ──
   const TYPE_FLAG = {
     'redeem'          : _flags.promoRedeem,
     'carryout'        : _flags.promoCarryout,
@@ -575,10 +556,11 @@ function buildPromoOptionsFromGAS(data) {
     'half_redeem'     : _flags.promoHalf,
     'half_issue'      : _flags.promoHalf,
     'half_keep'       : _flags.promoHalf,
-    'quota_redeem'    : _flags.promoHalf,
-    'points'          : _flags.promoPoints
+    'quota_redeem'    : _flags.promoHalf,    // ★ v9.2 額度半價，跟隨半價開關
+    'points'          : _flags.promoPoints  // ★ 集點開關也管「只集點」選項
   };
 
+  // ── warnings / notices ──
   (data.warnings || []).forEach(w => {
     const warn = document.createElement('div');
     warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
@@ -593,6 +575,7 @@ function buildPromoOptionsFromGAS(data) {
     container.appendChild(note);
   });
 
+  // ── 先過濾非 points 的可用選項，判斷是否有其他優惠 ──
   const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
     if (t === 'points') return false;
@@ -601,6 +584,9 @@ function buildPromoOptionsFromGAS(data) {
   });
   const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
 
+  // ── 「只集點」只在以下條件全成立時才顯示：
+  //    1. promoPoints 旗標開啟
+  //    2. 有其他可用優惠（讓客人可選擇不用優惠）
   let options = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
     if (t === 'points') return _flags.promoPoints && hasOtherUsable;
@@ -608,39 +594,7 @@ function buildPromoOptionsFromGAS(data) {
     return true;
   });
 
-  // ★ v9.3-fix3：
-  //   _quotaRemain >= 0 → GAS 有回傳額度，嚴格檢查（0 = 不顯示）
-  //   _quotaRemain === -1 → GAS 尚未支援額度回傳，向後相容顯示選項
-  if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
-    options = options.filter(opt => opt.type !== 'quota_redeem');
-
-    const _showQuota = (_quotaRemain === -1) ? true : (_quotaRemain > 0);
-    const _effectiveQty = (_quotaRemain > 0)
-      ? Math.min(_issueQtyFromUrl, _quotaRemain)
-      : _issueQtyFromUrl;
-
-    if (_showQuota) {
-      const _qDisc = Math.floor(_issueUnitPrice / 2);
-      const _remainNote = (_quotaRemain >= 0) ? ('\n剩餘額度：' + _quotaRemain + ' 份') : '';
-      options.unshift({
-        type : 'quota_redeem',
-        key  : 'quota_redeem',
-        icon : '🥩',
-        title: '使用半價額度（' + _effectiveQty + ' 份）',
-        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + _remainNote,
-        disabled: false
-      });
-    } else {
-      // ★ 額度確認為 0（GAS 明確回傳），顯示提示，不顯示核銷按鈕
-      const noQuotaWarn = document.createElement('div');
-      noQuotaWarn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
-      noQuotaWarn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 半價額度已用完</strong>' +
-        '本次訂單的半價額度為 0，無法使用「使用半價額度」優惠。<br>' +
-        '如需半價券，請選擇下方「領取第二件半價券」選項。';
-      container.appendChild(noQuotaWarn);
-    }
-  }
-
+  // ── 半價券：若有有效券但 GAS 未回傳 half_redeem，自動補上 ──
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
   const _hasIssuedHalf    = _halfCouponStatus === 'issued';
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
@@ -656,6 +610,7 @@ function buildPromoOptionsFromGAS(data) {
     });
   }
 
+  // ── 渲染選項 ──
   options.forEach(opt => {
     if (_hasIssuedHalf && opt.type === 'half_issue') {
       const warn = document.createElement('div');
@@ -682,6 +637,7 @@ function buildPromoOptionsFromGAS(data) {
     }));
   });
 
+  // ── 自訂促銷選項 ──
   customPromos.forEach(cp => {
     container.appendChild(makeOpt({
       id   : 'opt-' + cp.key,
@@ -693,11 +649,16 @@ function buildPromoOptionsFromGAS(data) {
     }));
   });
 
+  // ★ 修復 B：無可選項時的處理
+  //   若沒有任何可點選選項，且 promoPoints 開啟 → 自動送 'points'（只集點，原價結帳）
+  //   若 promoPoints 也關閉 → 直接送 'skip'（什麼都不做）
   const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
   if (!hasSelectable) {
     if (_flags.promoPoints) {
+      // 集點開啟但沒有促銷選項 → 靜默送出只集點
       setTimeout(() => submitPromoChoice('points', 0, 0), 300);
     } else {
+      // 集點也關閉 → 直接送 skip，通知 POS 正常結帳
       setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
     }
   }
@@ -819,7 +780,25 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
-  // quota_redeem 核銷由 POS 執行
+  // ★ v9.3 fix quota_redeem：先查實際剩餘份數，再以 min(useQty, remaining) 核銷
+  if (promoKey === 'quota_redeem') {
+    const _urlUseQty = parseInt((new URL(location.href)).searchParams.get("useQty") || "1") || 1;
+    try {
+      // step1：查詢實際剩餘額度（避免 issue_quota 補差額邏輯導致 B 欄被歸零後仍依舊值核銷）
+      const _chkRes  = await fetch(GAS_URL + "?action=check_quota&lineuid=" + encodeURIComponent(profile.userId));
+      const _chkData = await _chkRes.json();
+      if (!_chkData.hasQuota || (_chkData.remaining || 0) <= 0) {
+        showFatalError("額度核銷失敗：剩餘額度不足（" + (_chkData.message || "請告知店員") + ")"); return;
+      }
+      // step2：實際核銷份數 = min(URL帶入份數, 實際剩餘份數)
+      const _actualUseQty = Math.min(_urlUseQty, _chkData.remaining);
+      const _redeemRes  = await fetch(GAS_URL + "?action=redeem_quota&lineuid=" + encodeURIComponent(profile.userId) + "&useQty=" + _actualUseQty);
+      const _redeemData = await _redeemRes.json();
+      if (_redeemData.status !== 'OK') {
+        showFatalError("額度核銷失敗：" + (_redeemData.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
 
   if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
     try {
@@ -876,9 +855,10 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  集點流程
+//  ★ 修復 A：集點流程（只有 promoPoints=1 時才會執行到這裡）
 // ══════════════════════════════════════════════════════════════
 async function startPointsFlow() {
+  // 雙重保險：若旗標關閉，直接跳走
   if (!_flags.promoPoints) {
     goScreen("pt-skip");
     return;
@@ -905,6 +885,7 @@ async function startPointsFlow() {
 }
 
 async function confirmCollect() {
+  // ★ 修復 A（防護層）：此函式只應在 promoPoints=1 時被呼叫到
   if (!_flags.promoPoints) { goScreen("pt-skip"); return; }
 
   goScreen("pt-collecting");
