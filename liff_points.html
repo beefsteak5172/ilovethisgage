@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>無名牛排 - 快速同步中</title>
+<title>無名牛排 - 優惠同步中</title>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -20,6 +20,7 @@
   .loading-spinner { width: 36px; height: 36px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: rotate 0.8s linear infinite; margin: 0 auto; }
   .status-panel { animation: slideUp 0.4s ease-out; width: 100%; }
   .terms-body { padding: 12px 16px; font-size: 11px; color: #666; line-height: 1.5; border-top: 1px solid #eee; background: #fafafa; }
+  .btn-retry { margin-top: 15px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -31,7 +32,7 @@
   <div id="scn-options" style="padding: 25px 20px; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div id="auto-processing" style="text-align:center;">
       <div class="loading-spinner"></div>
-      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">快速同步中...</p>
+      <p id="status-text" style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在同步優惠資訊...</p>
     </div>
   </div>
 
@@ -43,29 +44,41 @@
 </div>
 
 <script>
-const VERSION = "12.0." + Math.floor(Date.now() / 1000);
+const VERSION = "13.0." + Math.floor(Date.now() / 1000);
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
+const LIFF_ID = "2004223422-C2DD295";
 
 async function initLiff() {
   try {
-    await liff.init({ liffId: "2004223422-C2DD295" });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    const profile = await liff.getProfile();
-    
-    // 極速化：同時啟動超時保護與資料抓取
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000));
-    const dataPromise = fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`).then(res => res.json());
-
-    try {
-      const status = await Promise.race([dataPromise, timeoutPromise]);
-      renderOptions(status, profile.userId);
-    } catch (err) {
-      // 如果超時或出錯，進入「預判模式」：假設沒券，直接領取
-      console.warn("Using fallback mode due to speed/error");
-      renderFallback(profile.userId);
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
     }
+    const profile = await liff.getProfile();
+    startSync(profile.userId);
   } catch (err) {
-    document.getElementById('scn-options').innerHTML = '<p style="color:red;">系統繁忙，請稍後再試</p>';
+    console.error("LIFF Init Error", err);
+    showError("初始化失敗，請重新掃碼");
+  }
+}
+
+async function startSync(uid) {
+  // 設置 8 秒超時保護
+  const timeoutId = setTimeout(() => {
+    console.warn("Sync timeout, using fallback");
+    renderFallback(uid);
+  }, 8000);
+
+  try {
+    const res = await fetch(`${GAS_URL}?action=member_status&uid=${uid}&v=${VERSION}`);
+    const status = await res.json();
+    clearTimeout(timeoutId);
+    renderOptions(status, uid);
+  } catch (err) {
+    console.error("Fetch Error", err);
+    clearTimeout(timeoutId);
+    renderFallback(uid); // 出錯也進入預判模式，不顯示繁忙
   }
 }
 
@@ -73,30 +86,26 @@ function renderOptions(status, uid) {
   const container = document.getElementById('scn-options');
   const _quotaRemain = parseInt(status.halfPriceQuota || 0);
   const _qDisc = parseInt(status.halfPriceDiscount || 0);
-  const _qExp = status.halfPriceExpireTime || '10天內';
   const urlParams = new URLSearchParams(window.location.search);
   const _cartQty = parseInt(urlParams.get('issueQty') || 0);
   const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
 
-  // 縮短等待感，僅保留 0.6 秒動畫
-  setTimeout(() => {
-    if (_quotaRemain > 0) {
-      container.innerHTML = `
-        <div class="status-panel" style="text-align:center;">
-          <div style="font-size:50px; margin-bottom:10px;">✅</div>
-          <h2 style="color:#28a745; margin-bottom:10px; font-size:20px;">已自動套用優惠</h2>
-          <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">使用 ${_quotaRemain} 份額度</div>
-          <div style="display:inline-block; background:#eef9f0; padding:8px 20px; border-radius:30px; color:#28a745; font-weight:bold; font-size:18px;">
-            每份現折 $${_qDisc} 元
-          </div>
-          <p style="font-size:15px; color:#333; font-weight:bold; margin-top:12px;">✨ 剩餘總額度：${_quotaRemain} 份</p>
+  if (_quotaRemain > 0) {
+    container.innerHTML = `
+      <div class="status-panel" style="text-align:center;">
+        <div style="font-size:50px; margin-bottom:10px;">✅</div>
+        <h2 style="color:#28a745; margin-bottom:10px; font-size:20px;">已自動套用優惠</h2>
+        <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">使用 ${_quotaRemain} 份額度</div>
+        <div style="display:inline-block; background:#eef9f0; padding:8px 20px; border-radius:30px; color:#28a745; font-weight:bold; font-size:18px;">
+          每份現折 $${_qDisc} 元
         </div>
-      `;
-      submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
-    } else {
-      renderFallback(uid);
-    }
-  }, 600);
+        <p style="font-size:15px; color:#333; font-weight:bold; margin-top:12px;">✨ 剩餘總額度：${_quotaRemain} 份</p>
+      </div>
+    `;
+    submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
+  } else {
+    renderFallback(uid);
+  }
 }
 
 function renderFallback(uid) {
@@ -121,11 +130,22 @@ function renderFallback(uid) {
 
 async function submitToGas(uid, choice, qty, disc) {
   try {
+    // 使用 no-cors 快速發送，不等待回傳
     fetch(`${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}`, { mode: 'no-cors' });
-    setTimeout(() => { liff.closeWindow(); }, 1800);
+    setTimeout(() => { liff.closeWindow(); }, 2000);
   } catch (err) { console.error(err); }
 }
 
+function showError(msg) {
+  document.getElementById('scn-options').innerHTML = `
+    <div style="text-align:center;">
+      <p style="color:#dc3545; font-weight:bold; font-size:16px;">${msg}</p>
+      <button class="btn-retry" onclick="location.reload()">手動重試</button>
+    </div>
+  `;
+}
+
+// 啟動
 initLiff();
 </script>
 </body>
