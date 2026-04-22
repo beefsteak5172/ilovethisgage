@@ -3,83 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>無名牛排 - 優惠同步中</title>
+<title>無名牛排 - 快速同步中</title>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
-  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rotate { to { transform: rotate(360deg); } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "PingFang TC", "Helvetica Neue", Arial, sans-serif;
     background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
-    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px;
   }
   .card { background: #fff; border-radius: 24px; max-width: 380px; width: 100%; box-shadow: 0 15px 40px rgba(0,0,0,0.25); overflow: hidden; }
-  .hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32); padding: 22px 20px 18px; text-align: center; color: #fff; }
-  .hdr-icon { font-size: 34px; margin-bottom: 5px; }
-  .hdr h2 { font-size: 17px; font-weight: 700; margin: 0 0 2px; }
-  .loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: rotate 1s linear infinite; margin: 0 auto; }
-  .status-panel { animation: slideUp 0.5s ease-out; width: 100%; }
-  .terms-body { padding: 14px 16px; max-height: 40vh; overflow-y: auto; font-size: 12px; color: #444; line-height: 1.6; border-top: 1px solid #eee; }
-  .terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20; margin: 10px 0 5px; }
-  .tag { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 6px; margin-right: 4px; }
-  .tag-org { background:#FFF3E0; color:#E65100; }
+  .hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32); padding: 18px 20px; text-align: center; color: #fff; }
+  .hdr h2 { font-size: 17px; font-weight: 700; }
+  .loading-spinner { width: 36px; height: 36px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: rotate 0.8s linear infinite; margin: 0 auto; }
+  .status-panel { animation: slideUp 0.4s ease-out; width: 100%; }
+  .terms-body { padding: 12px 16px; font-size: 11px; color: #666; line-height: 1.5; border-top: 1px solid #eee; background: #fafafa; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
   <div class="hdr">
-    <div class="hdr-icon">🥩</div>
     <h2>無名牛排會員系統</h2>
-    <p id="version-tag" style="font-size:10px; opacity:0.5;"></p>
   </div>
 
-  <div id="scn-options" style="padding: 30px 20px; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+  <div id="scn-options" style="padding: 25px 20px; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
     <div id="auto-processing" style="text-align:center;">
       <div class="loading-spinner"></div>
-      <p style="margin-top:25px; font-size:18px; color:#007bff; font-weight:bold;">正在同步優惠資訊...</p>
-      <p style="font-size:13px; color:#aaa; margin-top:8px;">請稍候，系統將自動為您處理</p>
+      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">快速同步中...</p>
     </div>
   </div>
 
   <div class="terms-body">
-    <div class="terms-section-title">【第二件半價券使用規則】</div>
-    <ul style="list-style:none; padding-left:5px;">
-      <li>• 每購買 1 份主餐，即可領取 1 份半價額度。</li>
-      <li>• 領取後 <span class="tag tag-org">隔日起 10 天內有效</span>，逾期失效。</li>
-      <li>• 核銷時，點幾客扣幾客，每客皆享基準價折抵。</li>
-      <li>• 基準價以領取時「最低價套餐之一半」為準。</li>
-    </ul>
+    <p style="font-weight:bold; color:#1B5E20; margin-bottom:4px;">【使用規則簡述】</p>
+    <p>• 買1客領1份額度，隔日起10天內有效。</p>
+    <p>• 核銷時點幾客扣幾客，每客皆享基準價折抵。</p>
   </div>
 </div>
 
 <script>
-// 版本隨機數，強制防止緩存
-const VERSION = "11.0." + Math.floor(Date.now() / 1000);
-document.getElementById('version-tag').textContent = "v" + VERSION;
+const VERSION = "12.0." + Math.floor(Date.now() / 1000);
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
 
 async function initLiff() {
   try {
     await liff.init({ liffId: "2004223422-C2DD295" });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    if (!liff.isLoggedIn()) { liff.login(); return; }
     const profile = await liff.getProfile();
-    fetchStatus(profile.userId);
-  } catch (err) {
-    console.error("LIFF Init Error", err);
-  }
-}
+    
+    // 極速化：同時啟動超時保護與資料抓取
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000));
+    const dataPromise = fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`).then(res => res.json());
 
-async function fetchStatus(uid) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
-  try {
-    const res = await fetch(`${GAS_URL}?action=member_status&uid=${uid}&v=${VERSION}`);
-    const status = await res.json();
-    renderOptions(status, uid);
+    try {
+      const status = await Promise.race([dataPromise, timeoutPromise]);
+      renderOptions(status, profile.userId);
+    } catch (err) {
+      // 如果超時或出錯，進入「預判模式」：假設沒券，直接領取
+      console.warn("Using fallback mode due to speed/error");
+      renderFallback(profile.userId);
+    }
   } catch (err) {
-    document.getElementById('scn-options').innerHTML = '<p style="color:red; font-weight:bold;">連線失敗，請重新整理頁面</p>';
+    document.getElementById('scn-options').innerHTML = '<p style="color:red;">系統繁忙，請稍後再試</p>';
   }
 }
 
@@ -90,58 +76,54 @@ function renderOptions(status, uid) {
   const _qExp = status.halfPriceExpireTime || '10天內';
   const urlParams = new URLSearchParams(window.location.search);
   const _cartQty = parseInt(urlParams.get('issueQty') || 0);
-  const _unitPrice = parseInt(urlParams.get('unitPrice') || 0);
-  const _baseDisc = Math.round(_unitPrice / 2);
+  const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
 
+  // 縮短等待感，僅保留 0.6 秒動畫
   setTimeout(() => {
     if (_quotaRemain > 0) {
-      // 情況 A: 有券 -> 自動扣除
       container.innerHTML = `
         <div class="status-panel" style="text-align:center;">
-          <div style="font-size:60px; margin-bottom:15px;">✅</div>
-          <h2 style="color:#28a745; margin-bottom:15px; font-size:22px;">已自動套用優惠</h2>
-          <div style="font-size:28px; font-weight:900; color:#333; margin:10px 0;">使用 ${_quotaRemain} 份額度</div>
-          <div style="display:inline-block; background:#eef9f0; padding:10px 25px; border-radius:40px; color:#28a745; font-weight:bold; font-size:20px; margin:10px 0;">
+          <div style="font-size:50px; margin-bottom:10px;">✅</div>
+          <h2 style="color:#28a745; margin-bottom:10px; font-size:20px;">已自動套用優惠</h2>
+          <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">使用 ${_quotaRemain} 份額度</div>
+          <div style="display:inline-block; background:#eef9f0; padding:8px 20px; border-radius:30px; color:#28a745; font-weight:bold; font-size:18px;">
             每份現折 $${_qDisc} 元
           </div>
-          <div style="margin-top:15px; padding-top:15px; border-top:1px solid #eee; width:100%;">
-            <p style="font-size:17px; color:#333; font-weight:bold;">✨ 帳號剩餘總額度：${_quotaRemain} 份</p>
-            <p style="font-size:13px; color:#666; margin-top:5px;">📅 有效期至: ${_qExp}</p>
-          </div>
+          <p style="font-size:15px; color:#333; font-weight:bold; margin-top:12px;">✨ 剩餘總額度：${_quotaRemain} 份</p>
         </div>
       `;
       submitToGas(uid, 'quota_redeem', _quotaRemain, _qDisc);
     } else {
-      // 情況 B: 沒券 -> 自動領取
-      container.innerHTML = `
-        <div class="status-panel" style="text-align:center;">
-          <div style="font-size:60px; margin-bottom:15px;">🎁</div>
-          <h2 style="color:#856404; margin-bottom:15px; font-size:22px;">已自動領取優惠</h2>
-          <div style="font-size:28px; font-weight:900; color:#333; margin:10px 0;">獲得 ${_cartQty} 份額度</div>
-          <div style="display:inline-block; background:#fff9ee; padding:10px 25px; border-radius:40px; color:#d39e00; font-weight:bold; font-size:20px; margin:10px 0;">
-            下次每份抵 $${_baseDisc} 元
-          </div>
-          <div style="margin-top:15px; padding-top:15px; border-top:1px solid #eee; width:100%;">
-            <p style="font-size:17px; color:#dc3545; font-weight:bold;">⏰ 隔日起 10 天內有效</p>
-            <p style="font-size:13px; color:#999; margin-top:5px;">(當日領取不可當日使用)</p>
-          </div>
-        </div>
-      `;
-      submitToGas(uid, 'half_issue', _cartQty, _baseDisc);
+      renderFallback(uid);
     }
-  }, 1500);
+  }, 600);
+}
+
+function renderFallback(uid) {
+  const container = document.getElementById('scn-options');
+  const urlParams = new URLSearchParams(window.location.search);
+  const _cartQty = parseInt(urlParams.get('issueQty') || 0);
+  const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
+
+  container.innerHTML = `
+    <div class="status-panel" style="text-align:center;">
+      <div style="font-size:50px; margin-bottom:10px;">🎁</div>
+      <h2 style="color:#856404; margin-bottom:10px; font-size:20px;">已自動領取優惠</h2>
+      <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">獲得 ${_cartQty} 份額度</div>
+      <div style="display:inline-block; background:#fff9ee; padding:8px 20px; border-radius:30px; color:#d39e00; font-weight:bold; font-size:18px;">
+        下次每份抵 $${_baseDisc} 元
+      </div>
+      <p style="font-size:15px; color:#dc3545; font-weight:bold; margin-top:12px;">⏰ 隔日起 10 天內有效</p>
+    </div>
+  `;
+  submitToGas(uid, 'half_issue', _cartQty, _baseDisc);
 }
 
 async function submitToGas(uid, choice, qty, disc) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
   try {
-    // 這裡模擬提交給 GAS 並通知 POS 的動作
-    // 實際運作時，POS 會輪詢 GAS 狀態，所以我們只需確保 GAS 狀態更新
-    await fetch(`${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}`);
-    setTimeout(() => { liff.closeWindow(); }, 2500);
-  } catch (err) {
-    console.error("Submit Error", err);
-  }
+    fetch(`${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}`, { mode: 'no-cors' });
+    setTimeout(() => { liff.closeWindow(); }, 1800);
+  } catch (err) { console.error(err); }
 }
 
 initLiff();
