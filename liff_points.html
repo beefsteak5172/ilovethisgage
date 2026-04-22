@@ -3,282 +3,248 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>無名牛排 - 會員優惠</title>
+<title>無名牛排 - 優惠系統</title>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
   @keyframes rotate { to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "PingFang TC", "Helvetica Neue", Arial, sans-serif;
     background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
     min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 15px;
   }
-  .card { background:#fff; border-radius:24px; max-width:380px; width:100%; box-shadow:0 15px 40px rgba(0,0,0,0.25); overflow:hidden; }
-  .hdr { background:linear-gradient(135deg,#1B5E20,#2E7D32); padding:16px 20px; text-align:center; color:#fff; }
-  .hdr h2 { font-size:17px; font-weight:700; }
-  .hdr p  { font-size:12px; opacity:0.85; margin-top:2px; }
-  .body { padding:20px 18px 22px; animation:fadeIn 0.35s ease; }
-  /* 會員資訊列 */
-  .info-row { display:flex; gap:8px; margin-bottom:14px; }
-  .info-box {
-    flex:1; background:#f8fafc; border:1.5px solid #e2e8f0;
-    border-radius:14px; padding:10px 8px; text-align:center;
+  .card { background: #fff; border-radius: 24px; max-width: 380px; width: 100%; box-shadow: 0 15px 40px rgba(0,0,0,0.25); overflow: hidden; animation: fadeIn 0.4s ease; }
+  .hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32); padding: 18px 20px; text-align: center; color: #fff; }
+  .hdr h2 { font-size: 17px; font-weight: 700; }
+  .body { padding: 28px 24px 24px; text-align: center; }
+  .icon { font-size: 52px; margin-bottom: 10px; }
+  .title { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .badge { display: inline-block; font-size: 22px; font-weight: 900; padding: 8px 20px; border-radius: 50px; margin: 10px 0; }
+  .detail { font-size: 13px; color: #666; line-height: 1.7; margin-top: 6px; }
+  .tag { font-size: 13px; font-weight: 700; margin-top: 8px; }
+  .spinner { width:36px; height:36px; border:4px solid #f3f3f3; border-top:4px solid #2E7D32; border-radius:50%; animation:rotate 0.8s linear infinite; margin:0 auto 16px; }
+  .loading-text { font-size:15px; color:#2E7D32; font-weight:700; }
+  
+  .btn-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .btn {
+    padding: 16px; border-radius: 12px; border: none; font-size: 18px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; text-decoration: none; display: block; width: 100%;
   }
-  .info-box .val { font-size:22px; font-weight:900; color:#1e293b; }
-  .info-box .lbl { font-size:11px; color:#64748b; margin-top:2px; }
-  /* 選項按鈕 */
-  .opt-btn {
-    width:100%; border:none; border-radius:14px; padding:14px 16px;
-    margin-bottom:10px; cursor:pointer; text-align:left;
-    display:flex; align-items:center; gap:12px;
-    font-family:inherit; transition:transform 0.1s, box-shadow 0.1s;
-    animation:fadeIn 0.4s ease;
+  .btn-primary { background: #2E7D32; color: #fff; box-shadow: 0 4px 12px rgba(46,125,50,0.3); }
+  .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 6px rgba(46,125,50,0.3); }
+  .btn-outline { background: #fff; color: #2E7D32; border: 2px solid #2E7D32; }
+  .btn-outline:active { background: #f1f8e9; }
+  
+  .input-group { margin-top: 15px; text-align: left; }
+  .input-label { font-size: 12px; color: #666; margin-bottom: 4px; display: block; }
+  .input-field {
+    width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;
+    outline: none; transition: border-color 0.2s;
   }
-  .opt-btn:active { transform:scale(0.97); }
-  .opt-btn .ico { font-size:28px; flex-shrink:0; }
-  .opt-btn .txt { flex:1; }
-  .opt-btn .txt .name { font-size:15px; font-weight:800; }
-  .opt-btn .txt .desc { font-size:12px; margin-top:2px; opacity:0.8; }
-  .opt-btn.green  { background:#d4edda; color:#155724; box-shadow:0 3px 12px rgba(34,197,94,0.25); }
-  .opt-btn.blue   { background:#cfe2ff; color:#084298; box-shadow:0 3px 12px rgba(99,102,241,0.2); }
-  .opt-btn.amber  { background:#fff3cd; color:#664d03; box-shadow:0 3px 12px rgba(251,191,36,0.2); }
-  .opt-btn.slate  { background:#f1f5f9; color:#475569; }
-  .opt-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
-  /* 結果畫面 */
-  .result { text-align:center; padding:10px 0 4px; animation:fadeIn 0.4s ease; }
-  .result .r-icon { font-size:54px; margin-bottom:8px; }
-  .result .r-title { font-size:20px; font-weight:900; margin-bottom:6px; }
-  .result .r-badge { display:inline-block; font-size:16px; font-weight:800; padding:7px 18px; border-radius:50px; margin-bottom:10px; }
-  .result .r-note  { font-size:13px; color:#666; line-height:1.6; }
-  /* 轉圈 */
-  .spinner { width:32px; height:32px; border:4px solid #f3f3f3; border-top:4px solid #2E7D32; border-radius:50%; animation:rotate 0.8s linear infinite; margin:0 auto 12px; }
-  .loading-text { font-size:14px; color:#2E7D32; font-weight:700; text-align:center; }
-  /* 分隔線 */
-  .divider { border:none; border-top:1px solid #e2e8f0; margin:10px 0; }
+  .input-field:focus { border-color: #2E7D32; }
+  .error-msg { color: #dc3545; font-size: 12px; margin-top: 4px; display: none; }
 </style>
 </head>
 <body>
 <div class="card" id="app">
-  <div class="hdr">
-    <h2>無名牛排 會員優惠</h2>
-    <p>請選擇您要使用的優惠</p>
-  </div>
+  <div class="hdr"><h2>無名牛排會員優惠系統</h2></div>
   <div class="body" id="scn">
     <div class="spinner"></div>
     <p class="loading-text">正在讀取會員資料…</p>
   </div>
 </div>
-
 <script>
-// ─── 設定 ────────────────────────────────────────
-var GAS_URL  = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
-var LIFF_ID  = "2004223422-C2DD295";
-var EXP_DAYS = 10;
-// ─────────────────────────────────────────────────
+const GAS_URL  = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
+const LIFF_ID  = "2004223422-C2DD295";
+const EXP_DAYS = 10;
 
 function getParam(name) {
-  var u = new URLSearchParams(window.location.search);
-  return u.get(name) || new URLSearchParams((window.location.hash.split('?')[1]||'')).get(name);
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name) || new URLSearchParams((window.location.hash.split('?')[1] || '')).get(name);
 }
-var _sessionKey = getParam('sessionKey') || '';
-var _issueQty   = Math.max(1, parseInt(getParam('issueQty') || 1));
-var _unitPrice  = parseInt(getParam('unitPrice') || 399);
-var _baseDisc   = Math.round(_unitPrice / 2);
+const _sessionKey = getParam('sessionKey') || '';
+const _issueQty   = Math.max(1, parseInt(getParam('issueQty') || 1));
+const _unitPrice  = parseInt(getParam('unitPrice') || 399);
+const _baseDisc   = Math.round(_unitPrice / 2);
 
-var _uid = '';  // 全域保存
+let _currentUserUid = 'unknown';
+let _currentQuota = 0;
+let _currentDisc = _baseDisc;
+let _isManual = false;
 
-// ─── 安全 fetch（逾時 + 非 JSON 防爆）─────────────
-async function safeGet(url) {
+function setHtml(html) { document.getElementById('scn').innerHTML = html; }
+function showLoading(msg) { setHtml(`<div class="spinner"></div><p class="loading-text">${msg}</p>`); }
+
+function showResult({ icon, titleColor, title, badgeBg, badgeColor, badge, details, tag, tagColor, showClose = true }) {
+  setHtml(`
+    <div class="icon">${icon}</div>
+    <div class="title" style="color:${titleColor}">${title}</div>
+    <div class="badge" style="background:${badgeBg};color:${badgeColor}">${badge}</div>
+    ${details ? `<div class="detail">${details}</div>` : ''}
+    ${tag ? `<div class="tag" style="color:${tagColor||'#dc3545'}">${tag}</div>` : ''}
+    ${showClose ? `<div class="btn-group"><button class="btn btn-outline" onclick="liff.closeWindow()">關閉視窗</button></div>` : ''}
+  `);
+}
+
+async function safeGet(url, timeoutMs) {
+  timeoutMs = timeoutMs || 5000;
   var ctrl = new AbortController();
-  var t = setTimeout(function(){ ctrl.abort(); }, 7000);
+  var timer = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
   try {
-    var res  = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    var res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
     var text = await res.text();
     return JSON.parse(text);
-  } catch(e) { return null; }
-  finally { clearTimeout(t); }
+  } catch(e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-// ─── 送出選擇到 GAS ──────────────────────────────
-async function submitChoice(choice, decision) {
-  decision = decision || 'use';
-  var url = GAS_URL
-    + '?action=submit_promo'
-    + '&uid='        + encodeURIComponent(_uid)
-    + '&lineuid='    + encodeURIComponent(_uid)
-    + '&choice='     + encodeURIComponent(choice)
-    + '&decision='   + encodeURIComponent(decision)
-    + '&qty='        + _issueQty
-    + '&disc='       + _baseDisc
-    + '&sessionKey=' + encodeURIComponent(_sessionKey)
-    + '&t='          + Date.now();
-  try { await fetch(url, { mode:'no-cors' }); } catch(_) {}
+async function submitDecision(uid, choice, qty, disc, extra) {
+  var params = 'action=submit_promo'
+    + '&uid='       + encodeURIComponent(uid)
+    + '&lineuid='   + encodeURIComponent(uid)
+    + '&choice='    + encodeURIComponent(choice)
+    + '&qty='       + qty
+    + '&disc='      + disc
+    + '&sessionKey='+ encodeURIComponent(_sessionKey)
+    + '&isManual='  + (_isManual ? '1' : '0')
+    + '&t='         + Date.now();
+  if (extra) { Object.keys(extra).forEach(function(k){ params += '&' + k + '=' + encodeURIComponent(extra[k]); }); }
+  var url = GAS_URL + '?' + params;
+  try { await fetch(url, { mode: 'no-cors' }); } catch(_) {}
   try { new Image().src = url; } catch(_) {}
 }
 
-function autoClose(ms) {
-  setTimeout(function(){ try { liff.closeWindow(); } catch(_) {} }, ms||3500);
+async function issueQuota(uid, qty) {
+  var url = GAS_URL + '?action=issue_quota&uid=' + encodeURIComponent(uid) + '&lineuid=' + encodeURIComponent(uid) + '&qty=' + qty + '&_t=' + Date.now();
+  try { await fetch(url, { mode: 'no-cors' }); } catch(_) {}
+  try { new Image().src = url; } catch(_) {}
 }
 
-// ─── 顯示結果畫面（按鈕後） ─────────────────────
-function showResult(icon, titleColor, title, badgeBg, badgeColor, badge, note) {
-  document.getElementById('scn').innerHTML =
-    '<div class="result">'
-    + '<div class="r-icon">' + icon + '</div>'
-    + '<div class="r-title" style="color:' + titleColor + '">' + title + '</div>'
-    + '<div class="r-badge" style="background:' + badgeBg + ';color:' + badgeColor + '">' + badge + '</div>'
-    + (note ? '<div class="r-note">' + note + '</div>' : '')
-    + '<div style="margin-top:14px;font-size:12px;color:#94a3b8;">視窗將自動關閉…</div>'
-    + '</div>';
+function autoClose(delay) {
+  delay = delay || 3500;
+  setTimeout(function(){ try { liff.closeWindow(); } catch(_) {} }, delay);
 }
 
-// ─── 禁用所有按鈕（防止重複點擊） ───────────────
-function lockBtns() {
-  var btns = document.querySelectorAll('.opt-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
-}
+async function handleRedeem() {
+  if (_isManual) {
+    const val = document.getElementById('manualId').value.trim();
+    if (!val) { document.getElementById('inputError').style.display = 'block'; return; }
+    _currentUserUid = 'M-' + val;
+  }
+  
+  const uid = _currentUserUid;
+  const quota = _currentQuota;
+  const need = _issueQty;
+  const qDisc = _currentDisc;
 
-// ─── 主畫面：顯示選項讓客人按 ────────────────────
-function renderOptions(quota, points, threshold, discount) {
-  var need   = _issueQty;
-  var canUse = quota >= need;    // 額度足夠可核消
-  var canTopUp = quota > 0 && quota < need; // 有但不夠
-  var canRedeem = points >= threshold && threshold > 0; // 點數可折抵
+  showLoading('正在處理核消…');
 
-  var html = '';
-
-  // ── 會員資訊列 ──
-  html += '<div class="info-row">'
-    + '<div class="info-box"><div class="val">' + quota + '</div><div class="lbl">半價券額度</div></div>'
-    + '<div class="info-box"><div class="val">' + points + '</div><div class="lbl">集點點數</div></div>'
-    + '<div class="info-box"><div class="val">' + need + '</div><div class="lbl">本次份數</div></div>'
-    + '</div>';
-
-  // ── 選項 A：核消半價券 ──
-  if (canUse) {
+  if (quota >= need) {
     var remain = quota - need;
-    html += '<button class="opt-btn green" onclick="onChooseQuota()">'
-      + '<span class="ico">✅</span>'
-      + '<span class="txt">'
-      + '<div class="name">使用半價券（核消 ' + need + ' 份）</div>'
-      + '<div class="desc">帳戶剩餘 ' + remain + ' 份 · 第二件半價折抵</div>'
-      + '</span></button>';
-  } else if (canTopUp) {
-    var topUp = need - quota;
-    html += '<button class="opt-btn green" onclick="onChooseQuota()">'
-      + '<span class="ico">🔄</span>'
-      + '<span class="txt">'
-      + '<div class="name">補發並核消（不足差額自動補發）</div>'
-      + '<div class="desc">現有 ' + quota + ' 份，補發 ' + topUp + ' 份後核消 ' + need + ' 份</div>'
-      + '</span></button>';
+    showResult({
+      icon: '✅', titleColor: '#1a7c2a', title: '半價券核消成功',
+      badgeBg: '#d4edda', badgeColor: '#155724', badge: '本次使用 ' + need + ' 份',
+      details: remain > 0 ? '✨ 帳戶剩餘：<b>' + remain + '</b> 份' : '✨ 本次剛好全部使用',
+      tag: '優惠已套用，稍後自動結帳', tagColor: '#1a7c2a'
+    });
+    await submitDecision(uid, 'quota_redeem', need, qDisc, { useQty: need });
   } else {
-    // 沒有額度 → 領取
-    html += '<button class="opt-btn amber" onclick="onChooseIssue()">'
-      + '<span class="ico">🎁</span>'
-      + '<span class="txt">'
-      + '<div class="name">領取第二件半價券（' + need + ' 份）</div>'
-      + '<div class="desc">⏰ 明日起 ' + EXP_DAYS + ' 天內有效</div>'
-      + '</span></button>';
-  }
-
-  // ── 選項 B：點數折抵 ──
-  if (canRedeem) {
-    html += '<button class="opt-btn blue" onclick="onChooseRedeem()">'
-      + '<span class="ico">⭐</span>'
-      + '<span class="txt">'
-      + '<div class="name">兌換點數折抵 -$' + discount + '</div>'
-      + '<div class="desc">使用 ' + threshold + ' 點（現有 ' + points + ' 點）</div>'
-      + '</span></button>';
-  }
-
-  html += '<hr class="divider">';
-
-  // ── 選項 C：只集點 ──
-  html += '<button class="opt-btn slate" onclick="onChoosePoints()">'
-    + '<span class="ico">📌</span>'
-    + '<span class="txt">'
-    + '<div class="name">只集點，不使用優惠</div>'
-    + '<div class="desc">本次僅累積點數，優惠留著下次用</div>'
-    + '</span></button>';
-
-  document.getElementById('scn').innerHTML = html;
-}
-
-// ─── 各按鈕 handler ───────────────────────────────
-async function onChooseQuota() {
-  lockBtns();
-  var quota = window._curQuota || 0;
-  var need  = _issueQty;
-  // 補發差額
-  if (quota > 0 && quota < need) {
     var topUp = need - quota;
-    var topUrl = GAS_URL + '?action=issue_quota&uid=' + encodeURIComponent(_uid) + '&lineuid=' + encodeURIComponent(_uid) + '&qty=' + topUp + '&_t=' + Date.now();
-    try { await fetch(topUrl, { mode:'no-cors' }); } catch(_) {}
-    try { new Image().src = topUrl; } catch(_) {}
+    await issueQuota(uid, topUp);
+    showResult({
+      icon: '🔄', titleColor: '#0a4fa3', title: '已補發並核消',
+      badgeBg: '#cfe2ff', badgeColor: '#084298', badge: '補發 ' + topUp + ' 份 ＋ 核消 ' + need + ' 份',
+      details: '原有額度：' + quota + ' 份　補發：' + topUp + ' 份<br>本次使用：' + need + ' 份，帳戶剩餘：0 份',
+      tag: '優惠已套用，稍後自動結帳', tagColor: '#0a4fa3'
+    });
+    await submitDecision(uid, 'quota_redeem', need, qDisc, { useQty: need, topUp: topUp });
   }
-  await submitChoice('quota_redeem', 'use');
-  showResult('✅','#1a7c2a','半價券核消成功','#d4edda','#155724','核消 ' + need + ' 份','優惠已套用，系統將自動完成結帳');
-  autoClose();
+  autoClose(4000);
 }
 
-async function onChooseIssue() {
-  lockBtns();
-  await submitChoice('half_issue', 'use');
-  showResult('🎁','#7c4a00','已領取半價券額度','#fff3cd','#664d03','獲得 ' + _issueQty + ' 份','⏰ 明日起 ' + EXP_DAYS + ' 天內有效<br>下次到店出示即可折抵');
-  autoClose();
+async function handleIssue() {
+  if (_isManual) {
+    const val = document.getElementById('manualId').value.trim();
+    if (!val) { document.getElementById('inputError').style.display = 'block'; return; }
+    _currentUserUid = 'M-' + val;
+  }
+
+  const uid = _currentUserUid;
+  const need = _issueQty;
+  
+  showLoading('正在領取優惠…');
+  
+  showResult({
+    icon: '🎁', titleColor: '#7c4a00', title: '已領取半價券額度',
+    badgeBg: '#fff3cd', badgeColor: '#664d03', badge: '獲得 ' + need + ' 份額度',
+    details: '下次到店出示即可折抵',
+    tag: '⏰ 明日起 ' + EXP_DAYS + ' 天內有效', tagColor: '#c0392b'
+  });
+  await submitDecision(uid, 'half_issue', need, _baseDisc);
+  autoClose(4000);
 }
 
-async function onChooseRedeem() {
-  lockBtns();
-  await submitChoice('redeem', 'redeem');
-  showResult('💰','#0a4fa3','點數折抵確認中','#cfe2ff','#084298','兌換點數折抵','系統將自動完成結帳');
-  autoClose();
+function showMenu(isManualMode) {
+  _isManual = isManualMode;
+  let html = `
+    <div class="icon">${isManualMode ? '👤' : '🎫'}</div>
+    <div class="title">${isManualMode ? '手動連結會員' : '請選擇優惠動作'}</div>
+    <div class="detail">${isManualMode ? '無法取得 LINE 資訊，請輸入手機號碼' : '目前帳戶額度：<b>' + _currentQuota + '</b> 份'}</div>
+  `;
+  
+  if (isManualMode) {
+    html += `
+      <div class="input-group">
+        <label class="input-label">手機號碼 / 會員編號</label>
+        <input type="tel" id="manualId" class="input-field" placeholder="例如：0912345678" oninput="document.getElementById('inputError').style.display='none'">
+        <div id="inputError" class="error-msg">請輸入識別資訊以繼續</div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="handleRedeem()">立即核消 (${_issueQty}份)</button>
+      <button class="btn btn-outline" onclick="handleIssue()">領取新額度 (${_issueQty}份)</button>
+    </div>
+    <div class="tag" style="color:#666; font-weight:normal; margin-top:15px;">點擊按鈕後將自動完成並關閉</div>
+  `;
+  setHtml(html);
 }
 
-async function onChoosePoints() {
-  lockBtns();
-  await submitChoice('points', 'skip');
-  showResult('📌','#374151','已集點','#f1f5f9','#374151','只集點不使用優惠','感謝消費，點數已記錄！');
-  autoClose();
+async function run(uid) {
+  _currentUserUid = uid;
+  showLoading('正在讀取會員資料…');
+
+  var statusUrl = GAS_URL + '?action=member_status&uid=' + encodeURIComponent(uid) + '&lineuid=' + encodeURIComponent(uid) + '&_t=' + Date.now();
+  var status = await safeGet(statusUrl);
+  if (!status || status.status === 'ERROR') status = {};
+
+  _currentQuota = parseInt(status.halfPriceQuota || 0);
+  _currentDisc = parseInt(status.halfPriceDiscount || _baseDisc);
+
+  showMenu(false);
 }
 
-// ─── LIFF 初始化 ─────────────────────────────────
 async function initLiff() {
+  // 設定 4 秒超時，若 LIFF 沒反應直接進手動模式
+  const timeout = setTimeout(() => {
+    showMenu(true);
+  }, 4000);
+
   try {
     await liff.init({ liffId: LIFF_ID });
+    clearTimeout(timeout);
     if (!liff.isLoggedIn()) { liff.login(); return; }
     var profile = await liff.getProfile();
-    _uid = profile.userId;
-
-    // 取會員狀態
-    var statusUrl = GAS_URL
-      + '?action=member_status'
-      + '&uid='     + encodeURIComponent(_uid)
-      + '&lineuid=' + encodeURIComponent(_uid)
-      + '&_t='      + Date.now();
-    var status = await safeGet(statusUrl) || {};
-
-    var quota     = parseInt(status.halfPriceQuota    || 0);
-    var points    = parseInt(status.points            || status.totalPoints || 0);
-    var threshold = parseInt(status.redeemThreshold   || localStorage && localStorage.getItem && localStorage.getItem('pos_points_redeem_threshold') || 5);
-    var discount  = parseInt(status.redeemDiscount    || 50);
-
-    window._curQuota = quota;
-
-    renderOptions(quota, points, threshold, discount);
-
+    await run(profile.userId);
   } catch(err) {
-    console.error('[LIFF] 初始化失敗:', err);
-    // LIFF 失敗 → 送出 unknown 讓 POS 倒數後自動略過
-    document.getElementById('scn').innerHTML =
-      '<div class="result">'
-      + '<div class="r-icon">⚠️</div>'
-      + '<div class="r-title" style="color:#856404">無法取得會員資料</div>'
-      + '<div class="r-badge" style="background:#fff3cd;color:#664d03">請告知店員</div>'
-      + '<div class="r-note">系統將在 15 秒後自動繼續結帳</div>'
-      + '</div>';
-    try { await fetch(GAS_URL + '?action=submit_promo&uid=unknown&lineuid=unknown&choice=points&decision=skip&sessionKey=' + encodeURIComponent(_sessionKey) + '&t=' + Date.now(), { mode:'no-cors' }); } catch(_) {}
+    clearTimeout(timeout);
+    showMenu(true);
   }
 }
 
