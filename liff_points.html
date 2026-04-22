@@ -385,12 +385,13 @@ let indoorExpDays = 14;
 let redeemTierPoints = 0, redeemTierDisc = 0;
 let customPromos = [];
 
-// ★ v9.3-fix：issue_quota 參數（從 URL 讀入，供 startCheckoutPromoFlow 使用）
 let _issueQtyFromUrl  = 1;
 let _issueItemName    = '';
 let _issueUnitPrice   = 0;
 
-// ── 優惠開關旗標（從 URL 參數讀入，預設全關）
+// ★ v9.3-fix2：新增 _quotaRemain，從 GAS 即時查詢，預設 -1 表示尚未查詢
+let _quotaRemain = -1;
+
 let _flags = {
   promoHalf    : false,
   promoCarryout: false,
@@ -409,7 +410,6 @@ async function init() {
     profile = await liff.getProfile();
     const p = new URL(location.href).searchParams;
 
-    // ── 讀取 tiers ──
     const tiersParam = p.get("tiers");
     if (tiersParam) {
       try {
@@ -430,12 +430,10 @@ async function init() {
     _flags.promoRedeem   = p.get("promoRedeem")   === '1';
     _flags.promoPoints   = p.get("promoPoints")   === '1';
 
-    // ★ v9.3-fix：讀取 issue_quota 所需參數
     _issueQtyFromUrl = Math.max(1, parseInt(p.get("useQty")    || "1") || 1);
     _issueItemName   = (p.get("itemName")  || "").trim();
     _issueUnitPrice  = Math.max(0, parseInt(p.get("unitPrice") || "0") || 0);
 
-    // ── 讀取 customPromos ──
     const cpParam = p.get("customPromos");
     if (cpParam) {
       try {
@@ -485,14 +483,12 @@ async function agreeTerms() {
 
   if (f === "checkout") {
     await startCheckoutPromoFlow();
-
   } else if (f === "points") {
     if (!_flags.promoPoints) {
       goScreen("pt-skip");
       return;
     }
     await startPointsFlow();
-
   } else if (f.startsWith("signin_")) {
     startSigninFlow(f.replace("signin_", ""));
   }
@@ -521,8 +517,32 @@ async function startCheckoutPromoFlow() {
       + "&discount="      + lo.discount
       + "&indoorExpDays=" + indoorExpDays;
 
-    const res  = await fetch(url);
+    // ★ v9.3-fix2：同時查 member_status 和 quota_status，並行執行節省時間
+    const [res, quotaRes] = await Promise.all([
+      fetch(url),
+      // 只有開啟半價功能且有商品資訊時才查 quota
+      (_flags.promoHalf && _issueItemName && _issueUnitPrice > 0)
+        ? fetch(GAS_URL + "?action=get_quota&lineuid=" + encodeURIComponent(profile.userId))
+        : Promise.resolve(null)
+    ]);
+
     const data = await res.json();
+
+    // ★ v9.3-fix2：讀取剩餘額度（get_quota action 回傳 { status:'OK', remain: N }）
+    if (quotaRes) {
+      try {
+        const quotaData = await quotaRes.json();
+        if (quotaData && quotaData.status === 'OK') {
+          _quotaRemain = typeof quotaData.remain === 'number' ? quotaData.remain : 0;
+        } else {
+          _quotaRemain = 0; // 查詢失敗視為無額度，拒絕顯示
+        }
+      } catch(_) {
+        _quotaRemain = 0;
+      }
+    } else {
+      _quotaRemain = 0;
+    }
 
     if (data.status !== 'OK') {
       showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
@@ -594,21 +614,36 @@ function buildPromoOptionsFromGAS(data) {
     return true;
   });
 
-  // ★ v9.3-fix（同「扣點數」做法）：
-  //   quota_redeem 選項直接從 URL 參數建立，不依賴資料庫。
-  //   實際的 issue_quota + redeem_quota 由 POS 在收到決策後執行（如同點數由 POS 扣除）。
+  // ★ v9.3-fix2：quota_redeem 必須同時滿足：
+  //   1. 有商品資訊（itemName + unitPrice）
+  //   2. _flags.promoHalf 開啟
+  //   3. _quotaRemain > 0（從 GAS 即時確認剩餘額度）
   if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
-    // 移除 GAS 回傳的 quota_redeem（可能是舊資料），改用本次訂單的即時資訊
+    // 移除 GAS 回傳的舊 quota_redeem
     options = options.filter(opt => opt.type !== 'quota_redeem');
-    const _qDisc = Math.floor(_issueUnitPrice / 2);
-    options.unshift({
-      type : 'quota_redeem',
-      key  : 'quota_redeem',
-      icon : '🥩',
-      title: '使用半價額度（' + _issueQtyFromUrl + ' 份）',
-      sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _issueQtyFromUrl),
-      disabled: false
-    });
+
+    if (_quotaRemain > 0) {
+      // 有剩餘額度：顯示核銷選項
+      const _qDisc = Math.floor(_issueUnitPrice / 2);
+      const _effectiveQty = Math.min(_issueQtyFromUrl, _quotaRemain); // 不超過剩餘額度
+      options.unshift({
+        type : 'quota_redeem',
+        key  : 'quota_redeem',
+        icon : '🥩',
+        title: '使用半價額度（' + _effectiveQty + ' 份）',
+        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) +
+               '\n剩餘額度：' + _quotaRemain + ' 份',
+        disabled: false
+      });
+    } else {
+      // ★ v9.3-fix2：額度為 0，顯示提示訊息，不顯示核銷按鈕
+      const noQuotaWarn = document.createElement('div');
+      noQuotaWarn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
+      noQuotaWarn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 半價額度已用完</strong>' +
+        '本次訂單的半價額度為 0，無法使用「使用半價額度」優惠。<br>' +
+        '如需半價券，請選擇下方「領取第二件半價券」選項。';
+      container.appendChild(noQuotaWarn);
+    }
   }
 
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
@@ -789,7 +824,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
     } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
   }
 
-  // ★ v9.3-fix：quota_redeem 核銷改由 POS 執行（同「扣點數」做法），LIFF 只送出決策即可
+  // quota_redeem 核銷由 POS 執行
 
   if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
     try {
