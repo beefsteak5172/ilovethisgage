@@ -606,7 +606,7 @@ function buildPromoOptionsFromGAS(data) {
   let options = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
     if (t === 'points') return _flags.promoPoints && hasOtherUsable;
-    if (t === 'half_redeem' && _cartQty < 2) return false;  // ★ 1件時不顯示核銷選項
+    if (t === 'half_redeem') return true;  // ★ 1件時不顯示核銷選項
     if (t in TYPE_FLAG) return TYPE_FLAG[t];
     return true;
   });
@@ -650,7 +650,7 @@ function buildPromoOptionsFromGAS(data) {
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
 
   // ★ v9.3-fix3c：套餐 < 2件時不補加 half_redeem 選項
-  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf && _cartQty >= 2) {
+  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf) {
     options.push({
       type : 'half_redeem',
       key  : 'half_redeem',
@@ -665,17 +665,10 @@ function buildPromoOptionsFromGAS(data) {
     if (_hasIssuedHalf && opt.type === 'half_issue') {
       const warn = document.createElement('div');
       warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
-      if (_cartQty >= 2) {
-        // 有2件以上：提示可去核銷
+      // 已持有券，提示可核銷
         warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
           '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
           '請選擇下方「核銷第二件半價券」選項使用，或選其他優惠。';
-      } else {
-        // ★ v9.3-fix3c：只有1件時，提示需要點2件才能核銷
-        warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
-          '帳號內已有尚未使用的第二件半價券，但<strong>本次只點了 1 件套餐</strong>。<br>' +
-          '第二件半價券需點 2 件以上套餐才可使用，本次請選「只集點」，下次點 2 件時再使用。';
-      }
       container.appendChild(warn);
       return;
     }
