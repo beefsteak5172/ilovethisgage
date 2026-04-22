@@ -629,8 +629,8 @@ function buildPromoOptionsFromGAS(data) {
         type : 'quota_redeem',
         key  : 'quota_redeem',
         icon : '🥩',
-        title: '使用半價額度（' + _effectiveQty + ' 份）',
-        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + _remainNote,
+        title: '🔥 使用半價額度（本次用 ' + _effectiveQty + ' 份）',
+        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + '\n✨ 帳號剩餘總額度：' + (_quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 份',
         disabled: false
       });
     } else {
@@ -655,7 +655,7 @@ function buildPromoOptionsFromGAS(data) {
       type : 'half_redeem',
       key  : 'half_redeem',
       icon : '🎫',
-      title: '核銷第二件半價券',
+      title: '🎫 核銷第二件半價券（已持有）',
       sub  : '使用帳號內的第二件半價券，較便宜那份半價折抵',
       disabled: false
     });
