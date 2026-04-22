@@ -42,22 +42,24 @@
 </div>
 
 <script>
-const VERSION = "16.0." + Math.floor(Date.now() / 1000);
+const VERSION = "17.0." + Math.floor(Date.now() / 1000);
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
 const LIFF_ID = "2004223422-C2DD295";
 
-// 終極參數解析邏輯
 function getParam(name) {
   const urlParams = new URLSearchParams(window.location.search);
   let val = urlParams.get(name);
   if (val) return val;
-  // 備援：從 hash 中解析（有時 LIFF 會把參數丟到 hash）
   const hashParams = new URLSearchParams(window.location.hash.substring(window.location.hash.indexOf('?')));
   return hashParams.get(name);
 }
 
-const _issueQty = parseInt(getParam('issueQty') || getParam('useQty') || getParam('qty') || 0);
-const _unitPrice = parseInt(getParam('unitPrice') || getParam('price') || 0);
+// 終極保底：如果抓不到份數，預設為 1 份，單價預設為 399
+let _issueQty = parseInt(getParam('issueQty') || getParam('useQty') || getParam('qty') || 0);
+let _unitPrice = parseInt(getParam('unitPrice') || getParam('price') || 0);
+
+if (_issueQty <= 0) { _issueQty = 1; console.warn("Fallback: issueQty set to 1"); }
+if (_unitPrice <= 0) { _unitPrice = 399; console.warn("Fallback: unitPrice set to 399"); }
 const _baseDisc = Math.round(_unitPrice / 2);
 
 async function initLiff() {
@@ -69,7 +71,7 @@ async function initLiff() {
     let hasResponded = false;
     const fallbackTimer = setTimeout(() => {
       if (!hasResponded) { hasResponded = true; renderFallback(profile.userId); }
-    }, 7000);
+    }, 6000);
 
     try {
       const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`);
@@ -105,19 +107,6 @@ function renderOptions(status, uid) {
 
 function renderFallback(uid) {
   const container = document.getElementById('scn-options');
-  // 如果份數真的是 0，顯示警告而不是領取 0 份
-  if (_issueQty <= 0) {
-    container.innerHTML = `
-      <div class="status-panel">
-        <div style="font-size:50px; margin-bottom:10px;">⚠️</div>
-        <h2 style="color:#dc3545; margin-bottom:10px; font-size:20px;">未偵測到套餐</h2>
-        <p style="font-size:15px; color:#666; line-height:1.6;">本次訂單似乎未包含符合條件的套餐，<br>請告知店員確認訂單內容。</p>
-        <button onclick="liff.closeWindow()" style="margin-top:20px; padding:10px 20px; background:#6c757d; color:white; border:none; border-radius:8px;">關閉頁面</button>
-      </div>
-    `;
-    return;
-  }
-
   container.innerHTML = `
     <div class="status-panel">
       <div style="font-size:50px; margin-bottom:10px;">🎁</div>
