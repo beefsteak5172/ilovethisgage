@@ -399,6 +399,11 @@ async function initLIFF() {
     console.error("LIFF Init Error", err);
     const errorMsg = `LIFF 初始化失敗\n錯誤代碼: ${err.code || 'unknown'}\n訊息: ${err.message || '無'}\n網址: ${window.location.href}`;
     console.error("LIFF Init Error", err);
+    // 強制顯示在畫面上，避免被其他樣式蓋住
+    const debugDiv = document.createElement('div');
+    debugDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:rgba(255,0,0,0.9);color:white;padding:20px;z-index:99999;font-size:12px;word-break:break-all;';
+    debugDiv.innerText = errorMsg;
+    document.body.appendChild(debugDiv);
     showError(errorMsg);
   }
 }
