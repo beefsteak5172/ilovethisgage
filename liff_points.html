@@ -517,31 +517,25 @@ async function startCheckoutPromoFlow() {
       + "&discount="      + lo.discount
       + "&indoorExpDays=" + indoorExpDays;
 
-    // ★ v9.3-fix2：同時查 member_status 和 quota_status，並行執行節省時間
-    const [res, quotaRes] = await Promise.all([
-      fetch(url),
-      // 只有開啟半價功能且有商品資訊時才查 quota
-      (_flags.promoHalf && _issueItemName && _issueUnitPrice > 0)
-        ? fetch(GAS_URL + "?action=get_quota&lineuid=" + encodeURIComponent(profile.userId))
-        : Promise.resolve(null)
-    ]);
-
+    // ★ v9.3-fix3：只查 member_status，quota 從回傳資料讀取
+    const res  = await fetch(url);
     const data = await res.json();
 
-    // ★ v9.3-fix2：讀取剩餘額度（get_quota action 回傳 { status:'OK', remain: N }）
-    if (quotaRes) {
-      try {
-        const quotaData = await quotaRes.json();
-        if (quotaData && quotaData.status === 'OK') {
-          _quotaRemain = typeof quotaData.remain === 'number' ? quotaData.remain : 0;
-        } else {
-          _quotaRemain = 0; // 查詢失敗視為無額度，拒絕顯示
-        }
-      } catch(_) {
-        _quotaRemain = 0;
-      }
+    // ★ v9.3-fix3：從 member_status 回傳讀取 quota 剩餘額度
+    // GAS 若有回傳 data.halfPriceQuota.remain 就用，否則從 eligibleOptions 找
+    // 找不到的話 _quotaRemain = -1（不限制，維持舊行為）
+    if (data.halfPriceQuota && typeof data.halfPriceQuota.remain === 'number') {
+      _quotaRemain = data.halfPriceQuota.remain;
     } else {
-      _quotaRemain = 0;
+      const qOpt = (data.eligibleOptions || []).find(o => o.type === 'quota_redeem');
+      if (qOpt) {
+        // GAS 有回傳 quota_redeem，從 remain 欄位讀取（若有的話）
+        _quotaRemain = typeof qOpt.remain === 'number' ? qOpt.remain : -1;
+      } else {
+        // GAS 沒有回傳 quota_redeem：代表額度為 0 或功能未啟用
+        // 但為了向後相容，此處設為 -1（不由 LIFF 管，交給下方 URL 參數邏輯判斷）
+        _quotaRemain = -1;
+      }
     }
 
     if (data.status !== 'OK') {
@@ -614,29 +608,30 @@ function buildPromoOptionsFromGAS(data) {
     return true;
   });
 
-  // ★ v9.3-fix2：quota_redeem 必須同時滿足：
-  //   1. 有商品資訊（itemName + unitPrice）
-  //   2. _flags.promoHalf 開啟
-  //   3. _quotaRemain > 0（從 GAS 即時確認剩餘額度）
+  // ★ v9.3-fix3：
+  //   _quotaRemain >= 0 → GAS 有回傳額度，嚴格檢查（0 = 不顯示）
+  //   _quotaRemain === -1 → GAS 尚未支援額度回傳，向後相容顯示選項
   if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
-    // 移除 GAS 回傳的舊 quota_redeem
     options = options.filter(opt => opt.type !== 'quota_redeem');
 
-    if (_quotaRemain > 0) {
-      // 有剩餘額度：顯示核銷選項
+    const _showQuota = (_quotaRemain === -1) ? true : (_quotaRemain > 0);
+    const _effectiveQty = (_quotaRemain > 0)
+      ? Math.min(_issueQtyFromUrl, _quotaRemain)
+      : _issueQtyFromUrl;
+
+    if (_showQuota) {
       const _qDisc = Math.floor(_issueUnitPrice / 2);
-      const _effectiveQty = Math.min(_issueQtyFromUrl, _quotaRemain); // 不超過剩餘額度
+      const _remainNote = (_quotaRemain >= 0) ? ('\n剩餘額度：' + _quotaRemain + ' 份') : '';
       options.unshift({
         type : 'quota_redeem',
         key  : 'quota_redeem',
         icon : '🥩',
         title: '使用半價額度（' + _effectiveQty + ' 份）',
-        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) +
-               '\n剩餘額度：' + _quotaRemain + ' 份',
+        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + _remainNote,
         disabled: false
       });
     } else {
-      // ★ v9.3-fix2：額度為 0，顯示提示訊息，不顯示核銷按鈕
+      // ★ 額度確認為 0（GAS 明確回傳），顯示提示，不顯示核銷按鈕
       const noQuotaWarn = document.createElement('div');
       noQuotaWarn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
       noQuotaWarn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 半價額度已用完</strong>' +
