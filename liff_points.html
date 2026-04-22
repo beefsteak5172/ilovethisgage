@@ -6,7 +6,6 @@
 <title>無名牛排 - 優惠同步中</title>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 <style>
-  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rotate { to { transform: rotate(360deg); } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -18,9 +17,8 @@
   .hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32); padding: 18px 20px; text-align: center; color: #fff; }
   .hdr h2 { font-size: 17px; font-weight: 700; }
   .loading-spinner { width: 36px; height: 36px; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; animation: rotate 0.8s linear infinite; margin: 0 auto; }
-  .status-panel { animation: slideUp 0.4s ease-out; width: 100%; }
+  .status-panel { width: 100%; text-align: center; padding: 25px 20px; }
   .terms-body { padding: 12px 16px; font-size: 11px; color: #666; line-height: 1.5; border-top: 1px solid #eee; background: #fafafa; }
-  .btn-retry { margin-top: 15px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -29,10 +27,10 @@
     <h2>無名牛排會員系統</h2>
   </div>
 
-  <div id="scn-options" style="padding: 25px 20px; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <div id="auto-processing" style="text-align:center;">
+  <div id="scn-options" style="min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div id="auto-processing">
       <div class="loading-spinner"></div>
-      <p id="status-text" style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在同步優惠資訊...</p>
+      <p style="margin-top:20px; font-size:17px; color:#007bff; font-weight:bold;">正在同步優惠資訊...</p>
     </div>
   </div>
 
@@ -44,41 +42,50 @@
 </div>
 
 <script>
-const VERSION = "13.0." + Math.floor(Date.now() / 1000);
+const VERSION = "14.0." + Math.floor(Date.now() / 1000);
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
 const LIFF_ID = "2004223422-C2DD295";
 
+// 終極相容邏輯：不論發生什麼事，最後都要有一個結果
 async function initLiff() {
   try {
+    // 1. 初始化 LIFF
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) {
       liff.login();
       return;
     }
     const profile = await liff.getProfile();
-    startSync(profile.userId);
+    
+    // 2. 嘗試獲取狀態，但設定「保底」機制
+    let hasResponded = false;
+    
+    // 啟動保底定時器：10 秒後如果沒反應，直接進入領取流程
+    const fallbackTimer = setTimeout(() => {
+      if (!hasResponded) {
+        console.warn("GAS slow, using fallback");
+        renderFallback(profile.userId);
+      }
+    }, 10000);
+
+    try {
+      const res = await fetch(`${GAS_URL}?action=member_status&uid=${profile.userId}&v=${VERSION}`);
+      const status = await res.json();
+      hasResponded = true;
+      clearTimeout(fallbackTimer);
+      renderOptions(status, profile.userId);
+    } catch (err) {
+      console.error("Fetch failed", err);
+      if (!hasResponded) {
+        hasResponded = true;
+        clearTimeout(fallbackTimer);
+        renderFallback(profile.userId);
+      }
+    }
   } catch (err) {
     console.error("LIFF Init Error", err);
-    showError("初始化失敗，請重新掃碼");
-  }
-}
-
-async function startSync(uid) {
-  // 設置 8 秒超時保護
-  const timeoutId = setTimeout(() => {
-    console.warn("Sync timeout, using fallback");
-    renderFallback(uid);
-  }, 8000);
-
-  try {
-    const res = await fetch(`${GAS_URL}?action=member_status&uid=${uid}&v=${VERSION}`);
-    const status = await res.json();
-    clearTimeout(timeoutId);
-    renderOptions(status, uid);
-  } catch (err) {
-    console.error("Fetch Error", err);
-    clearTimeout(timeoutId);
-    renderFallback(uid); // 出錯也進入預判模式，不顯示繁忙
+    // 初始化失敗也嘗試顯示領取畫面，讓客人至少能領
+    renderFallback("unknown");
   }
 }
 
@@ -92,7 +99,7 @@ function renderOptions(status, uid) {
 
   if (_quotaRemain > 0) {
     container.innerHTML = `
-      <div class="status-panel" style="text-align:center;">
+      <div class="status-panel">
         <div style="font-size:50px; margin-bottom:10px;">✅</div>
         <h2 style="color:#28a745; margin-bottom:10px; font-size:20px;">已自動套用優惠</h2>
         <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">使用 ${_quotaRemain} 份額度</div>
@@ -115,7 +122,7 @@ function renderFallback(uid) {
   const _baseDisc = Math.round(parseInt(urlParams.get('unitPrice') || 0) / 2);
 
   container.innerHTML = `
-    <div class="status-panel" style="text-align:center;">
+    <div class="status-panel">
       <div style="font-size:50px; margin-bottom:10px;">🎁</div>
       <h2 style="color:#856404; margin-bottom:10px; font-size:20px;">已自動領取優惠</h2>
       <div style="font-size:26px; font-weight:900; color:#333; margin:8px 0;">獲得 ${_cartQty} 份額度</div>
@@ -130,19 +137,12 @@ function renderFallback(uid) {
 
 async function submitToGas(uid, choice, qty, disc) {
   try {
-    // 使用 no-cors 快速發送，不等待回傳
-    fetch(`${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}`, { mode: 'no-cors' });
-    setTimeout(() => { liff.closeWindow(); }, 2000);
+    // 使用 img beacon 方式發送請求，這是最相容且不會被 CORS 擋掉的方式
+    const img = new Image();
+    img.src = `${GAS_URL}?action=submit_promo&uid=${uid}&choice=${choice}&qty=${qty}&disc=${disc}&v=${VERSION}&t=${Date.now()}`;
+    // 2.5 秒後自動關閉
+    setTimeout(() => { liff.closeWindow(); }, 2500);
   } catch (err) { console.error(err); }
-}
-
-function showError(msg) {
-  document.getElementById('scn-options').innerHTML = `
-    <div style="text-align:center;">
-      <p style="color:#dc3545; font-weight:bold; font-size:16px;">${msg}</p>
-      <button class="btn-retry" onclick="location.reload()">手動重試</button>
-    </div>
-  `;
 }
 
 // 啟動
