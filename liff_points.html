@@ -642,7 +642,8 @@ function buildPromoOptionsFromGAS(data) {
   }
 
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
-  const _hasIssuedHalf    = _halfCouponStatus === 'issued';
+  // ★ v9.3-fix3b：GAS 回傳 halfCoupon.status 為 'active'，也需視為已持有（兼容 'issued'）
+  const _hasIssuedHalf    = _halfCouponStatus === 'active' || _halfCouponStatus === 'issued';
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
 
   if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf) {
@@ -767,7 +768,8 @@ async function confirmPromo() {
     promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
   } else if (promoSelected === 'half_issue') {
     const halfStatus = (ms.halfCoupon && ms.halfCoupon.status) || 'unused';
-    promoKey = (halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
+    // ★ v9.3-fix3b：GAS 回傳 'active'，也需視為已持有（兼容 'issued'）
+    promoKey = (halfStatus === 'active' || halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
   } else if (promoSelected === 'redeem') {
     promoKey = 'redeem';
   }
