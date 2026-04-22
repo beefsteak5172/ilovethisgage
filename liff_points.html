@@ -363,7 +363,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxzXg3UHs2Fjzzh-bul_otTGound6t7IJKr5qTWDuWaQoo1ML07k7vdMVsdnX7U0Qk2AQ/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -642,8 +642,7 @@ function buildPromoOptionsFromGAS(data) {
   }
 
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
-  // ★ v9.3-fix3b：GAS 回傳 halfCoupon.status 為 'active'，也需視為已持有（兼容 'issued'）
-  const _hasIssuedHalf    = _halfCouponStatus === 'active' || _halfCouponStatus === 'issued';
+  const _hasIssuedHalf    = _halfCouponStatus === 'issued';
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
 
   if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf) {
@@ -768,8 +767,7 @@ async function confirmPromo() {
     promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
   } else if (promoSelected === 'half_issue') {
     const halfStatus = (ms.halfCoupon && ms.halfCoupon.status) || 'unused';
-    // ★ v9.3-fix3b：GAS 回傳 'active'，也需視為已持有（兼容 'issued'）
-    promoKey = (halfStatus === 'active' || halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
+    promoKey = (halfStatus === 'issued') ? 'half_redeem' : 'half_issue';
   } else if (promoSelected === 'redeem') {
     promoKey = 'redeem';
   }
