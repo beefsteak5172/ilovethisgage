@@ -319,6 +319,40 @@ body {
     </div>
   </div>
 
+  <!-- ★ v9.4：結帳時詢問是否加入會員 -->
+  <div class="scn" id="member-ask">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
+      <div class="hdr-icon">🥩</div>
+      <h2>加入無名牛排會員</h2>
+      <p>每月享專屬優惠</p>
+    </div>
+    <div style="padding:16px 16px 0;">
+      <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
+        <div style="font-size:12px;color:#3949ab;line-height:2;">
+          🎫 每月 4 張第二件半價券<br>
+          🎉 本月到訪 5 次，次月月費全免<br>
+          📊 專屬消費紀錄追蹤
+        </div>
+      </div>
+      <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
+        ⚠️ 月費 <strong>$200/月</strong>，加入後本月費用請至櫃台繳交。<br>
+        繳費後方可享本月優惠。
+      </div>
+      <div id="member-ask-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#e8eaf6;border:2px solid #1a237e;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="memberAskJoin()">
+          <div style="font-size:15px;font-weight:800;color:#1a237e;margin-bottom:3px;">✅ 是，加入會員</div>
+          <div style="font-size:12px;color:#888;">完成後繼續結帳</div>
+        </div>
+        <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="memberAskSkip()">
+          <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 暫不加入，直接結帳</div>
+          <div style="font-size:12px;color:#888;">繼續選擇優惠</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ★ v9.3-fix5：帳號有券 → 只問用或略過 -->
   <div class="scn" id="coupon-ask">
     <div class="hdr">
@@ -484,7 +518,8 @@ let _flags = {
   promoCarryout: false,
   promoIndoor  : false,
   promoRedeem  : false,
-  promoPoints  : false
+  promoPoints  : false,
+  promoMember  : false   // ★ v9.4：結帳時詢問加入會員
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -529,6 +564,7 @@ async function init() {
     _flags.promoIndoor   = p.get("promoIndoor")   === '1';
     _flags.promoRedeem   = p.get("promoRedeem")   === '1';
     _flags.promoPoints   = p.get("promoPoints")   === '1';
+    _flags.promoMember   = p.get("promoMember")   === '1'; // ★ v9.4
 
     _issueQtyFromUrl = Math.max(1, parseInt(p.get("useQty")    || "1") || 1);
     _issueItemName   = (p.get("itemName")  || "").trim();
@@ -696,6 +732,17 @@ async function startCheckoutPromoFlow() {
     }
 
     buildPromoOptionsFromGAS(data);
+
+    // ★ v9.4：若開啟 promoMember=1 且此用戶非會員 → 詢問是否加入
+    if (_flags.promoMember && _isMemberFlowPending(data)) {
+      document.getElementById('member-ask-user').innerHTML =
+        '<strong>👤 ' + profile.displayName + '</strong><br>' +
+        '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
+      window._memberAskPending = true;
+      goScreen('member-ask');
+      return;
+    }
+
     goScreen("co-promo");
 
   } catch(err) {
@@ -1033,6 +1080,48 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       showFatalError("送出失敗：" + (data.message || "請告知店員"));
     }
   } catch (_) { showFatalError("網路錯誤，請告知店員"); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.4：結帳時加入會員詢問
+// ══════════════════════════════════════════════════════════════
+function _isMemberFlowPending(gasData) {
+  // member_status 不直接回傳是否為會員，用 halfCoupon/indoorCoupon 等有資料代表曾交互
+  // 最可靠方式：若 GAS 有 isMember 欄位則直接用；否則保守顯示（總是問）
+  if (typeof gasData.isMember === 'boolean') return !gasData.isMember;
+  // 無欄位時：若點數為 NEW 狀態且無任何半價券紀錄 → 視為非會員
+  const ptsStatus  = (gasData.points && gasData.points.ptsStatus) || 'NEW';
+  const halfStatus = (gasData.halfCoupon && gasData.halfCoupon.status) || 'none';
+  return ptsStatus === 'NEW' && halfStatus === 'none';
+}
+
+async function memberAskJoin() {
+  // 導向加入會員流程，加入完成後回 co-promo
+  goScreen('mem-joining');
+  try {
+    const url  = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId)
+      + '&displayName=' + encodeURIComponent(profile.displayName);
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status === 'OK') {
+      // 顯示加入成功提示，再導回 co-promo
+      const sub = data.isNew
+        ? '本月月費 $200 請至櫃台繳交，繳費後即享全部優惠'
+        : (data.reJoin ? '歡迎重新加入！月費 $200 請至櫃台繳交' : '您已是有效會員');
+      document.getElementById('mem-done-sub').innerHTML = sub + '<br><small style="color:#888;font-size:11px;">3 秒後繼續結帳…</small>';
+      goScreen('mem-done');
+      setTimeout(() => goScreen('co-promo'), 3000);
+    } else {
+      showFatalError('加入失敗：' + (data.message || '請告知店員'));
+    }
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
+
+function memberAskSkip() {
+  // 略過加入會員，直接進優惠選擇
+  goScreen('co-promo');
 }
 
 // ══════════════════════════════════════════════════════════════
