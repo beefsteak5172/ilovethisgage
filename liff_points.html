@@ -760,11 +760,13 @@ async function startCheckoutPromoFlow() {
 
     // ★ v9.3-fix5：偵測帳號是否有可用券（half_redeem 或 quota_redeem 額度 > 0）
     //   有券 → 鎖定，只顯示「用券」或「略過」，不進一般優惠流程
+    //   ★ v9.6-fix：若是會員系統（isMember=true），半價為當次直接折扣，不走舊券流程
     const _halfCouponStatusCheck = (data.halfCoupon && data.halfCoupon.status) || '';
     const _hasActiveCoupon = _halfCouponStatusCheck === 'active' || _halfCouponStatusCheck === 'issued';
     const _hasQuotaCoupon  = (_quotaRemain > 0);
+    const _isMemberSystem  = data.isMember === true;
 
-    if (_hasActiveCoupon || _hasQuotaCoupon) {
+    if ((_hasActiveCoupon || _hasQuotaCoupon) && !_isMemberSystem) {
       // 決定券的顯示資訊
       let couponIcon = '🎫', couponName = '第二件半價券', couponDesc = '使用後，第二件（較便宜）套餐半價折抵';
       if (_hasQuotaCoupon && _issueItemName) {
@@ -889,8 +891,9 @@ function buildPromoOptionsFromGAS(data) {
   const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
   const _hasIssuedHalf    = _halfCouponStatus === 'active' || _halfCouponStatus === 'issued';
   const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
+  const _isMemberSys      = data.isMember === true; // ★ v9.6-fix：會員系統不走舊券邏輯
 
-  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf) {
+  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf && !_isMemberSys) {
     options.push({
       type : 'half_redeem',
       key  : 'half_redeem',
@@ -902,7 +905,17 @@ function buildPromoOptionsFromGAS(data) {
   }
 
   options.forEach(opt => {
-    if (_hasIssuedHalf && opt.type === 'half_issue') {
+    // ★ v9.6-fix：會員系統雙數次（canUseHalfPrice）強化顯示文字
+    if (opt.type === 'member_visit' && _isMemberSys) {
+      const _halfCouponActive = (data.halfCoupon && data.halfCoupon.status) === 'active';
+      if (_halfCouponActive) {
+        opt = Object.assign({}, opt, {
+          title: '🥩 記錄本次消費（本人套餐半價）',
+          sub  : '🎉 本次為雙數次，本人主餐套餐享半價！\n' + (opt.sub || '')
+        });
+      }
+    }
+    if (_hasIssuedHalf && opt.type === 'half_issue' && !_isMemberSys) {
       const warn = document.createElement('div');
       warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
       warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
@@ -1029,6 +1042,10 @@ async function confirmPromo() {
     promoKey = 'half_issue';
   } else if (promoSelected === 'redeem') {
     promoKey = 'redeem';
+  } else if (promoSelected === 'member_visit') {
+    // ★ v9.6-fix：雙數次半價，送 member_visit_half 讓 POS 知道要折半
+    const _halfActive = (ms.halfCoupon && ms.halfCoupon.status) === 'active';
+    if (_halfActive) promoKey = 'member_visit_half';
   }
 
   await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
@@ -1092,7 +1109,7 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
   }
 
   let decisionValue = 'use';
-  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue' || promoKey === 'skip' || promoKey === 'member_visit') decisionValue = 'skip';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue' || promoKey === 'skip' || promoKey === 'member_visit' || promoKey === 'member_visit_half') decisionValue = 'skip';
   if (promoKey === 'redeem') decisionValue = 'redeem';
 
   const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
@@ -1126,7 +1143,8 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       else if (promoKey === 'half_keep')     waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
       else if (promoKey === 'quota_redeem')  waitText = "✅ 半價額度已核銷！\n折扣已套用，請等候店員確認";
       else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
-      else if (promoKey === 'member_visit')  waitText = "✅ 已記錄本次消費\n感謝惠顧，請等候店員完成結帳";
+      else if (promoKey === 'member_visit')      waitText = "✅ 已記錄本次消費\n感謝惠顧，請等候店員完成結帳";
+      else if (promoKey === 'member_visit_half') waitText = "✅ 已記錄本次消費（雙數次）\n🎉 本人套餐半價已套用\n請等候店員完成結帳";
       else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
       else {
         const cp = customPromos.find(c => c.key === promoKey);
