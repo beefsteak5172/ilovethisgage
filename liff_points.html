@@ -150,31 +150,60 @@ body {
       <p>請詳閱後選擇同意或不同意</p>
     </div>
     <div class="terms-body">
-      
+
       <div class="terms-section">
-        <div class="terms-section-title">五、第二件半價券</div>
+        <div class="terms-section-title">一、會員資格</div>
         <ul class="terms-item">
-          <li>每人限持一張，使用後才可重新領取。</li>
-          <li>自領取日起 <span class="terms-tag tag-org">10 天內有效</span>，逾期自動失效，恕不補發。</li>
-          <li>適用 <span class="terms-tag tag-grn">內用</span><span class="terms-tag tag-blu">外帶</span>，需至少點 <strong>2 件主餐</strong>。</li>
+          <li>月費 <span class="terms-tag tag-org">$600 / 30 天</span>，繳費後當日起算。</li>
+          <li>月費到期前系統會提醒是否續約。</li>
+          <li>逾期未續約，優惠暫停，消費次數保留。</li>
         </ul>
       </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">二、消費半價優惠</div>
+        <ul class="terms-item">
+          <li>雙數次（第 2、4、6…次）本人套餐享 <span class="terms-tag tag-grn">半價</span>。</li>
+          <li>半價金額以「本次」與「前次」最低套餐較小者計算。</li>
+          <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶。</li>
+          <li>不可與其他優惠 <span class="terms-tag tag-red">併用</span>。</li>
+          <li>半價品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料、配菜、加點。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">三、達標獎勵</div>
+        <ul class="terms-item">
+          <li>30 天內消費滿 <span class="terms-tag tag-blu">14 次</span> 即達標。</li>
+          <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐 + 簡餐各一份。</li>
+          <li>獎勵由店員手動發放，<span class="terms-tag tag-gry">不自動折抵</span>。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">四、注意事項</div>
+        <ul class="terms-item">
+          <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不可轉讓。</li>
+          <li>客人不得以 <span class="terms-tag tag-red">口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
+          <li>如遇系統異常，持當次收據向店員確認，依收據票面辦理。</li>
+        </ul>
+      </div>
+
       <div class="terms-section terms-disclaimer">
-        <div class="terms-section-title">六、系統免責聲明</div>
+        <div class="terms-section-title">五、免責聲明</div>
         <ul class="terms-item">
-          <li>本優惠方案屬商家 <span class="terms-tag tag-grn">純善意提供</span>，不具任何盈利性質，亦非商業契約之一部分。</li>
-          <li>若因系統故障、網路中斷、斷電或其他不可抗力因素，導致優惠未能正常使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不另行補發或折換現金。</li>
-          <li>客人 <span class="terms-tag tag-red">不得以口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
-          <li>如遇系統異常，客人可持 <span class="terms-tag tag-blu">當次有效收據或發票</span> 向現場店員出示，依 <span class="terms-tag tag-org">收據票面所載優惠</span> 辦理，不另提供收據以外之任何補償或優惠。</li>
-          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本優惠方案，恕不另行通知。</li>
+          <li>本優惠屬商家 <span class="terms-tag tag-grn">純善意提供</span>，非商業契約之一部分。</li>
+          <li>因系統故障、斷網或其他不可抗力因素導致優惠未能使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不補發或折換現金。</li>
+          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本方案，恕不另行通知。</li>
         </ul>
       </div>
+
     </div>
     <div class="terms-footer">
       <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
       <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
     </div>
-  </div>
+  </div></div>
 
   <div class="scn" id="co-checking">
     <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
@@ -334,6 +363,7 @@ body {
           🎉 <strong>30天內消費14次以上</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份
@@ -456,6 +486,7 @@ body {
           🎉 <strong>30天內消費14次以上</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份
@@ -508,7 +539,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwL8YjMBVm-u2lSWVy8W4BoXJYnirL8So0XSiBjZYLXxJYPkivvDq6gCJ7oC8spoPRq/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzdU-oeHBig36YrrnH6JKZWvRZBrO6NscOuhsW0WpaUjjU2JmwM2gU1P2ii1toCWxjJ/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -847,6 +878,14 @@ function buildPromoOptionsFromGAS(data) {
     note.innerHTML = n;
     container.appendChild(note);
   });
+
+  // ★ v9.7：介紹免月費會員顯示身份提示
+  if (data.isReferralFree) {
+    const rfNote = document.createElement('div');
+    rfNote.style.cssText = 'background:#E8F5E9;border:2px solid #2E7D32;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;font-weight:700;';
+    rfNote.innerHTML = '🎁 您為介紹會員，永久免月費，雙數次本人套餐半價優惠持續有效！';
+    container.appendChild(rfNote);
+  }
 
   const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
     const t = opt.type || '';
@@ -1204,8 +1243,10 @@ async function memberAskJoin() {
             + '&tierPoints=0&tierDisc=0&promoChoice=join_member';
           await fetch(decUrl);
         } catch(_) {}
-        document.getElementById('co-wait-sub').textContent =
-          '✅ 加入成功！\n月費 $600 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
+        const _isRefFree = (data.isReferralFree === true);
+        document.getElementById('co-wait-sub').textContent = _isRefFree
+          ? '✅ 加入成功！\n您為介紹會員，免月費\n請等候店員完成結帳\n\n請勿關閉此頁面'
+          : '✅ 加入成功！\n月費 $600 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
         goScreen('co-waiting');
       } else {
         // 來自會員專用入口：顯示加入成功畫面
