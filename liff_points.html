@@ -38,7 +38,7 @@ body {
 .opt.half-issue { border-color: #0369A1; background: #F0F9FF; }
 .opt.half-issue.sel { border-color: #075985; background: #E0F2FE; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; white-space: nowrap; }
+.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .opt.sel .opt-title { color: #15803d; }
 .opt.half-opt .opt-title { color: #5B21B6; }
 .opt.half-opt.sel .opt-title { color: #4C1D95; }
@@ -154,46 +154,56 @@ body {
       <div class="terms-section">
         <div class="terms-section-title">一、會員資格</div>
         <ul class="terms-item">
-          <li>月費 <span class="terms-tag tag-org">$600</span>，效期 <span class="terms-tag tag-org">30 天</span>。</li>
-          <li>系統將於到期前 3 天提醒續約。</li>
-          <li>逾期未續約者，優惠功能將自動暫停，但原累積之消費次數將為您保留。</li>
+          <li>月費 <span class="terms-tag tag-org">$600 / 30 天</span>，繳費後當日起算。</li>
+          <li>月費到期前系統會提醒是否續約。</li>
+          <li>逾期未續約，優惠暫停，消費次數保留。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">二、半價優惠</div>
+        <div class="terms-section-title">二、消費半價優惠</div>
         <ul class="terms-item">
-          <li>凡會員本人內用，<strong>雙數次</strong>（第 2, 4, 6... 次）消費享 <span class="terms-tag tag-grn">本人套餐半價</span>。</li>
-          <li>半價金額以「本次」與「前次」消費之最低價套餐為準，取其較小值折抵。</li>
-          <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶，亦不可與其他折扣併用。</li>
-          <li>半價僅限「主餐套餐」，<span class="terms-tag tag-red">不含</span>單點飲料、配菜或加點項目。</li>
+          <li>雙數次（第 2、4、6…次）本人套餐享 <span class="terms-tag tag-grn">半價</span>。</li>
+          <li>半價金額以「本次」與「前次」最低套餐較小者計算。</li>
+          <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶。</li>
+          <li>不可與其他優惠 <span class="terms-tag tag-red">併用</span>。</li>
+          <li>半價品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料、配菜、加點。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">三、達標獎勵【瘋狂牛排手】</div>
+        <div class="terms-section-title">三、達標獎勵</div>
         <ul class="terms-item">
           <li>30 天內消費滿 <span class="terms-tag tag-blu">14 次</span> 即達標。</li>
-          <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐與精選簡餐兌換券各乙張。</li>
-          <li>獎勵由店員手動發放，請於達標後向櫃台出示畫面。</li>
+          <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐 + 簡餐各一份。</li>
+          <li>獎勵由店員手動發放，<span class="terms-tag tag-gry">不自動折抵</span>。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">四、使用限制</div>
+        <div class="terms-section-title">四、介紹獎勵</div>
         <ul class="terms-item">
-          <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不得轉讓。</li>
-          <li>結帳時請主動出示此畫面，<span class="terms-tag tag-red">恕不接受口頭聲明</span>。</li>
-          <li>如遇系統異常，請持當次收據向店員確認，依收據票面辦理。</li>
+          <li>成功介紹滿 <span class="terms-tag tag-grn">6 名</span> 新會員加入，即可 <strong>永久免月費</strong>。</li>
+          <li>免月費後仍保留雙數次本人套餐 <span class="terms-tag tag-grn">半價</span> 優惠。</li>
+          <li>介紹人數由店員確認後更新，達 6 人時月費自動改為「免收」。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">五、注意事項</div>
+        <ul class="terms-item">
+          <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不可轉讓。</li>
+          <li>客人不得以 <span class="terms-tag tag-red">口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
+          <li>如遇系統異常，持當次收據向店員確認，依收據票面辦理。</li>
         </ul>
       </div>
 
       <div class="terms-section terms-disclaimer">
-        <div class="terms-section-title">五、溫馨提醒</div>
+        <div class="terms-section-title">六、免責聲明</div>
         <ul class="terms-item">
-          <li>本計畫為商家回饋會員之 <span class="terms-tag tag-grn">善意方案</span>。</li>
-          <li>如遇系統故障或不可抗力因素導致無法即時折抵，請保留收據，我們將於恢復後為您補錄。</li>
-          <li>商家保有活動 <span class="terms-tag tag-gry">最終解釋與修改權利</span>，恕不另行通知。</li>
+          <li>本優惠屬商家 <span class="terms-tag tag-grn">純善意提供</span>，非商業契約之一部分。</li>
+          <li>因系統故障、斷網或其他不可抗力因素導致優惠未能使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不補發或折換現金。</li>
+          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本方案，恕不另行通知。</li>
         </ul>
       </div>
 
@@ -202,7 +212,7 @@ body {
       <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
       <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
     </div>
-  </div>
+  </div></div>
 
   <div class="scn" id="co-checking">
     <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
@@ -365,7 +375,10 @@ body {
           &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份
+          &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
+          🌟 <strong>介紹獎勵</strong>：<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 免月費後半價優惠依然保留
         </div>
       </div>
       <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
@@ -373,7 +386,8 @@ body {
         ✓ 優惠不列入消費記錄<br>
         ✓ 本人套餐指主餐部分<br>
         ✓ 30天週期自加入日起計算<br>
-        ✓ 達標獎勵於30天後發放
+        ✓ 達標獎勵於30天後發放<br>
+        ✓ 介紹人數由店員確認更新
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
         ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
@@ -467,7 +481,7 @@ body {
       <!-- 有效券清單 -->
       <div id="mem-coupons-box"></div>
       <!-- 底部說明 -->
-      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $600 / 30天 · 消費14次以上雙數次半價<br>到期退還 $600 並加送套餐 + 簡餐各一份
+      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $600 / 30天 · 消費14次以上雙數次半價<br>到期退還 $600 並加送套餐 + 簡餐各一份<br>🌟 介紹滿 6 名新會員可永久免月費
     </div>
   </div>
 
@@ -488,7 +502,10 @@ body {
           &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份
+          &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
+          🌟 <strong>介紹獎勵</strong>：<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 免月費後半價優惠依然保留
         </div>
       </div>
       <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
@@ -496,7 +513,8 @@ body {
         ✓ 優惠不列入消費記錄<br>
         ✓ 本人套餐指主餐部分<br>
         ✓ 30天週期自加入日起計算<br>
-        ✓ 達標獎勵於30天後發放
+        ✓ 達標獎勵於30天後發放<br>
+        ✓ 介紹人數由店員確認更新
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
         ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
@@ -1026,7 +1044,7 @@ function makeOpt({ id, key, cls, icon, title, sub, dis }) {
   if (!dis) div.onclick = () => selectPromo(key);
   div.innerHTML =
     '<div class="opt-icon">' + icon + '</div>' +
-    '<div style="flex:1; min-width: 0;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
+    '<div style="flex:1;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
     '<div class="opt-check" id="chk-' + key + '">✅</div>';
   return div;
 }
