@@ -350,6 +350,7 @@ body {
         ⚠️ 月費 <strong>$200/月</strong>，加入後本月費用請至櫃台繳交。<br>
         繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
+      <div id="member-ask-sub" style="margin-bottom:14px;"></div>
       <div id="member-ask-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div style="background:#e8eaf6;border:2px solid #1a237e;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="memberAskJoin()">
@@ -507,7 +508,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzpYTF_902b0oWWpAKeWK6C4wFNN9k1USYAoMVJBA2JJr4ADiXpCRYbT3_UFdw_Tg0/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxwrbwPNOGKln63ZGaKx3Tjt9zP3akN5dO8u1cNM7lSvnxizj2P5vdWKzvAom5MeEUP/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -660,6 +661,8 @@ async function agreeTerms() {
       await submitPromoChoice('skip', 0, 0);
       return;
     }
+    // ★ v9.4：標記來自結帳流程
+    window._memberAskFromCheckout = true;
     await startCheckoutPromoFlow();
   } else if (f === "points") {
     if (!_flags.promoPoints) {
