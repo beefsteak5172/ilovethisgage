@@ -1,800 +1,221 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無名牛排</title>
-  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, "PingFang TC", "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 20px;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-      overflow: hidden;
-    }
-
-    .hdr {
-      background: linear-gradient(135deg, #1B5E20, #2E7D32);
-      padding: 22px 20px 18px;
-      text-align: center;
-      color: #fff;
-    }
-
-    .hdr-icon {
-      font-size: 34px;
-      margin-bottom: 5px;
-    }
-
-    .hdr h2 {
-      font-size: 17px;
-      font-weight: 700;
-      margin: 0 0 2px;
-    }
-
-    .hdr p {
-      font-size: 12px;
-      opacity: 0.8;
-      margin: 0;
-    }
-
-    .scn {
-      display: none;
-      flex-direction: column;
-      padding-bottom: 24px;
-    }
-
-    .scn.active {
-      display: flex;
-    }
-
-    .loading {
-      color: #888;
-      font-size: 14px;
-      text-align: center;
-      padding: 32px 20px;
-    }
-
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid #eee;
-      border-top-color: #2E7D32;
-      border-radius: 50%;
-      animation: rotate .7s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes rotate {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .opt {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 14px;
-      border: 2px solid #e2e8f0;
-      background: #fff;
-      cursor: pointer;
-      text-align: left;
-      width: 100%;
-      margin-bottom: 10px;
-      transition: all .15s;
-    }
-
-    .opt.sel {
-      border-color: #15803d;
-      background: #f0fdf4;
-    }
-
-    .opt.dis {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .opt.redeem-opt {
-      border-color: #B45309;
-      background: #FFFBEB;
-    }
-
-    .opt.redeem-opt.sel {
-      border-color: #92400E;
-      background: #FEF3C7;
-    }
-
-    .opt.half-opt {
-      border-color: #7C3AED;
-      background: #F5F3FF;
-    }
-
-    .opt.half-opt.sel {
-      border-color: #5B21B6;
-      background: #EDE9FE;
-    }
-
-    .opt.half-issue {
-      border-color: #0369A1;
-      background: #F0F9FF;
-    }
-
-    .opt.half-issue.sel {
-      border-color: #075985;
-      background: #E0F2FE;
-    }
-
-    .opt-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .opt-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 3px;
-    }
-
-    .opt.sel .opt-title {
-      color: #15803d;
-    }
-
-    .opt.half-opt .opt-title {
-      color: #5B21B6;
-    }
-
-    .opt.half-opt.sel .opt-title {
-      color: #4C1D95;
-    }
-
-    .opt.half-issue .opt-title {
-      color: #0369A1;
-    }
-
-    .opt.half-issue.sel .opt-title {
-      color: #075985;
-    }
-
-    .opt-sub {
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    .opt-check {
-      margin-left: auto;
-      flex-shrink: 0;
-      font-size: 18px;
-      display: none;
-    }
-
-    .notice-box {
-      margin: 0 0 10px;
-      padding: 10px 12px;
-      background: #FFF7ED;
-      border: 1.5px solid #FED7AA;
-      border-radius: 10px;
-      font-size: 11px;
-      color: #9A3412;
-      line-height: 1.7;
-    }
-
-    .notice-box strong {
-      display: block;
-      font-size: 12px;
-      margin-bottom: 3px;
-      color: #7C2D12;
-    }
-
-    .btn-confirm {
-      display: block;
-      width: 100%;
-      padding: 15px;
-      border-radius: 12px;
-      border: none;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s;
-    }
-
-    .btn-confirm.active {
-      background: #15803d;
-      color: #fff;
-    }
-
-    .btn-confirm.disabled {
-      background: #cbd5e1;
-      color: #fff;
-      cursor: not-allowed;
-    }
-
-    .done-wrap {
-      padding: 40px 24px 24px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .done-icon {
-      font-size: 50px;
-      margin-bottom: 14px;
-    }
-
-    .done-title {
-      font-size: 19px;
-      font-weight: 800;
-      color: #1B5E20;
-      margin-bottom: 8px;
-    }
-
-    .done-sub {
-      font-size: 13px;
-      color: #888;
-      line-height: 1.6;
-    }
-
-    .pulse-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #2E7D32;
-      border-radius: 50%;
-      margin-right: 6px;
-      animation: pulse-anim 1.2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-anim {
-
-      0%,
-      100% {
-        opacity: 1;
-        transform: scale(1)
-      }
-
-      50% {
-        opacity: 0.4;
-        transform: scale(0.7)
-      }
-    }
-
-    .pts-big-num {
-      font-size: 56px;
-      font-weight: 900;
-      color: #1B5E20;
-      line-height: 1;
-    }
-
-    .pts-big-label {
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    .stars {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin: 14px 0 8px;
-      flex-wrap: wrap;
-    }
-
-    .star {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #eee;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      transition: background .3s, transform .3s;
-    }
-
-    .star.filled {
-      background: #2E7D32;
-      transform: scale(1.1);
-      color: #fff;
-    }
-
-    .bar-wrap {
-      padding: 0 20px;
-      margin-bottom: 8px;
-    }
-
-    .bar-bg {
-      height: 10px;
-      background: #eee;
-      border-radius: 99px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 99px;
-      background: linear-gradient(90deg, #1B5E20, #4CAF50);
-      width: 0%;
-      transition: width 1s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    .bar-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    .redeem-box {
-      margin: 0 20px 4px;
-      padding: 14px;
-      background: #FFF8E1;
-      border: 1.5px solid #FFE082;
-      border-radius: 12px;
-      text-align: center;
-    }
-
-    .redeem-box p {
-      font-size: 13px;
-      color: #E65100;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .redeem-box small {
-      font-size: 11px;
-      color: #888;
-      display: block;
-      line-height: 1.6;
-    }
-
-    .use-btns {
-      display: flex;
-      gap: 10px;
-      padding: 12px 20px 0;
-    }
-
-    .use-btns button {
-      flex: 1;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-    }
-
-    .use-yes {
-      background: #2E7D32;
-      color: #fff;
-    }
-
-    .use-no {
-      background: #f5f5f5;
-      color: #666;
-    }
-
-    .drum {
-      width: 200px;
-      height: 120px;
-      margin: 0 auto 14px;
-      background: #1B5E20;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .drum-face {
-      font-size: 44px;
-      font-weight: 900;
-      color: #fff;
-    }
-
-    .spinning {
-      animation: spin .12s linear infinite;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: translateY(0)
-      }
-
-      50% {
-        transform: translateY(-40px)
-      }
-
-      100% {
-        transform: translateY(0)
-      }
-    }
-
-    .prize-badge {
-      background: #E8F5E9;
-      border: 2px solid #A5D6A7;
-      border-radius: 16px;
-      padding: 20px;
-      margin: 0 20px 16px;
-      text-align: center;
-    }
-
-    .prize-icon {
-      font-size: 40px;
-      margin-bottom: 8px;
-    }
-
-    .prize-name {
-      font-size: 24px;
-      font-weight: 900;
-      color: #1B5E20;
-      margin-bottom: 4px;
-    }
-
-    .prize-desc {
-      font-size: 13px;
-      color: #666;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 9px 0;
-      border-bottom: .5px solid #eee;
-      font-size: 13px;
-    }
-
-    .info-row:last-child {
-      border-bottom: none;
-    }
-
-    .info-label {
-      color: #999;
-    }
-
-    .info-val {
-      font-weight: 700;
-      color: #222;
-    }
-
-    .result {
-      margin: 16px 20px 0;
-      padding: 16px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      display: none;
-      white-space: pre-line;
-    }
-
-    .result.success {
-      background: #E8F5E9;
-      color: #1B5E20;
-      border: 1px solid #A5D6A7;
-    }
-
-    .result.warn {
-      background: #FFF8E1;
-      color: #E65100;
-      border: 1px solid #FFE082;
-    }
-
-    .result.error {
-      background: #FFEBEE;
-      color: #B71C1C;
-      border: 1px solid #FFCDD2;
-    }
-
-    .btn-main {
-      display: block;
-      width: calc(100% - 40px);
-      margin: 16px 20px 0;
-      padding: 15px;
-      background: #2E7D32;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .activity-badge {
-      display: inline-block;
-      background: #E8F5E9;
-      color: #2E7D32;
-      border: 1.5px solid #A5D6A7;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 7px 22px;
-      margin: 16px 0 8px;
-    }
-
-    .anim-in {
-      animation: fadeUp .4s ease both;
-    }
-
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(14px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    .user-info {
-      font-size: 12px;
-      color: #aaa;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .coupon-card {
-      margin: 0 0 10px;
-      padding: 12px 14px;
-      background: linear-gradient(135deg, #EDE9FE, #F5F3FF);
-      border: 2px dashed #7C3AED;
-      border-radius: 12px;
-    }
-
-    .coupon-card .title {
-      font-size: 14px;
-      font-weight: 800;
-      color: #5B21B6;
-      margin-bottom: 4px;
-    }
-
-    .coupon-card .detail {
-      font-size: 11px;
-      color: #6D28D9;
-      line-height: 1.6;
-    }
-
-    #liff-spinner,
-    .liff-spinner,
-    [class*="liff-loading"],
-    [id*="liff-loading"] {
-      display: none !important;
-    }
-
-    .terms-body {
-      padding: 14px 16px 0;
-      max-height: 56vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .terms-section {
-      margin-bottom: 12px;
-    }
-
-    .terms-section-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: #1B5E20;
-      border-left: 4px solid #2E7D32;
-      padding-left: 8px;
-      margin-bottom: 5px;
-    }
-
-    .terms-item {
-      font-size: 12px;
-      color: #444;
-      line-height: 1.8;
-      padding-left: 4px;
-    }
-
-    .terms-item li {
-      margin-bottom: 2px;
-      list-style: none;
-      padding-left: 12px;
-      text-indent: -12px;
-    }
-
-    .terms-item li::before {
-      content: "• ";
-      color: #2E7D32;
-      font-weight: 700;
-    }
-
-    .terms-tag {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 4px;
-      padding: 1px 6px;
-      margin-right: 4px;
-      vertical-align: middle;
-    }
-
-    .tag-red {
-      background: #FFEBEE;
-      color: #B71C1C;
-    }
-
-    .tag-grn {
-      background: #E8F5E9;
-      color: #1B5E20;
-    }
-
-    .tag-blu {
-      background: #E3F2FD;
-      color: #0D47A1;
-    }
-
-    .tag-org {
-      background: #FFF3E0;
-      color: #E65100;
-    }
-
-    .tag-gry {
-      background: #ECEFF1;
-      color: #455A64;
-    }
-
-    .terms-footer {
-      padding: 10px 14px 4px;
-      border-top: 1px solid #eee;
-    }
-
-    .terms-agree-btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      background: #15803d;
-      color: #fff;
-      border: none;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 8px;
-    }
-
-    .terms-disagree-btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      background: #f5f5f5;
-      color: #666;
-      border: 1.5px solid #ddd;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .terms-disclaimer {
-      background: #FFF8E1;
-      border: 1.5px solid #FFD54F;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-    }
-
-    .terms-disclaimer .terms-section-title {
-      color: #E65100;
-      border-left-color: #FF8F00;
-    }
-
-    .terms-disclaimer .terms-item li::before {
-      color: #FF8F00;
-    }
-
-    .terms-disclaimer .terms-item {
-      color: #5D4037;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>無名牛排</title>
+<script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "PingFang TC", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 20px;
+}
+.card { background: #fff; border-radius: 20px; max-width: 360px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18); overflow: hidden; }
+.hdr { background: linear-gradient(135deg, #1B5E20, #2E7D32);
+  padding: 22px 20px 18px; text-align: center; color: #fff; }
+.hdr-icon { font-size: 34px; margin-bottom: 5px; }
+.hdr h2 { font-size: 17px; font-weight: 700; margin: 0 0 2px; }
+.hdr p  { font-size: 12px; opacity: 0.8; margin: 0; }
+.scn { display: none; flex-direction: column; padding-bottom: 24px; }
+.scn.active { display: flex; }
+.loading { color: #888; font-size: 14px; text-align: center; padding: 32px 20px; }
+.spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #2E7D32;
+  border-radius: 50%; animation: rotate .7s linear infinite; margin: 0 auto 10px; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 14px;
+  border-radius: 14px; border: 2px solid #e2e8f0; background: #fff;
+  cursor: pointer; text-align: left; width: 100%; margin-bottom: 10px; transition: all .15s; }
+.opt.sel  { border-color: #15803d; background: #f0fdf4; }
+.opt.dis  { opacity: 0.4; cursor: not-allowed; }
+.opt.redeem-opt { border-color: #B45309; background: #FFFBEB; }
+.opt.redeem-opt.sel { border-color: #92400E; background: #FEF3C7; }
+.opt.half-opt { border-color: #7C3AED; background: #F5F3FF; }
+.opt.half-opt.sel { border-color: #5B21B6; background: #EDE9FE; }
+.opt.half-issue { border-color: #0369A1; background: #F0F9FF; }
+.opt.half-issue.sel { border-color: #075985; background: #E0F2FE; }
+.opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+.opt.sel .opt-title { color: #15803d; }
+.opt.half-opt .opt-title { color: #5B21B6; }
+.opt.half-opt.sel .opt-title { color: #4C1D95; }
+.opt.half-issue .opt-title { color: #0369A1; }
+.opt.half-issue.sel .opt-title { color: #075985; }
+.opt-sub   { font-size: 12px; color: #64748b; line-height: 1.5; }
+.opt-check { margin-left: auto; flex-shrink: 0; font-size: 18px; display: none; }
+.notice-box { margin: 0 0 10px; padding: 10px 12px;
+  background: #FFF7ED; border: 1.5px solid #FED7AA; border-radius: 10px;
+  font-size: 11px; color: #9A3412; line-height: 1.7; }
+.notice-box strong { display: block; font-size: 12px; margin-bottom: 3px; color: #7C2D12; }
+.btn-confirm { display: block; width: 100%; padding: 15px; border-radius: 12px;
+  border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.btn-confirm.active { background: #15803d; color: #fff; }
+.btn-confirm.disabled { background: #cbd5e1; color: #fff; cursor: not-allowed; }
+.done-wrap { padding: 40px 24px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.done-icon  { font-size: 50px; margin-bottom: 14px; }
+.done-title { font-size: 19px; font-weight: 800; color: #1B5E20; margin-bottom: 8px; }
+.done-sub   { font-size: 13px; color: #888; line-height: 1.6; }
+.pulse-dot  { display: inline-block; width: 8px; height: 8px; background: #2E7D32;
+  border-radius: 50%; margin-right: 6px; animation: pulse-anim 1.2s ease-in-out infinite; }
+@keyframes pulse-anim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+.pts-big-num   { font-size: 56px; font-weight: 900; color: #1B5E20; line-height: 1; }
+.pts-big-label { font-size: 13px; color: #888; margin-top: 4px; }
+.stars { display: flex; justify-content: center; gap: 8px; margin: 14px 0 8px; flex-wrap: wrap; }
+.star  { width: 34px; height: 34px; border-radius: 50%; background: #eee;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+  transition: background .3s, transform .3s; }
+.star.filled { background: #2E7D32; transform: scale(1.1); color: #fff; }
+.bar-wrap  { padding: 0 20px; margin-bottom: 8px; }
+.bar-bg    { height: 10px; background: #eee; border-radius: 99px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #1B5E20, #4CAF50); width: 0%;
+  transition: width 1s cubic-bezier(.4,0,.2,1); }
+.bar-row   { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-top: 4px; }
+.redeem-box { margin: 0 20px 4px; padding: 14px;
+  background: #FFF8E1; border: 1.5px solid #FFE082; border-radius: 12px; text-align: center; }
+.redeem-box p     { font-size: 13px; color: #E65100; font-weight: 700; margin-bottom: 4px; }
+.redeem-box small { font-size: 11px; color: #888; display: block; line-height: 1.6; }
+.use-btns { display: flex; gap: 10px; padding: 12px 20px 0; }
+.use-btns button { flex: 1; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; }
+.use-yes { background: #2E7D32; color: #fff; }
+.use-no  { background: #f5f5f5; color: #666; }
+.drum { width: 200px; height: 120px; margin: 0 auto 14px; background: #1B5E20;
+  border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.drum-face { font-size: 44px; font-weight: 900; color: #fff; }
+.spinning { animation: spin .12s linear infinite; }
+@keyframes spin { 0%{transform:translateY(0)} 50%{transform:translateY(-40px)} 100%{transform:translateY(0)} }
+.prize-badge { background: #E8F5E9; border: 2px solid #A5D6A7;
+  border-radius: 16px; padding: 20px; margin: 0 20px 16px; text-align: center; }
+.prize-icon { font-size: 40px; margin-bottom: 8px; }
+.prize-name { font-size: 24px; font-weight: 900; color: #1B5E20; margin-bottom: 4px; }
+.prize-desc { font-size: 13px; color: #666; }
+.info-row { display: flex; justify-content: space-between;
+  padding: 9px 0; border-bottom: .5px solid #eee; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #999; } .info-val { font-weight: 700; color: #222; }
+.result { margin: 16px 20px 0; padding: 16px; border-radius: 12px;
+  font-size: 14px; font-weight: 500; display: none; white-space: pre-line; }
+.result.success { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
+.result.warn    { background: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
+.result.error   { background: #FFEBEE; color: #B71C1C; border: 1px solid #FFCDD2; }
+.btn-main { display: block; width: calc(100% - 40px); margin: 16px 20px 0; padding: 15px;
+  background: #2E7D32; color: #fff; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; }
+.activity-badge { display: inline-block; background: #E8F5E9; color: #2E7D32;
+  border: 1.5px solid #A5D6A7; border-radius: 30px;
+  font-size: 14px; font-weight: 600; padding: 7px 22px; margin: 16px 0 8px; }
+.anim-in { animation: fadeUp .4s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.user-info { font-size: 12px; color: #aaa; text-align: center; margin-top: 10px; }
+.coupon-card { margin: 0 0 10px; padding: 12px 14px;
+  background: linear-gradient(135deg, #EDE9FE, #F5F3FF);
+  border: 2px dashed #7C3AED; border-radius: 12px; }
+.coupon-card .title { font-size: 14px; font-weight: 800; color: #5B21B6; margin-bottom: 4px; }
+.coupon-card .detail { font-size: 11px; color: #6D28D9; line-height: 1.6; }
+
+#liff-spinner, .liff-spinner, [class*="liff-loading"], [id*="liff-loading"] { display: none !important; }
+
+.terms-body { padding: 14px 16px 0; max-height: 56vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.terms-section { margin-bottom: 12px; }
+.terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20; border-left: 4px solid #2E7D32; padding-left: 8px; margin-bottom: 5px; }
+.terms-item { font-size: 12px; color: #444; line-height: 1.8; padding-left: 4px; }
+.terms-item li { margin-bottom: 2px; list-style: none; padding-left: 12px; text-indent: -12px; }
+.terms-item li::before { content: "• "; color: #2E7D32; font-weight: 700; }
+.terms-tag { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 6px; margin-right: 4px; vertical-align: middle; }
+.tag-red { background:#FFEBEE; color:#B71C1C; }
+.tag-grn { background:#E8F5E9; color:#1B5E20; }
+.tag-blu { background:#E3F2FD; color:#0D47A1; }
+.tag-org { background:#FFF3E0; color:#E65100; }
+.tag-gry { background:#ECEFF1; color:#455A64; }
+.terms-footer { padding: 10px 14px 4px; border-top: 1px solid #eee; }
+.terms-agree-btn { display:block; width:100%; padding:14px; border-radius:12px; background:#15803d; color:#fff; border:none; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; }
+.terms-disagree-btn { display:block; width:100%; padding:12px; border-radius:12px; background:#f5f5f5; color:#666; border:1.5px solid #ddd; font-size:14px; font-weight:600; cursor:pointer; }
+.terms-disclaimer { background: #FFF8E1; border: 1.5px solid #FFD54F; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.terms-disclaimer .terms-section-title { color: #E65100; border-left-color: #FF8F00; }
+.terms-disclaimer .terms-item li::before { color: #FF8F00; }
+.terms-disclaimer .terms-item { color: #5D4037; }
+</style>
 </head>
 <body>
-  <div class="card" id="app">
+<div class="card" id="app">
 
-    <!-- 使用規則 -->
-    <div class="scn" id="terms-screen">
-      <div class="hdr">
-        <div class="hdr-icon">📋</div>
-        <h2>會員優惠使用規則</h2>
-        <p>請詳閱後選擇同意或不同意</p>
-      </div>
-      <div class="terms-body">
-
-        <div class="terms-section">
-          <div class="terms-section-title">一、會員資格</div>
-          <ul class="terms-item">
-            <li>月費 <span class="terms-tag tag-org">$600 / 30 天</span>，繳費後當日起算。</li>
-            <li>月費到期前系統會提醒是否續約。</li>
-            <li>逾期未續約，優惠暫停，消費次數保留。</li>
-          </ul>
-        </div>
-
-        <div class="terms-section">
-          <div class="terms-section-title">二、消費半價優惠</div>
-          <ul class="terms-item">
-            <li>雙數次（第 2、4、6…次）本人套餐享 <span class="terms-tag tag-grn">半價</span>。</li>
-            <li>半價金額以「本次」與「前次」最低套餐較小者計算。</li>
-            <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶。</li>
-            <li>不可與其他優惠 <span class="terms-tag tag-red">併用</span>。</li>
-            <li>半價品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料、配菜、加點。</li>
-          </ul>
-        </div>
-
-        <div class="terms-section">
-          <div class="terms-section-title">三、達標獎勵</div>
-          <ul class="terms-item">
-            <li>30 天內消費滿 <span class="terms-tag tag-blu">14 次</span> 即達標。</li>
-            <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐 + 簡餐各一份。</li>
-            <li>獎勵由店員手動發放，<span class="terms-tag tag-gry">不自動折抵</span>。</li>
-          </ul>
-        </div>
-
-        <div class="terms-section">
-          <div class="terms-section-title">四、介紹獎勵</div>
-          <ul class="terms-item">
-            <li>成功介紹滿 <span class="terms-tag tag-grn">6 名</span> 新會員加入，即可 <strong>永久免月費</strong>。</li>
-            <li>免月費後仍保留雙數次本人套餐 <span class="terms-tag tag-grn">半價</span> 優惠。</li>
-            <li>介紹人數由店員確認後更新，達 6 人時月費自動改為「免收」。</li>
-          </ul>
-        </div>
-
-        <div class="terms-section">
-          <div class="terms-section-title">五、注意事項</div>
-          <ul class="terms-item">
-            <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不可轉讓。</li>
-            <li>客人不得以 <span class="terms-tag tag-red">口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
-            <li>如遇系統異常，持當次收據向店員確認，依收據票面辦理。</li>
-          </ul>
-        </div>
-
-        <div class="terms-section terms-disclaimer">
-          <div class="terms-section-title">六、免責聲明</div>
-          <ul class="terms-item">
-            <li>本優惠屬商家 <span class="terms-tag tag-grn">純善意提供</span>，非商業契約之一部分。</li>
-            <li>因系統故障、斷網或其他不可抗力因素導致優惠未能使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不補發或折換現金。</li>
-            <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本方案，恕不另行通知。</li>
-          </ul>
-        </div>
-
-      </div>
-      <div class="terms-footer">
-        <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
-        <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
-      </div>
+  <!-- 使用規則 -->
+  <div class="scn" id="terms-screen">
+    <div class="hdr">
+      <div class="hdr-icon">📋</div>
+      <h2>會員優惠使用規則</h2>
+      <p>請詳閱後選擇同意或不同意</p>
     </div>
-  </div>
+    <div class="terms-body">
+
+      <div class="terms-section">
+        <div class="terms-section-title">一、會員資格</div>
+        <ul class="terms-item">
+          <li>月費 <span class="terms-tag tag-org">$600 / 30 天</span>，繳費後當日起算。</li>
+          <li>月費到期前系統會提醒是否續約。</li>
+          <li>逾期未續約，優惠暫停，消費次數保留。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">二、消費半價優惠</div>
+        <ul class="terms-item">
+          <li>雙數次（第 2、4、6…次）本人套餐享 <span class="terms-tag tag-grn">半價</span>。</li>
+          <li>半價金額以「本次」與「前次」最低套餐較小者計算。</li>
+          <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶。</li>
+          <li>不可與其他優惠 <span class="terms-tag tag-red">併用</span>。</li>
+          <li>半價品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料、配菜、加點。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">三、達標獎勵</div>
+        <ul class="terms-item">
+          <li>30 天內消費滿 <span class="terms-tag tag-blu">14 次</span> 即達標。</li>
+          <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐 + 簡餐各一份。</li>
+          <li>獎勵由店員手動發放，<span class="terms-tag tag-gry">不自動折抵</span>。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">四、介紹獎勵</div>
+        <ul class="terms-item">
+          <li>成功介紹滿 <span class="terms-tag tag-grn">6 名</span> 新會員加入，即可 <strong>永久免月費</strong>。</li>
+          <li>免月費後仍保留雙數次本人套餐 <span class="terms-tag tag-grn">半價</span> 優惠。</li>
+          <li>介紹人數由店員確認後更新，達 6 人時月費自動改為「免收」。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">五、注意事項</div>
+        <ul class="terms-item">
+          <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不可轉讓。</li>
+          <li>客人不得以 <span class="terms-tag tag-red">口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
+          <li>如遇系統異常，持當次收據向店員確認，依收據票面辦理。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section terms-disclaimer">
+        <div class="terms-section-title">六、免責聲明</div>
+        <ul class="terms-item">
+          <li>本優惠屬商家 <span class="terms-tag tag-grn">純善意提供</span>，非商業契約之一部分。</li>
+          <li>因系統故障、斷網或其他不可抗力因素導致優惠未能使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不補發或折換現金。</li>
+          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本方案，恕不另行通知。</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="terms-footer">
+      <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
+      <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
+    </div>
+  </div></div>
 
   <div class="scn" id="co-checking">
-    <div class="hdr">
-      <div class="hdr-icon">🔍</div>
-      <h2>查詢優惠中</h2>
-      <p>請稍候…</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
     <div class="loading" style="padding:48px 20px;">
       <div class="spinner"></div>正在查詢您的優惠資格…
     </div>
@@ -814,11 +235,7 @@
   </div>
 
   <div class="scn" id="co-sending">
-    <div class="hdr">
-      <div class="hdr-icon">📡</div>
-      <h2>送出中</h2>
-      <p>請稍候…</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">📡</div><h2>送出中</h2><p>請稍候…</p></div>
     <div class="loading" style="padding:48px 20px;">
       <div class="spinner"></div>正在確認您的選擇…
     </div>
@@ -826,9 +243,7 @@
 
   <div class="scn" id="co-waiting">
     <div class="hdr">
-      <div class="hdr-icon">✅</div>
-      <h2>選擇完成！</h2>
-      <p>請等候店員完成結帳</p>
+      <div class="hdr-icon">✅</div><h2>選擇完成！</h2><p>請等候店員完成結帳</p>
     </div>
     <div class="done-wrap">
       <div class="done-icon">🎉</div>
@@ -843,16 +258,14 @@
 
   <div class="scn" id="pt-confirm">
     <div class="hdr">
-      <div class="hdr-icon">🎁</div>
-      <h2>消費集點</h2>
+      <div class="hdr-icon">🎁</div><h2>消費集點</h2>
       <p id="pt-confirm-sub">本次可獲得點數</p>
     </div>
     <div style="padding:20px 20px 0;">
       <div style="text-align:center;margin-bottom:14px;">
         <span class="activity-badge" id="pt-earn-badge">本次 +0 點</span>
       </div>
-      <div
-        style="background:#F1F8E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px 16px;font-size:13px;line-height:2;color:#444;">
+      <div style="background:#F1F8E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px 16px;font-size:13px;line-height:2;color:#444;">
         <div style="display:flex;justify-content:space-between;">
           <span>目前點數</span><strong id="pt-cur-show" style="color:#1B5E20;">— 點</strong>
         </div>
@@ -868,13 +281,11 @@
       <div id="pt-user-info" class="user-info"></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:18px 20px 0;">
-      <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:14px 16px;cursor:pointer;"
-        onclick="confirmCollect()">
+      <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="confirmCollect()">
         <div style="font-size:15px;font-weight:700;color:#1B5E20;margin-bottom:3px;">✅ 是，幫我集點</div>
         <div style="font-size:12px;color:#888;">累積點數，集滿門檻可折抵</div>
       </div>
-      <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:14px 16px;cursor:pointer;"
-        onclick="skipCollect()">
+      <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:14px 16px;cursor:pointer;" onclick="skipCollect()">
         <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 不用，直接結帳</div>
         <div style="font-size:12px;color:#888;">跳過集點，直接付款結束</div>
       </div>
@@ -882,59 +293,36 @@
   </div>
 
   <div class="scn" id="pt-collecting">
-    <div class="hdr">
-      <div class="hdr-icon">⭐</div>
-      <h2>集點中…</h2>
-      <p>正在寫入點數</p>
-    </div>
-    <div class="loading" style="padding:48px 20px;">
-      <div class="spinner"></div>正在為您累積點數…
-    </div>
+    <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點中…</h2><p>正在寫入點數</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在為您累積點數…</div>
   </div>
 
   <div class="scn" id="pt-balance">
-    <div class="hdr">
-      <div class="hdr-icon">⭐</div>
-      <h2>集點成功！</h2>
-      <p>點數已更新</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">⭐</div><h2>集點成功！</h2><p>點數已更新</p></div>
     <div style="text-align:center;padding:24px 20px 16px;" class="anim-in">
       <div class="pts-big-num" id="bal-num">0</div>
       <div class="pts-big-label">累積點數</div>
       <div class="stars" id="bal-stars"></div>
     </div>
     <div class="bar-wrap">
-      <div class="bar-bg">
-        <div class="bar-fill" id="bal-bar"></div>
-      </div>
+      <div class="bar-bg"><div class="bar-fill" id="bal-bar"></div></div>
       <div class="bar-row"><span>0</span><span id="bal-goal-label">目標 5 點</span></div>
     </div>
     <div id="bal-action"></div>
   </div>
 
   <div class="scn" id="pt-draw">
-    <div class="hdr">
-      <div class="hdr-icon">🎰</div>
-      <h2>幸運抽獎！</h2>
-      <p id="pt-draw-sub">使用門檻點數抽獎</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">🎰</div><h2>幸運抽獎！</h2><p id="pt-draw-sub">使用門檻點數抽獎</p></div>
     <div style="padding:24px 20px;text-align:center;">
       <div style="font-size:13px;color:#666;margin-bottom:16px;">正在抽出你的獎品…</div>
-      <div class="drum">
-        <div class="drum-face" id="drum-face">?</div>
-      </div>
+      <div class="drum"><div class="drum-face" id="drum-face">?</div></div>
       <div id="draw-hint" style="font-size:12px;color:#aaa;margin-bottom:20px;min-height:18px;"></div>
-      <button class="btn-main" id="draw-btn" onclick="startDraw()"
-        style="width:auto;padding:14px 48px;display:inline-block;">開始抽獎</button>
+      <button class="btn-main" id="draw-btn" onclick="startDraw()" style="width:auto;padding:14px 48px;display:inline-block;">開始抽獎</button>
     </div>
   </div>
 
   <div class="scn" id="pt-prize">
-    <div class="hdr">
-      <div class="hdr-icon">🎉</div>
-      <h2>恭喜獲獎！</h2>
-      <p>請向店員出示兌換</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">🎉</div><h2>恭喜獲獎！</h2><p>請向店員出示兌換</p></div>
     <div style="padding:20px 0 0;">
       <div class="prize-badge">
         <div class="prize-icon" id="prize-icon">🎫</div>
@@ -951,8 +339,7 @@
       <div class="done-icon">✅</div>
       <div class="done-title">付款完成！</div>
       <div class="done-sub">感謝惠顧，期待下次再見 🥩</div>
-      <div
-        style="background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:16px 24px;width:100%;margin-top:0;">
+      <div style="background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:16px 24px;width:100%;margin-top:0;">
         <div style="font-size:12px;color:#666;margin-bottom:4px;">剩餘點數</div>
         <div style="font-size:34px;font-weight:900;color:#1B5E20;" id="done-pts">—</div>
         <div style="font-size:11px;color:#888;margin-top:2px;" id="done-pts-sub"></div>
@@ -962,11 +349,7 @@
 
   <!-- ★ v9.3-fix4：直接結帳（無任何優惠/集點設定時顯示此畫面） -->
   <div class="scn" id="pt-skip">
-    <div class="hdr">
-      <div class="hdr-icon">💳</div>
-      <h2>結帳完成</h2>
-      <p>感謝您的光臨</p>
-    </div>
+    <div class="hdr"><div class="hdr-icon">💳</div><h2>結帳完成</h2><p>感謝您的光臨</p></div>
     <div class="done-wrap" style="padding:36px 24px 20px;">
       <div class="done-icon">👋</div>
       <div class="done-title" style="font-size:16px;">下次歡迎光臨！</div>
@@ -998,8 +381,7 @@
           &nbsp;&nbsp;&nbsp;&nbsp;• 免月費後半價優惠依然保留
         </div>
       </div>
-      <div
-        style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
+      <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
         <strong>📋 重要說明：</strong><br>
         ✓ 優惠不列入消費記錄<br>
         ✓ 本人套餐指主餐部分<br>
@@ -1007,25 +389,18 @@
         ✓ 達標獎勵於30天後發放<br>
         ✓ 介紹人數由店員確認更新
       </div>
-      <div
-        style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
+      <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
         ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
         繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
       <div id="member-ask-sub" style="margin-bottom:14px;"></div>
-      <div id="member-ask-user"
-        style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;">
-      </div>
+      <div id="member-ask-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div
-          style="background:#e8eaf6;border:2px solid #1a237e;border-radius:14px;padding:16px;cursor:pointer;text-align:center;"
-          onclick="memberAskJoin()">
+        <div style="background:#e8eaf6;border:2px solid #1a237e;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="memberAskJoin()">
           <div style="font-size:15px;font-weight:800;color:#1a237e;margin-bottom:3px;">✅ 是，加入會員</div>
           <div style="font-size:12px;color:#888;">完成後繼續結帳</div>
         </div>
-        <div
-          style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;"
-          onclick="memberAskSkip()">
+        <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="memberAskSkip()">
           <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 暫不加入，直接結帳</div>
           <div style="font-size:12px;color:#888;">繼續選擇優惠</div>
         </div>
@@ -1041,26 +416,20 @@
       <p id="coupon-ask-sub">是否本次使用？</p>
     </div>
     <div style="padding:20px 16px 0;">
-      <div
-        style="background:#F5F3FF;border:2px solid #7C3AED;border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;">
+      <div style="background:#F5F3FF;border:2px solid #7C3AED;border-radius:16px;padding:16px;margin-bottom:16px;text-align:center;">
         <div style="font-size:36px;margin-bottom:8px;" id="coupon-ask-icon">🎫</div>
         <div style="font-size:17px;font-weight:800;color:#5B21B6;margin-bottom:4px;" id="coupon-ask-name">第二件半價券</div>
         <div style="font-size:12px;color:#6D28D9;line-height:1.7;" id="coupon-ask-desc">使用後折抵本次消費</div>
       </div>
-      <div
-        style="background:#FFF8E1;border:1.5px solid #FFE082;border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#B45309;line-height:1.7;">
+      <div style="background:#FFF8E1;border:1.5px solid #FFE082;border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#B45309;line-height:1.7;">
         ⚠️ 使用後券即核銷，本次<strong>不另外集點</strong>。<br>略過則保留券，下次仍可使用。
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div
-          style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:16px;cursor:pointer;text-align:center;"
-          onclick="useCouponNow()">
+        <div style="background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="useCouponNow()">
           <div style="font-size:15px;font-weight:800;color:#1B5E20;margin-bottom:3px;">✅ 是，本次使用優惠券</div>
           <div style="font-size:12px;color:#888;">核銷後立即折抵，不集點</div>
         </div>
-        <div
-          style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;"
-          onclick="skipCouponNow()">
+        <div style="background:#fafafa;border:2px solid #ddd;border-radius:14px;padding:16px;cursor:pointer;text-align:center;" onclick="skipCouponNow()">
           <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:3px;">✗ 略過，保留券下次用</div>
           <div style="font-size:12px;color:#888;">本次直接結帳，券繼續保留</div>
         </div>
@@ -1071,14 +440,8 @@
 
   <!-- ══ 會員系統畫面 ══ -->
   <div class="scn" id="mem-loading">
-    <div class="hdr">
-      <div class="hdr-icon">👤</div>
-      <h2>會員系統</h2>
-      <p>查詢中…</p>
-    </div>
-    <div class="loading" style="padding:48px 20px;">
-      <div class="spinner"></div>正在查詢會員資料…
-    </div>
+    <div class="hdr"><div class="hdr-icon">👤</div><h2>會員系統</h2><p>查詢中…</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在查詢會員資料…</div>
   </div>
 
   <div class="scn" id="mem-status">
@@ -1089,28 +452,17 @@
     </div>
     <div style="padding:16px 16px 0;">
       <!-- 狀態卡 -->
-      <div id="mem-status-card"
-        style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:2px solid #a5d6a7;border-radius:16px;padding:16px;margin-bottom:12px;">
+      <div id="mem-status-card" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:2px solid #a5d6a7;border-radius:16px;padding:16px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <span style="font-size:13px;font-weight:700;color:#1b5e20;">會員狀態</span>
-          <span id="mem-badge"
-            style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#2e7d32;color:#fff;">有效會員</span>
+          <span id="mem-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#2e7d32;color:#fff;">有效會員</span>
         </div>
         <div style="display:flex;justify-content:space-around;text-align:center;">
-          <div>
-            <div style="font-size:28px;font-weight:900;color:#1b5e20;" id="mem-visit-num">0</div>
-            <div style="font-size:11px;color:#666;">本月消費</div>
-          </div>
+          <div><div style="font-size:28px;font-weight:900;color:#1b5e20;" id="mem-visit-num">0</div><div style="font-size:11px;color:#666;">本月消費</div></div>
           <div style="width:1px;background:#c8e6c9;"></div>
-          <div>
-            <div style="font-size:28px;font-weight:900;color:#e65100;" id="mem-remain-num">14</div>
-            <div style="font-size:11px;color:#666;">達標還差</div>
-          </div>
+          <div><div style="font-size:28px;font-weight:900;color:#e65100;" id="mem-remain-num">14</div><div style="font-size:11px;color:#666;">達標還差</div></div>
           <div style="width:1px;background:#c8e6c9;"></div>
-          <div>
-            <div style="font-size:28px;font-weight:900;color:#0d47a1;" id="mem-coupon-num">0</div>
-            <div style="font-size:11px;color:#666;">已獲半價</div>
-          </div>
+          <div><div style="font-size:28px;font-weight:900;color:#0d47a1;" id="mem-coupon-num">0</div><div style="font-size:11px;color:#666;">已獲半價</div></div>
         </div>
       </div>
       <!-- 進度條 -->
@@ -1119,1053 +471,895 @@
           <span>消費次數進度</span><span id="mem-progress-label">0 / 14 次</span>
         </div>
         <div style="height:10px;background:#eee;border-radius:99px;overflow:hidden;">
-          <div id="mem-progress-bar"
-            style="height:100%;border-radius:99px;background:linear-gradient(90deg,#1b5e20,#4caf50);width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);">
-          </div>
+          <div id="mem-progress-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#1b5e20,#4caf50);width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);"></div>
         </div>
       </div>
       <!-- 月費狀態 -->
-      <div id="mem-fee-box"
-        style="background:#fff3e0;border:1.5px solid #ffcc80;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;display:none;">
-      </div>
+      <div id="mem-fee-box" style="background:#fff3e0;border:1.5px solid #ffcc80;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;display:none;"></div>
       <!-- 免費提示 -->
-      <div id="mem-free-box"
-        style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#1b5e20;text-align:center;display:none;">
-        🎉 已達標！到期可獲得獎勵及退費</div>
+      <div id="mem-free-box" style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#1b5e20;text-align:center;display:none;">🎉 已達標！到期可獲得獎勵及退費</div>
       <!-- 有效券清單 -->
       <div id="mem-coupons-box"></div>
       <!-- 底部說明 -->
-      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $600 / 30天 ·
-        消費14次以上雙數次半價<br>到期退還 $600 並加送套餐 + 簡餐各一份<br>🌟 介紹滿 6 名新會員可永久免月費
-      </div>
+      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $600 / 30天 · 消費14次以上雙數次半價<br>到期退還 $600 並加送套餐 + 簡餐各一份<br>🌟 介紹滿 6 名新會員可永久免月費
     </div>
-
-    <div class="scn" id="mem-join">
-      <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
-        <div class="hdr-icon">🥩</div>
-        <h2>加入無名牛排會員</h2>
-        <p>每月享專屬優惠</p>
-      </div>
-      <div style="padding:16px 16px 0;">
-        <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
-          <div style="font-size:12px;color:#3949ab;line-height:2;">
-            💰 <strong>月費 $600 / 30天</strong><br>
-            🎉 <strong>30天內消費14次以上</strong>：<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
-            🎁 <strong>達標獎勵</strong>：<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
-            🌟 <strong>介紹獎勵</strong>：<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;• 免月費後半價優惠依然保留
-          </div>
-        </div>
-        <div
-          style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
-          <strong>📋 重要說明：</strong><br>
-          ✓ 優惠不列入消費記錄<br>
-          ✓ 本人套餐指主餐部分<br>
-          ✓ 30天週期自加入日起計算<br>
-          ✓ 達標獎勵於30天後發放<br>
-          ✓ 介紹人數由店員確認更新
-        </div>
-        <div
-          style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
-          ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
-          繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
-        </div>
-        <div id="mem-join-user"
-          style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;">
-        </div>
-        <button onclick="doJoinMember()"
-          style="display:block;width:100%;padding:15px;border-radius:12px;background:#1a237e;color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅
-          確認加入會員</button>
-        <button onclick="goScreen('pt-skip')"
-          style="display:block;width:100%;padding:12px;border-radius:12px;background:#f5f5f5;color:#666;border:1.5px solid #ddd;font-size:14px;font-weight:600;cursor:pointer;">✗
-          暫不加入</button>
-      </div>
-    </div>
-
-    <div class="scn" id="mem-joining">
-      <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
-        <div class="hdr-icon">📡</div>
-        <h2>加入中…</h2>
-        <p>請稍候</p>
-      </div>
-      <div class="loading" style="padding:48px 20px;">
-        <div class="spinner"></div>正在建立會員資料…
-      </div>
-    </div>
-
-    <div class="scn" id="mem-done">
-      <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
-        <div class="hdr-icon">🎉</div>
-        <h2>加入成功！</h2>
-        <p>歡迎成為無名牛排會員</p>
-      </div>
-      <div class="done-wrap">
-        <div class="done-icon">🥩</div>
-        <div class="done-title" style="color:#1a237e;">歡迎加入！</div>
-        <div class="done-sub" id="mem-done-sub">本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員福利</div>
-      </div>
-    </div>
-
-    <div class="scn" id="si-main">
-      <div class="hdr">
-        <div class="hdr-icon" id="si-icon">🎮</div>
-        <h2>無名牛排</h2>
-        <p>每日簽到 · 天天好康</p>
-      </div>
-      <div style="padding:20px 20px 0;text-align:center;">
-        <div class="activity-badge" id="si-label">活動名稱</div>
-        <div id="si-user" class="user-info"></div>
-      </div>
-      <button class="btn-main" id="si-btn" onclick="doCheckin()">立即簽到 ✓</button>
-      <div class="result" id="si-result"></div>
-    </div>
-
   </div>
 
-  <script>
-    const GAS_URL =
-      "https://script.google.com/macros/s/AKfycbzdU-oeHBig36YrrnH6JKZWvRZBrO6NscOuhsW0WpaUjjU2JmwM2gU1P2ii1toCWxjJ/exec";
-    const LIFF_ID = "2009772018-M8WxXgeO";
-    const PRIZES = [{
-        icon: "🎫",
-        name: "85 折優惠",
-        desc: "本次消費享 85 折，現場折抵",
-        disc: 0.85
-      },
-      {
-        icon: "🎟",
-        name: "9 折優惠",
-        desc: "本次消費享 9 折，現場折抵",
-        disc: 0.90
-      },
-      {
-        icon: "🍰",
-        name: "免費甜點",
-        desc: "本單贈送甜點一份，請向店員領取",
-        disc: 1,
-        extra: "贈甜點"
-      },
-      {
-        icon: "🎁",
-        name: "下次 85 折",
-        desc: "下次到店享 85 折",
-        disc: 1,
-        next: true
-      }
-    ];
-    const SIGNIN_INFO = {
-      chicken: {
-        icon: "🍗",
-        label: "炸雞活動"
-      },
-      shake: {
-        icon: "🎲",
-        label: "搖骰子"
-      },
-      dice: {
-        icon: "🎮",
-        label: "每日遊戲"
-      }
-    };
+  <div class="scn" id="mem-join">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
+      <div class="hdr-icon">🥩</div>
+      <h2>加入無名牛排會員</h2>
+      <p>每月享專屬優惠</p>
+    </div>
+    <div style="padding:16px 16px 0;">
+      <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
+        <div style="font-size:12px;color:#3949ab;line-height:2;">
+          💰 <strong>月費 $600 / 30天</strong><br>
+          🎉 <strong>30天內消費14次以上</strong>：<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
+          🎁 <strong>達標獎勵</strong>：<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
+          🌟 <strong>介紹獎勵</strong>：<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 免月費後半價優惠依然保留
+        </div>
+      </div>
+      <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
+        <strong>📋 重要說明：</strong><br>
+        ✓ 優惠不列入消費記錄<br>
+        ✓ 本人套餐指主餐部分<br>
+        ✓ 30天週期自加入日起計算<br>
+        ✓ 達標獎勵於30天後發放<br>
+        ✓ 介紹人數由店員確認更新
+      </div>
+      <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
+        ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
+        繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
+      </div>
+      <div id="mem-join-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
+      <button onclick="doJoinMember()" style="display:block;width:100%;padding:15px;border-radius:12px;background:#1a237e;color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ 確認加入會員</button>
+      <button onclick="goScreen('pt-skip')" style="display:block;width:100%;padding:12px;border-radius:12px;background:#f5f5f5;color:#666;border:1.5px solid #ddd;font-size:14px;font-weight:600;cursor:pointer;">✗ 暫不加入</button>
+    </div>
+  </div>
 
-    let profile = null,
-      earnPts = 0,
-      curPts = 0,
-      newTotal = 0,
-      finalPts = 0;
-    let drawnPrize = null,
-      drawTimer = null;
-    let sessionKey = null,
-      goalThreshold = 5,
-      redeemDisc = 50,
-      redeemTiers = [];
-    let promoSelected = null;
-    let indoorExpDays = 14;
-    let redeemTierPoints = 0,
-      redeemTierDisc = 0;
-    let customPromos = [];
+  <div class="scn" id="mem-joining">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);"><div class="hdr-icon">📡</div><h2>加入中…</h2><p>請稍候</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在建立會員資料…</div>
+  </div>
 
-    let _issueQtyFromUrl = 1;
-    let _issueItemName = '';
-    let _issueUnitPrice = 0;
+  <div class="scn" id="mem-done">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);"><div class="hdr-icon">🎉</div><h2>加入成功！</h2><p>歡迎成為無名牛排會員</p></div>
+    <div class="done-wrap">
+      <div class="done-icon">🥩</div>
+      <div class="done-title" style="color:#1a237e;">歡迎加入！</div>
+      <div class="done-sub" id="mem-done-sub">本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員福利</div>
+    </div>
+  </div>
 
-    let _quotaRemain = -1;
+  <div class="scn" id="si-main">
+    <div class="hdr">
+      <div class="hdr-icon" id="si-icon">🎮</div>
+      <h2>無名牛排</h2><p>每日簽到 · 天天好康</p>
+    </div>
+    <div style="padding:20px 20px 0;text-align:center;">
+      <div class="activity-badge" id="si-label">活動名稱</div>
+      <div id="si-user" class="user-info"></div>
+    </div>
+    <button class="btn-main" id="si-btn" onclick="doCheckin()">立即簽到 ✓</button>
+    <div class="result" id="si-result"></div>
+  </div>
 
-    let _flags = {
-      promoHalf: false,
-      promoCarryout: false,
-      promoIndoor: false,
-      promoRedeem: false,
-      promoPoints: false,
-      promoMember: false // ★ v9.4：結帳時詢問加入會員
-    };
+</div>
 
-    // ══════════════════════════════════════════════════════════════
-    //  ★ v9.3-fix4：判斷是否「完全無任何優惠/集點設定」
-    //  所有 flag 皆為 false，且無 customPromos → 直接結帳
-    // ══════════════════════════════════════════════════════════════
-    function hasAnyPromoOrPoints() {
-      return _flags.promoHalf ||
-        _flags.promoCarryout ||
-        _flags.promoIndoor ||
-        _flags.promoRedeem ||
-        _flags.promoPoints ||
-        customPromos.length > 0;
-    }
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzdU-oeHBig36YrrnH6JKZWvRZBrO6NscOuhsW0WpaUjjU2JmwM2gU1P2ii1toCWxjJ/exec";
+const LIFF_ID = "2009772018-M8WxXgeO";
+const PRIZES  = [
+  { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
+  { icon:"🎟", name:"9 折優惠",   desc:"本次消費享 9 折，現場折抵",     disc: 0.90 },
+  { icon:"🍰", name:"免費甜點",   desc:"本單贈送甜點一份，請向店員領取", disc: 1, extra:"贈甜點" },
+  { icon:"🎁", name:"下次 85 折", desc:"下次到店享 85 折",              disc: 1, next: true }
+];
+const SIGNIN_INFO = {
+  chicken: { icon:"🍗", label:"炸雞活動" },
+  shake:   { icon:"🎲", label:"搖骰子"   },
+  dice:    { icon:"🎮", label:"每日遊戲"  }
+};
 
-    // ══════════════════════════════════════════════════════════════
-    //  初始化
-    // ══════════════════════════════════════════════════════════════
-    async function init() {
+let profile = null, earnPts = 0, curPts = 0, newTotal = 0, finalPts = 0;
+let drawnPrize = null, drawTimer = null;
+let sessionKey = null, goalThreshold = 5, redeemDisc = 50, redeemTiers = [];
+let promoSelected = null;
+let indoorExpDays = 14;
+let redeemTierPoints = 0, redeemTierDisc = 0;
+let customPromos = [];
+
+let _issueQtyFromUrl  = 1;
+let _issueItemName    = '';
+let _issueUnitPrice   = 0;
+
+let _quotaRemain = -1;
+
+let _flags = {
+  promoHalf    : false,
+  promoCarryout: false,
+  promoIndoor  : false,
+  promoRedeem  : false,
+  promoPoints  : false,
+  promoMember  : false   // ★ v9.4：結帳時詢問加入會員
+};
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.3-fix4：判斷是否「完全無任何優惠/集點設定」
+//  所有 flag 皆為 false，且無 customPromos → 直接結帳
+// ══════════════════════════════════════════════════════════════
+function hasAnyPromoOrPoints() {
+  return _flags.promoHalf
+      || _flags.promoCarryout
+      || _flags.promoIndoor
+      || _flags.promoRedeem
+      || _flags.promoPoints
+      || customPromos.length > 0;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  初始化
+// ══════════════════════════════════════════════════════════════
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    profile = await liff.getProfile();
+    const p = new URL(location.href).searchParams;
+
+    const tiersParam = p.get("tiers");
+    if (tiersParam) {
       try {
-        await liff.init({
-          liffId: LIFF_ID
-        });
-        if (!liff.isLoggedIn()) {
-          liff.login({
-            redirectUri: location.href
-          });
-          return;
-        }
-        profile = await liff.getProfile();
-        const p = new URL(location.href).searchParams;
-
-        const tiersParam = p.get("tiers");
-        if (tiersParam) {
-          try {
-            const parsed = JSON.parse(decodeURIComponent(tiersParam));
-            if (Array.isArray(parsed) && parsed.length > 0)
-              redeemTiers = parsed.map(t => ({
-                threshold: Math.max(1, parseInt(t.threshold) || 1),
-                discount: Math.max(0, parseInt(t.discount) || 0)
-              })).sort((a, b) => a.threshold - b.threshold);
-          } catch (_) {}
-        }
-        goalThreshold = Math.max(1, parseInt(p.get("threshold") || "5") || 5);
-        redeemDisc = Math.max(0, parseInt(p.get("discount") || "50") || 50);
-        if (redeemTiers.length === 0) redeemTiers = [{
-          threshold: goalThreshold,
-          discount: redeemDisc
-        }];
-
-        indoorExpDays = Math.max(1, parseInt(p.get("indoorExpDays") || "14") || 14);
-
-        _flags.promoHalf = p.get("promoHalf") === '1';
-        _flags.promoCarryout = p.get("promoCarryout") === '1';
-        _flags.promoIndoor = p.get("promoIndoor") === '1';
-        _flags.promoRedeem = p.get("promoRedeem") === '1';
-        _flags.promoPoints = p.get("promoPoints") === '1';
-        _flags.promoMember = p.get("promoMember") === '1'; // ★ v9.4
-
-        _issueQtyFromUrl = Math.max(1, parseInt(p.get("useQty") || "1") || 1);
-        _issueItemName = (p.get("itemName") || "").trim();
-        _issueUnitPrice = Math.max(0, parseInt(p.get("unitPrice") || "0") || 0);
-
-        const cpParam = p.get("customPromos");
-        if (cpParam) {
-          try {
-            const parsed = JSON.parse(decodeURIComponent(cpParam));
-            if (Array.isArray(parsed)) {
-              customPromos = parsed.map((item, idx) => ({
-                key: item.key || ('custom_' + idx),
-                label: item.label || '促銷活動',
-                icon: item.icon || '🎁',
-                desc: item.desc || '',
-                type: item.type || 'custom'
-              }));
-            }
-          } catch (_) {}
-        }
-
-        const skParam = p.get("sessionKey");
-        const ptsParam = p.get("points");
-        const orderParam = p.get("orderId");
-        const typeParam = p.get("type");
-        const modeParam = p.get("mode");
-
-        hideLoading();
-
-        // ★ mode=member → 會員入口（加入/查詢）
-        if (modeParam === "member") {
-          window._pendingFlow = "member";
-          await startMemberFlow();
-          return;
-        }
-
-        if (skParam && !ptsParam) {
-          sessionKey = skParam;
-          earnPts = Math.max(0, parseInt(p.get("earn") || "0") || 0);
-          window._pendingFlow = "checkout";
-        } else if (ptsParam && orderParam) {
-          earnPts = Math.max(0, parseInt(ptsParam) || 0);
-          window._pendingFlow = "points";
-        } else if (typeParam && SIGNIN_INFO[typeParam]) {
-          window._pendingFlow = "signin_" + typeParam;
-        } else {
-          showFatalError("未知的進入方式，請重新掃描 QR Code");
-          return;
-        }
-
-        // ★ v9.3-fix4：完全無任何優惠及集點設定 → 直接跳到結帳完成，不顯示規則也不做任何動作
-        if (!hasAnyPromoOrPoints() && window._pendingFlow !== "signin_chicken" && !window._pendingFlow.startsWith(
-            "signin_")) {
-          goScreen("pt-skip");
-          return;
-        }
-
-        // ★ v9.6：checkout flow 老會員 → 先查詢身份，是會員直接跳主題，不顯示規則
-        if (window._pendingFlow === "checkout") {
-          try {
-            const chkRes = await fetch(GAS_URL + '?action=member_checkin&lineuid=' + encodeURIComponent(profile
-              .userId));
-            const chkData = await chkRes.json();
-            if (chkData.status === 'OK') {
-              // 已是會員，直接進結帳優惠流程
-              window._memberAskFromCheckout = true;
-              await startCheckoutPromoFlow();
-              return;
-            }
-          } catch (_) {}
-        }
-
-        goScreen("terms-screen");
-
-      } catch (err) {
-        showFatalError("初始化失敗：\n" + err.message);
-      }
+        const parsed = JSON.parse(decodeURIComponent(tiersParam));
+        if (Array.isArray(parsed) && parsed.length > 0)
+          redeemTiers = parsed.map(t => ({ threshold: Math.max(1, parseInt(t.threshold)||1), discount: Math.max(0, parseInt(t.discount)||0) })).sort((a,b)=>a.threshold-b.threshold);
+      } catch(_) {}
     }
+    goalThreshold = Math.max(1, parseInt(p.get("threshold")||"5")||5);
+    redeemDisc    = Math.max(0, parseInt(p.get("discount")||"50")||50);
+    if (redeemTiers.length === 0) redeemTiers = [{ threshold: goalThreshold, discount: redeemDisc }];
 
-    // ══════════════════════════════════════════════════════════════
-    //  同意規則 → 根據 flow 跳轉
-    // ══════════════════════════════════════════════════════════════
-    async function agreeTerms() {
-      const f = window._pendingFlow || '';
+    indoorExpDays = Math.max(1, parseInt(p.get("indoorExpDays")||"14")||14);
 
-      if (f === "checkout") {
-        // ★ v9.3-fix4：checkout flow 但無任何優惠 → 直接送 skip 給 POS，不顯示選項畫面
-        if (!hasAnyPromoOrPoints()) {
-          await submitPromoChoice('skip', 0, 0);
-          return;
-        }
-        // ★ v9.4：標記來自結帳流程
-        window._memberAskFromCheckout = true;
-        await startCheckoutPromoFlow();
-      } else if (f === "points") {
-        if (!_flags.promoPoints) {
-          goScreen("pt-skip");
-          return;
-        }
-        await startPointsFlow();
-      } else if (f.startsWith("signin_")) {
-        startSigninFlow(f.replace("signin_", ""));
-      }
-    }
+    _flags.promoHalf     = p.get("promoHalf")     === '1';
+    _flags.promoCarryout = p.get("promoCarryout") === '1';
+    _flags.promoIndoor   = p.get("promoIndoor")   === '1';
+    _flags.promoRedeem   = p.get("promoRedeem")   === '1';
+    _flags.promoPoints   = p.get("promoPoints")   === '1';
+    _flags.promoMember   = p.get("promoMember")   === '1'; // ★ v9.4
 
-    function disagreeTerms() {
-      // ★ v9.3-fix4：checkout flow 按「不同意」也要送 skip 給 POS
-      if (window._pendingFlow === "checkout" && sessionKey) {
-        submitPromoChoice('skip', 0, 0);
-      } else {
-        goScreen("pt-skip");
-      }
-    }
+    _issueQtyFromUrl = Math.max(1, parseInt(p.get("useQty")    || "1") || 1);
+    _issueItemName   = (p.get("itemName")  || "").trim();
+    _issueUnitPrice  = Math.max(0, parseInt(p.get("unitPrice") || "0") || 0);
 
-    // ══════════════════════════════════════════════════════════════
-    //  結帳優惠流程
-    // ══════════════════════════════════════════════════════════════
-    async function startCheckoutPromoFlow() {
-      hideLoading();
-      document.getElementById("co-user-info").textContent = "👤 " + profile.displayName;
-      document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
-      goScreen("co-checking");
-
+    const cpParam = p.get("customPromos");
+    if (cpParam) {
       try {
-        const lo = redeemTiers[0] || {
-          threshold: goalThreshold,
-          discount: redeemDisc
-        };
-        const url = GAS_URL +
-          "?action=member_status" +
-          "&lineuid=" + encodeURIComponent(profile.userId) +
-          "&earnPts=" + earnPts +
-          "&threshold=" + lo.threshold +
-          "&discount=" + lo.discount +
-          "&indoorExpDays=" + indoorExpDays;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.halfPriceQuota && typeof data.halfPriceQuota.remain === 'number') {
-          _quotaRemain = data.halfPriceQuota.remain;
-        } else {
-          const qOpt = (data.eligibleOptions || []).find(o => o.type === 'quota_redeem');
-          if (qOpt) {
-            _quotaRemain = typeof qOpt.remain === 'number' ? qOpt.remain : -1;
-          } else {
-            _quotaRemain = -1;
-          }
+        const parsed = JSON.parse(decodeURIComponent(cpParam));
+        if (Array.isArray(parsed)) {
+          customPromos = parsed.map((item, idx) => ({
+            key   : item.key   || ('custom_' + idx),
+            label : item.label || '促銷活動',
+            icon  : item.icon  || '🎁',
+            desc  : item.desc  || '',
+            type  : item.type  || 'custom'
+          }));
         }
-
-        // ★ 修改：非會員時顯示加入邀請而非報錯
-        if (data.status === 'NOT_MEMBER') {
-          // 顯示加入會員邀請畫面
-          document.getElementById('member-ask-user').innerHTML =
-            '<strong>👤 ' + profile.displayName + '</strong><br>' +
-            '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() +
-            '</span>';
-          document.getElementById('member-ask-sub').innerHTML =
-            '<strong style="font-size:14px;color:#1B5E20;">🎉 加入會員享優惠</strong><br>' +
-            '<span style="font-size:12px;color:#666;line-height:1.6;">月費 $600 / 30天<br>30天內消費滿14次：單數次正常價，雙數次本人套餐半價<br>到期退還 $600 並加送指定套餐 + 簡餐各一份</span>';
-          window._memberAskPending = true;
-          window._memberAskFromCheckout = true; // 標記來自結帳流程
-          goScreen('member-ask');
-          return;
-        }
-
-        if (data.status !== 'OK') {
-          showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
-          return;
-        }
-
-        window._memberStatus = data;
-        curPts = (data.points && data.points.current) || 0;
-
-        const bestTier = [...redeemTiers].reverse().find(t => (data.points.totalAfterEarn || 0) >= t.threshold);
-        if (bestTier) {
-          redeemTierPoints = bestTier.threshold;
-          redeemTierDisc = bestTier.discount;
-        } else {
-          redeemTierPoints = lo.threshold;
-          redeemTierDisc = lo.discount;
-        }
-
-        // ★ v9.3-fix5：偵測帳號是否有可用券（half_redeem 或 quota_redeem 額度 > 0）
-        //   有券 → 鎖定，只顯示「用券」或「略過」，不進一般優惠流程
-        //   ★ v9.6-fix：若是會員系統（isMember=true），半價為當次直接折扣，不走舊券流程
-        const _halfCouponStatusCheck = (data.halfCoupon && data.halfCoupon.status) || '';
-        const _hasActiveCoupon = _halfCouponStatusCheck === 'active' || _halfCouponStatusCheck === 'issued';
-        const _hasQuotaCoupon = (_quotaRemain > 0);
-        const _isMemberSystem = data.isMember === true;
-
-        if ((_hasActiveCoupon || _hasQuotaCoupon) && !_isMemberSystem) {
-          // 決定券的顯示資訊
-          let couponIcon = '🎫',
-            couponName = '第二件半價券',
-            couponDesc = '使用後，第二件（較便宜）套餐半價折抵';
-          if (_hasQuotaCoupon && _issueItemName) {
-            const _qDisc = Math.floor(_issueUnitPrice / 2);
-            const _effectiveQty = Math.min(_issueQtyFromUrl, _quotaRemain);
-            couponIcon = '🥩';
-            couponName = '半價折扣額度';
-            couponDesc = '[' + _issueItemName + '] 本次用 ' + _effectiveQty + ' 份，共折 $' + (_qDisc * _effectiveQty) +
-              '\n剩餘總額度：' + _quotaRemain + ' 份';
-          }
-          document.getElementById("coupon-ask-icon").textContent = couponIcon;
-          document.getElementById("coupon-ask-name").textContent = couponName;
-          document.getElementById("coupon-ask-desc").innerHTML = couponDesc.replace(/\n/g, '<br>');
-          document.getElementById("coupon-ask-sub").textContent = "帳號有未使用的優惠券";
-          document.getElementById("coupon-ask-user").textContent = "👤 " + profile.displayName;
-          // 儲存券種類供按鈕使用
-          window._activeCouponType = _hasQuotaCoupon ? 'quota_redeem' : 'half_redeem';
-          goScreen("coupon-ask");
-          return;
-        }
-
-        buildPromoOptionsFromGAS(data);
-
-        // ★ v9.4：若開啟 promoMember=1 且此用戶非會員 → 詢問是否加入
-        if (_flags.promoMember && _isMemberFlowPending(data)) {
-          document.getElementById('member-ask-user').innerHTML =
-            '<strong>👤 ' + profile.displayName + '</strong><br>' +
-            '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() +
-            '</span>';
-          window._memberAskPending = true;
-          goScreen('member-ask');
-          return;
-        }
-
-        goScreen("co-promo");
-
-      } catch (err) {
-        showFatalError("網路錯誤，請告知店員：\n" + err.message);
-      }
+      } catch(_) {}
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  建立優惠選項（結帳流程）
-    // ══════════════════════════════════════════════════════════════
-    function buildPromoOptionsFromGAS(data) {
-      const container = document.getElementById("promo-options-container");
-      container.innerHTML = "";
+    const skParam    = p.get("sessionKey");
+    const ptsParam   = p.get("points");
+    const orderParam = p.get("orderId");
+    const typeParam  = p.get("type");
+    const modeParam  = p.get("mode");
 
-      // ★ v9.6-debug：顯示 GAS 回傳的 halfCoupon.status 與 isMember，方便驗證
-      const _dbgHalf = (data.halfCoupon && data.halfCoupon.status) || '無';
-      const _dbgMem = data.isMember === true ? 'true' : 'false';
-      const _dbgVisit = (data.member && data.member.visitCount) || 0;
-      document.getElementById("co-promo-sub").textContent =
-        `第 ${_dbgVisit + 1} 次 ｜ halfCoupon=${_dbgHalf} ｜ isMember=${_dbgMem}`;
+    hideLoading();
 
-      const TYPE_FLAG = {
-        'redeem': _flags.promoRedeem,
-        'carryout': _flags.promoCarryout,
-        'indoor_redeem': _flags.promoIndoor,
-        'indoor_issue': _flags.promoIndoor,
-        'indoor_redeemed': _flags.promoIndoor,
-        'half_redeem': _flags.promoHalf,
-        'half_issue': _flags.promoHalf,
-        'half_keep': _flags.promoHalf,
-        'quota_redeem': _flags.promoHalf,
-        'points': _flags.promoPoints,
-        'member_visit': true // ★ 會員消費記錄，永遠顯示
-      };
+    // ★ mode=member → 會員入口（加入/查詢）
+    if (modeParam === "member") {
+      window._pendingFlow = "member";
+      await startMemberFlow();
+      return;
+    }
 
-      (data.warnings || []).forEach(w => {
-        const warn = document.createElement('div');
-        warn.style.cssText =
-          'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
-        warn.innerHTML = w;
-        container.appendChild(warn);
-      });
+    if (skParam && !ptsParam) {
+      sessionKey = skParam;
+      earnPts = Math.max(0, parseInt(p.get("earn")||"0")||0);
+      window._pendingFlow = "checkout";
+    } else if (ptsParam && orderParam) {
+      earnPts = Math.max(0, parseInt(ptsParam)||0);
+      window._pendingFlow = "points";
+    } else if (typeParam && SIGNIN_INFO[typeParam]) {
+      window._pendingFlow = "signin_" + typeParam;
+    } else {
+      showFatalError("未知的進入方式，請重新掃描 QR Code");
+      return;
+    }
 
-      (data.notices || []).forEach(n => {
-        const note = document.createElement('div');
-        note.style.cssText =
-          'background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;';
-        note.innerHTML = n;
-        container.appendChild(note);
-      });
+    // ★ v9.3-fix4：完全無任何優惠及集點設定 → 直接跳到結帳完成，不顯示規則也不做任何動作
+    if (!hasAnyPromoOrPoints() && window._pendingFlow !== "signin_chicken" && !window._pendingFlow.startsWith("signin_")) {
+      goScreen("pt-skip");
+      return;
+    }
 
-      // ★ v9.7：介紹免月費會員顯示身份提示
-      if (data.isReferralFree) {
-        const rfNote = document.createElement('div');
-        rfNote.style.cssText =
-          'background:#E8F5E9;border:2px solid #2E7D32;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;font-weight:700;';
-        rfNote.innerHTML = '🎁 您為介紹會員，永久免月費，雙數次本人套餐半價優惠持續有效！';
-        container.appendChild(rfNote);
-      }
-
-      const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
-        const t = opt.type || '';
-        if (t === 'points') return false;
-        if (t in TYPE_FLAG) return TYPE_FLAG[t];
-        return true;
-      });
-      const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
-
-      const _cartQty = _issueQtyFromUrl || 0;
-      const _pairQty = _cartQty;
-      let options = (data.eligibleOptions || []).filter(opt => {
-        const t = opt.type || '';
-        if (t === 'points') return _flags.promoPoints && hasOtherUsable;
-        if (t === 'member_visit') return true;
-        if (t === 'half_redeem') return true;
-        if (t in TYPE_FLAG) return TYPE_FLAG[t];
-        return true;
-      });
-
-      if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
-        options = options.filter(opt => opt.type !== 'quota_redeem');
-
-        const _showQuota = (_quotaRemain === -1) ? true : (_quotaRemain > 0);
-        const _effectiveQty = (_quotaRemain > 0) ?
-          Math.min(_issueQtyFromUrl, _quotaRemain) :
-          _issueQtyFromUrl;
-
-        if (_showQuota) {
-          const _qDisc = Math.floor(_issueUnitPrice / 2);
-          options.unshift({
-            type: 'quota_redeem',
-            key: 'quota_redeem',
-            icon: '🥩',
-            title: '🔥 使用半價額度（本次用 ' + _effectiveQty + ' 份）',
-            sub: '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + '\n✨ 帳號剩餘總額度：' + (
-              _quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 份',
-            disabled: false
-          });
-        } else {
-          const noQuotaWarn = document.createElement('div');
-          noQuotaWarn.style.cssText =
-            'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
-          noQuotaWarn.innerHTML =
-            '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 半價額度已用完</strong>' +
-            '本次訂單的半價額度為 0，無法使用「使用半價額度」優惠。<br>' +
-            '如需半價券，請選擇下方「領取第二件半價券」選項。';
-          container.appendChild(noQuotaWarn);
-        }
-      }
-
-      const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
-      const _hasIssuedHalf = _halfCouponStatus === 'active' || _halfCouponStatus === 'issued';
-      const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
-      const _isMemberSys = data.isMember === true; // ★ v9.6-fix：會員系統不走舊券邏輯
-
-      if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf && !_isMemberSys) {
-        options.push({
-          type: 'half_redeem',
-          key: 'half_redeem',
-          icon: '🎫',
-          title: '🎫 核銷半價優惠（本次折抵 ' + _pairQty + ' 件）',
-          sub: '✨ 每一份套餐皆折抵「最低價套餐」之半價\n✨ 帳號剩餘總額度：' + (_quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 件',
-          disabled: false
-        });
-      }
-
-      options.forEach(opt => {
-        // ★ v9.6-fix：會員系統雙數次（canUseHalfPrice）強化顯示文字
-        if (opt.type === 'member_visit' && _isMemberSys) {
-          const _halfCouponActive = (data.halfCoupon && data.halfCoupon.status) === 'active';
-          if (_halfCouponActive) {
-            opt = Object.assign({}, opt, {
-              title: '🥩 記錄本次消費（本人套餐半價）',
-              sub: '🎉 本次為雙數次，本人主餐套餐享半價！\n' + (opt.sub || '')
-            });
-          }
-        }
-        if (_hasIssuedHalf && opt.type === 'half_issue' && !_isMemberSys) {
-          const warn = document.createElement('div');
-          warn.style.cssText =
-            'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
-          warn.innerHTML =
-            '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
-            '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
-            '請選擇下方「核銷第二件半價券」選項使用，或選其他優惠。';
-          container.appendChild(warn);
+    // ★ v9.6：checkout flow 老會員 → 先查詢身份，是會員直接跳主題，不顯示規則
+    if (window._pendingFlow === "checkout") {
+      try {
+        const chkRes  = await fetch(GAS_URL + '?action=member_checkin&lineuid=' + encodeURIComponent(profile.userId));
+        const chkData = await chkRes.json();
+        if (chkData.status === 'OK') {
+          // 已是會員，直接進結帳優惠流程
+          window._memberAskFromCheckout = true;
+          await startCheckoutPromoFlow();
           return;
         }
-
-        let cls = '';
-        if (opt.type === 'redeem') cls = 'redeem-opt';
-        if (opt.type === 'half_redeem') cls = 'half-opt';
-        if (opt.type === 'half_issue') cls = 'half-issue';
-        container.appendChild(makeOpt({
-          id: 'opt-' + opt.key,
-          key: opt.key,
-          cls,
-          icon: opt.icon,
-          title: opt.title,
-          sub: opt.sub,
-          dis: !!opt.disabled
-        }));
-      });
-
-      customPromos.forEach(cp => {
-        container.appendChild(makeOpt({
-          id: 'opt-' + cp.key,
-          key: cp.key,
-          icon: cp.icon,
-          title: cp.label,
-          sub: cp.desc,
-          dis: false
-        }));
-      });
-
-      // ★ v9.3-fix4：GAS 也回傳了沒有可選選項 → 自動 skip
-      const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
-      if (!hasSelectable) {
-        if (_flags.promoPoints) {
-          setTimeout(() => submitPromoChoice('points', 0, 0), 300);
-        } else {
-          setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
-        }
-      }
+      } catch(_) {}
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  ★ v9.3-fix5：券詢問畫面的兩個按鈕
-    // ══════════════════════════════════════════════════════════════
-    async function useCouponNow() {
-      const couponType = window._activeCouponType || 'half_redeem';
-      await submitPromoChoice(couponType, 0, 0);
-    }
+    goScreen("terms-screen");
 
-    async function skipCouponNow() {
-      // 略過券：直接送 skip，不集點
+  } catch (err) { showFatalError("初始化失敗：\n" + err.message); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  同意規則 → 根據 flow 跳轉
+// ══════════════════════════════════════════════════════════════
+async function agreeTerms() {
+  const f = window._pendingFlow || '';
+
+  if (f === "checkout") {
+    // ★ v9.3-fix4：checkout flow 但無任何優惠 → 直接送 skip 給 POS，不顯示選項畫面
+    if (!hasAnyPromoOrPoints()) {
       await submitPromoChoice('skip', 0, 0);
+      return;
     }
-
-    function makeOpt({
-      id,
-      key,
-      cls,
-      icon,
-      title,
-      sub,
-      dis
-    }) {
-      const div = document.createElement("div");
-      div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
-      div.id = id;
-      if (!dis) div.onclick = () => selectPromo(key);
-      div.innerHTML =
-        '<div class="opt-icon">' + icon + '</div>' +
-        '<div style="flex:1;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub || '').replace(
-          /\n/g, '<br>') + '</div></div>' +
-        '<div class="opt-check" id="chk-' + key + '">✅</div>';
-      return div;
+    // ★ v9.4：標記來自結帳流程
+    window._memberAskFromCheckout = true;
+    await startCheckoutPromoFlow();
+  } else if (f === "points") {
+    if (!_flags.promoPoints) {
+      goScreen("pt-skip");
+      return;
     }
+    await startPointsFlow();
+  } else if (f.startsWith("signin_")) {
+    startSigninFlow(f.replace("signin_", ""));
+  }
+}
 
-    function selectPromo(key) {
-      const el = document.getElementById("opt-" + key);
-      if (!el || el.classList.contains("dis")) return;
+function disagreeTerms() {
+  // ★ v9.3-fix4：checkout flow 按「不同意」也要送 skip 給 POS
+  if (window._pendingFlow === "checkout" && sessionKey) {
+    submitPromoChoice('skip', 0, 0);
+  } else {
+    goScreen("pt-skip");
+  }
+}
 
-      if (promoSelected === key) {
-        confirmPromo();
-        return;
-      }
+// ══════════════════════════════════════════════════════════════
+//  結帳優惠流程
+// ══════════════════════════════════════════════════════════════
+async function startCheckoutPromoFlow() {
+  hideLoading();
+  document.getElementById("co-user-info").textContent  = "👤 " + profile.displayName;
+  document.getElementById("co-user-info2").textContent = "👤 " + profile.displayName;
+  goScreen("co-checking");
 
-      promoSelected = key;
+  try {
+    const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+    const url = GAS_URL
+      + "?action=member_status"
+      + "&lineuid="       + encodeURIComponent(profile.userId)
+      + "&earnPts="       + earnPts
+      + "&threshold="     + lo.threshold
+      + "&discount="      + lo.discount
+      + "&indoorExpDays=" + indoorExpDays;
 
-      document.querySelectorAll(".opt").forEach(e => {
-        const k = e.id.replace("opt-", "");
-        const ch = document.getElementById("chk-" + k);
-        if (k === promoSelected) {
-          e.classList.add("sel");
-          if (ch) ch.style.display = "block";
-        } else {
-          e.classList.remove("sel");
-          if (ch) ch.style.display = "none";
-        }
-      });
+    const res  = await fetch(url);
+    const data = await res.json();
 
-      const btn = document.getElementById("btn-confirm");
-      if (btn) {
-        btn.className = "btn-confirm active";
-        let label = "✅ 再點一次確認";
-        if (promoSelected === 'redeem') label = "✅ 再點一次：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
-        else if (promoSelected === 'carryout') label = "✅ 再點一次：外帶第二件半價";
-        else if (promoSelected === 'indoor') label = "✅ 再點一次：內用回購半價券";
-        else if (promoSelected === 'half_redeem') label = "✅ 再點一次：使用第二件半價券";
-        else if (promoSelected === 'half_issue') label = "✅ 再點一次：領取第二件半價券";
-        else if (promoSelected === 'half_keep') label = "✅ 再點一次：保留券，只集點";
-        else if (promoSelected === 'points') label = "✅ 再點一次：只集點";
-        else if (promoSelected === 'member_visit') label = "✅ 再點一次：記錄本次消費";
-        else {
-          const cp = customPromos.find(c => c.key === promoSelected);
-          if (cp) label = "✅ 再點一次：" + cp.label;
-        }
-        btn.textContent = label;
-      }
-    }
-
-    async function confirmPromo() {
-      if (!promoSelected) return;
-
-      const ms = window._memberStatus || {};
-
-      let promoKey = promoSelected;
-
-      if (promoSelected === 'indoor') {
-        const indoorStatus = (ms.indoorCoupon && ms.indoorCoupon.status) || 'unused';
-        promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
-      } else if (promoSelected === 'half_issue') {
-        promoKey = 'half_issue';
-      } else if (promoSelected === 'redeem') {
-        promoKey = 'redeem';
-      } else if (promoSelected === 'member_visit') {
-        // ★ v9.7：雙數次半價，送 member_visit_half + prevHalfAmt 作為 tierDisc
-        const _halfActive = (ms.halfCoupon && ms.halfCoupon.status) === 'active';
-        if (_halfActive) {
-          promoKey = 'member_visit_half';
-          // prevHalfAmt = GAS 回傳的前次最低套餐半價金額
-          const _prevHalfAmt = (ms.prevHalfAmt && ms.prevHalfAmt > 0) ? ms.prevHalfAmt : 0;
-          await submitPromoChoice(promoKey, redeemTierPoints, _prevHalfAmt);
-          return;
-        }
-      }
-
-      await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
-    }
-
-    async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
-      goScreen("co-sending");
-      tierPoints = tierPoints || 0;
-      tierDisc = tierDisc || 0;
-
-      if (promoKey === 'half_issue') {
-        try {
-          const res = await fetch(GAS_URL + "?action=issue_half_coupon&lineuid=" + encodeURIComponent(profile
-          .userId));
-          const data = await res.json();
-          if (data.status !== 'OK') {
-            console.warn('[LIFF] issue_half_coupon 失敗：' + data.message + '，改為 half_keep');
-            promoKey = 'half_keep';
-          }
-        } catch (_) {
-          showFatalError("網路錯誤，請告知店員");
-          return;
-        }
-      }
-
-      if (promoKey === 'half_redeem') {
-        try {
-          const res = await fetch(GAS_URL + "?action=redeem_half_coupon&lineuid=" + encodeURIComponent(profile
-            .userId));
-          const data = await res.json();
-          if (data.status !== 'OK') {
-            showFatalError("核銷失敗：" + (data.message || "請告知店員"));
-            return;
-          }
-        } catch (_) {
-          showFatalError("網路錯誤，請告知店員");
-          return;
-        }
-      }
-
-      if (promoKey === 'indoor_issue') {
-        try {
-          const res = await fetch(GAS_URL + "?action=issue_indoor_coupon&lineuid=" + encodeURIComponent(profile
-            .userId) + "&expDays=" + indoorExpDays);
-          const data = await res.json();
-          if (data.status !== 'OK') {
-            showFatalError("領取失敗：" + (data.message || "請告知店員"));
-            return;
-          }
-        } catch (_) {
-          showFatalError("網路錯誤，請告知店員");
-          return;
-        }
-      }
-
-      if (promoKey === 'indoor_redeem') {
-        try {
-          const res = await fetch(GAS_URL + "?action=redeem_indoor_coupon&lineuid=" + encodeURIComponent(profile
-            .userId));
-          const data = await res.json();
-          if (data.status !== 'OK') {
-            showFatalError("核銷失敗：" + (data.message || "請告知店員"));
-            return;
-          }
-        } catch (_) {
-          showFatalError("網路錯誤，請告知店員");
-          return;
-        }
-      }
-
-      if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
-        try {
-          const res = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) +
-            "&points=" + earnPts + "&spent=0");
-          const data = await res.json();
-          if (data.status !== 'OK') {
-            showFatalError("集點失敗，無法折抵：" + (data.message || "請告知店員"));
-            return;
-          }
-          curPts = data.newTotal || (curPts + earnPts);
-          earnPts = 0;
-        } catch (_) {
-          showFatalError("網路錯誤，請告知店員");
-          return;
-        }
-      }
-
-      let decisionValue = 'use';
-      if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey ===
-        'indoor_issue' || promoKey === 'skip' || promoKey === 'member_visit' || promoKey === 'member_visit_half')
-        decisionValue = 'skip';
-      if (promoKey === 'redeem') decisionValue = 'redeem';
-
-      const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
-
-      // ★ v9.3-fix4：若無 sessionKey（純集點 flow 誤入），直接顯示結帳完成
-      if (!sessionKey) {
-        goScreen("pt-skip");
-        return;
-      }
-
-      try {
-        const url = GAS_URL +
-          "?action=set_decision" +
-          "&sessionKey=" + encodeURIComponent(sessionKey) +
-          "&lineuid=" + encodeURIComponent(profile.userId) +
-          "&decision=" + encodeURIComponent(decisionValue) +
-          "&tierPoints=" + tierPoints +
-          "&tierDisc=" + tierDisc +
-          "&promoChoice=" + encodeURIComponent(finalPromoChoice);
-        const res = await fetch(url);
-        const data = await res.json().catch(() => ({}));
-
-        if (data.status === "OK") {
-          let waitText = "已送出選擇";
-          if (promoKey === 'redeem') waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
-          else if (promoKey === 'carryout') waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
-          else if (promoKey === 'indoor_issue') waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
-          else if (promoKey === 'indoor_redeem') waitText = "已選擇：核銷內用回購券\n最低價套餐半價折抵";
-          else if (promoKey === 'half_issue') waitText = "✅ 第二件半價券已發出！\n請保留收據，10天內到店使用\n本次照原價結帳";
-          else if (promoKey === 'half_redeem') waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
-          else if (promoKey === 'half_keep') waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
-          else if (promoKey === 'quota_redeem') waitText = "✅ 半價額度已核銷！\n折扣已套用，請等候店員確認";
-          else if (promoKey === 'points') waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
-          else if (promoKey === 'member_visit') waitText = "✅ 已記錄本次消費\n感謝惠顧，請等候店員完成結帳";
-          else if (promoKey === 'member_visit_half') waitText = "✅ 已記錄本次消費（雙數次）\n🎉 本人套餐半價折抵 $" + (tierDisc > 0 ?
-            tierDisc : "（計算中）") + "\n請等候店員完成結帳";
-          else if (promoKey === 'skip') waitText = "已確認，直接結帳\n感謝惠顧";
-          else {
-            const cp = customPromos.find(c => c.key === promoKey);
-            if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
-          }
-          document.getElementById("co-wait-sub").textContent = waitText + "\n\n請勿關閉此頁面";
-          goScreen("co-waiting");
-        } else {
-          showFatalError("送出失敗：" + (data.message || "請告知店員"));
-        }
-      } catch (_) {
-        showFatalError("網路錯誤，請告知店員");
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  ★ v9.4：結帳時加入會員詢問
-    // ══════════════════════════════════════════════════════════════
-    function _isMemberFlowPending(gasData) {
-      // member_status 不直接回傳是否為會員，用 halfCoupon/indoorCoupon 等有資料代表曾交互
-      // 最可靠方式：若 GAS 有 isMember 欄位則直接用；否則保守顯示（總是問）
-      if (typeof gasData.isMember === 'boolean') return !gasData.isMember;
-      // 無欄位時：若點數為 NEW 狀態且無任何半價券紀錄 → 視為非會員
-      const ptsStatus = (gasData.points && gasData.points.ptsStatus) || 'NEW';
-      const halfStatus = (gasData.halfCoupon && gasData.halfCoupon.status) || 'none';
-      return ptsStatus === 'NEW' && halfStatus === 'none';
-    }
-
-    async function memberAskJoin() {
-      // 導向加入會員流程，加入完成後回 co-promo
-      goScreen('mem-joining');
-      try {
-        const url = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId) +
-          '&displayName=' + encodeURIComponent(profile.displayName);
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.status === 'OK') {
-          if (window._memberAskFromCheckout) {
-            // ★ 來自結帳流程：通知 POS 新會員已加入，由 POS 自動將月費 $600 加入帳單
-            try {
-              const decUrl = GAS_URL +
-                '?action=set_decision' +
-                '&sessionKey=' + encodeURIComponent(sessionKey) +
-                '&lineuid=' + encodeURIComponent(profile.userId) +
-                '&decision=join_member' +
-                '&feeStatus=' + encodeURIComponent('待收') +
-                '&tierPoints=0&tierDisc=0&promoChoice=join_member';
-              await fetch(decUrl);
-            } catch (_) {}
-            const _isRefFree = (data.isReferralFree === true);
-            document.getElementById('co-wait-sub').textContent = _isRefFree ?
-              '✅ 加入成功！\n您為介紹會員，免月費\n請等候店員完成結帳\n\n請勿關閉此頁面' :
-              '✅ 加入成功！\n月費 $600 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
-            goScreen('co-waiting');
-          } else {
-            // 來自會員專用入口：顯示加入成功畫面
-            const sub = data.isNew ?
-              '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠' :
-              (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
-            document.getElementById('mem-done-sub').innerHTML = sub;
-            goScreen('mem-done');
-          }
-        } else {
-          showFatalError('加入失敗：' + (data.message || '請告知店員'));
-        }
-      } catch (err) {
-        showFatalError('網路錯誤：' + err.message);
-      }
-    }
-
-    function memberAskSkip() {
-      // 略過加入會員
-      if (window._memberAskFromCheckout) {
-        // 來自結帳流程：直接送 skip 給 POS
-        submitPromoChoice('skip', 0, 0);
+    if (data.halfPriceQuota && typeof data.halfPriceQuota.remain === 'number') {
+      _quotaRemain = data.halfPriceQuota.remain;
+    } else {
+      const qOpt = (data.eligibleOptions || []).find(o => o.type === 'quota_redeem');
+      if (qOpt) {
+        _quotaRemain = typeof qOpt.remain === 'number' ? qOpt.remain : -1;
       } else {
-        // 來自會員專用入口：進優惠選擇
-        goScreen('co-promo');
+        _quotaRemain = -1;
       }
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  集點流程
-    // ══════════════════════════════════════════════════════════════
-    async function startPointsFlow() {
-      if (!_flags.promoPoints) {
-        goScreen("pt-skip");
-        return;
-      }
-
-      hideLoading();
-      curPts = 0;
-      try {
-        const res = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
-        const data = await res.json();
-        if (data.status === "OK") curPts = data.currentPoints || 0;
-      } catch (_) {}
-      newTotal = curPts + earnPts;
-      const lo = redeemTiers[0] || {
-        threshold: goalThreshold
-      };
-      document.getElementById("pt-cur-show").textContent = curPts + " 點";
-      document.getElementById("pt-earn-show").textContent = "+" + earnPts + " 點";
-      document.getElementById("pt-after-show").textContent = newTotal + " 點";
-      document.getElementById("pt-earn-badge").textContent = "本次 +" + earnPts + " 點";
-      document.getElementById("pt-confirm-sub").textContent = "本次可獲得 " + earnPts + " 點";
-      document.getElementById("pt-user-info").textContent = "👤 " + profile.displayName;
-      document.getElementById("pt-draw-sub").textContent = "使用 " + lo.threshold + " 點抽取本次優惠";
-      document.getElementById("bal-goal-label").textContent = "目標 " + lo.threshold + " 點";
-      goScreen("pt-confirm");
+    // ★ 修改：非會員時顯示加入邀請而非報錯
+    if (data.status === 'NOT_MEMBER') {
+      // 顯示加入會員邀請畫面
+      document.getElementById('member-ask-user').innerHTML =
+        '<strong>👤 ' + profile.displayName + '</strong><br>' +
+        '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
+      document.getElementById('member-ask-sub').innerHTML =
+        '<strong style="font-size:14px;color:#1B5E20;">🎉 加入會員享優惠</strong><br>' +
+        '<span style="font-size:12px;color:#666;line-height:1.6;">月費 $600 / 30天<br>30天內消費滿14次：單數次正常價，雙數次本人套餐半價<br>到期退還 $600 並加送指定套餐 + 簡餐各一份</span>';
+      window._memberAskPending = true;
+      window._memberAskFromCheckout = true; // 標記來自結帳流程
+      goScreen('member-ask');
+      return;
+    }
+    
+    if (data.status !== 'OK') {
+      showFatalError("資格查詢失敗：" + (data.message || "請告知店員"));
+      return;
     }
 
-    async function confirmCollect() {
-      if (!_flags.promoPoints) {
-        goScreen("pt-skip");
-        return;
-      }
+    window._memberStatus = data;
+    curPts = (data.points && data.points.current) || 0;
 
-      goScreen("pt-collecting");
-      try {
-        const res = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) +
-          "&points=" + earnPts + "&spent=0");
-        const data = await res.json();
-        if (data.status === "OK") {
-          newTotal = data.newTotal || newTotal;
-          showBalance();
-          printPointsReceipt(newTotal);
-        } else {
-          showError("集點失敗：" + (data.message || "請向店員確認"));
-        }
-      } catch (_) {
-        showError("網路錯誤，請向店員確認");
+    const bestTier = [...redeemTiers].reverse().find(t => (data.points.totalAfterEarn || 0) >= t.threshold);
+    if (bestTier) { redeemTierPoints = bestTier.threshold; redeemTierDisc = bestTier.discount; }
+    else { redeemTierPoints = lo.threshold; redeemTierDisc = lo.discount; }
+
+    // ★ v9.3-fix5：偵測帳號是否有可用券（half_redeem 或 quota_redeem 額度 > 0）
+    //   有券 → 鎖定，只顯示「用券」或「略過」，不進一般優惠流程
+    //   ★ v9.6-fix：若是會員系統（isMember=true），半價為當次直接折扣，不走舊券流程
+    const _halfCouponStatusCheck = (data.halfCoupon && data.halfCoupon.status) || '';
+    const _hasActiveCoupon = _halfCouponStatusCheck === 'active' || _halfCouponStatusCheck === 'issued';
+    const _hasQuotaCoupon  = (_quotaRemain > 0);
+    const _isMemberSystem  = data.isMember === true;
+
+    if ((_hasActiveCoupon || _hasQuotaCoupon) && !_isMemberSystem) {
+      // 決定券的顯示資訊
+      let couponIcon = '🎫', couponName = '第二件半價券', couponDesc = '使用後，第二件（較便宜）套餐半價折抵';
+      if (_hasQuotaCoupon && _issueItemName) {
+        const _qDisc = Math.floor(_issueUnitPrice / 2);
+        const _effectiveQty = Math.min(_issueQtyFromUrl, _quotaRemain);
+        couponIcon = '🥩';
+        couponName = '半價折扣額度';
+        couponDesc = '[' + _issueItemName + '] 本次用 ' + _effectiveQty + ' 份，共折 $' + (_qDisc * _effectiveQty) + '\n剩餘總額度：' + _quotaRemain + ' 份';
       }
+      document.getElementById("coupon-ask-icon").textContent = couponIcon;
+      document.getElementById("coupon-ask-name").textContent = couponName;
+      document.getElementById("coupon-ask-desc").innerHTML   = couponDesc.replace(/\n/g,'<br>');
+      document.getElementById("coupon-ask-sub").textContent  = "帳號有未使用的優惠券";
+      document.getElementById("coupon-ask-user").textContent = "👤 " + profile.displayName;
+      // 儲存券種類供按鈕使用
+      window._activeCouponType = _hasQuotaCoupon ? 'quota_redeem' : 'half_redeem';
+      goScreen("coupon-ask");
+      return;
     }
 
-    function printPointsReceipt(total) {
-      const lo = redeemTiers[0] || {
-        threshold: goalThreshold,
-        discount: redeemDisc
-      };
-      const left = Math.max(0, lo.threshold - total);
-      const now = new Date();
-      const nowStr = now.getFullYear() + '/' +
-        String(now.getMonth() + 1).padStart(2, '0') + '/' +
-        String(now.getDate()).padStart(2, '0') + ' ' +
-        String(now.getHours()).padStart(2, '0') + ':' +
-        String(now.getMinutes()).padStart(2, '0');
-      const name = profile ? profile.displayName : '';
+    buildPromoOptionsFromGAS(data);
 
-      const win = window.open('', '_blank', 'width=360,height=420');
-      if (!win) {
-        const tip = document.createElement('div');
-        tip.style.cssText =
-          'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:12px;padding:10px 18px;border-radius:20px;z-index:9999;';
-        tip.textContent = '⚠️ 請允許彈出視窗以列印集點明細';
-        document.body.appendChild(tip);
-        setTimeout(() => tip.remove(), 4000);
-        return;
+    // ★ v9.4：若開啟 promoMember=1 且此用戶非會員 → 詢問是否加入
+    if (_flags.promoMember && _isMemberFlowPending(data)) {
+      document.getElementById('member-ask-user').innerHTML =
+        '<strong>👤 ' + profile.displayName + '</strong><br>' +
+        '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
+      window._memberAskPending = true;
+      goScreen('member-ask');
+      return;
+    }
+
+    goScreen("co-promo");
+
+  } catch(err) {
+    showFatalError("網路錯誤，請告知店員：\n" + err.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  建立優惠選項（結帳流程）
+// ══════════════════════════════════════════════════════════════
+function buildPromoOptionsFromGAS(data) {
+  const container = document.getElementById("promo-options-container");
+  container.innerHTML = "";
+
+  // ★ v9.6-debug：顯示 GAS 回傳的 halfCoupon.status 與 isMember，方便驗證
+  const _dbgVisit = (data.member && data.member.visitCount) || 0;
+  document.getElementById("co-promo-sub").textContent =
+    `第 ${_dbgVisit + 1} 次消費　選擇後即完成確認`;
+
+  const TYPE_FLAG = {
+    'redeem'          : _flags.promoRedeem,
+    'carryout'        : _flags.promoCarryout,
+    'indoor_redeem'   : _flags.promoIndoor,
+    'indoor_issue'    : _flags.promoIndoor,
+    'indoor_redeemed' : _flags.promoIndoor,
+    'half_redeem'     : _flags.promoHalf,
+    'half_issue'      : _flags.promoHalf,
+    'half_keep'       : _flags.promoHalf,
+    'quota_redeem'    : _flags.promoHalf,
+    'points'          : _flags.promoPoints,
+    'member_visit'    : true   // ★ 會員消費記錄，永遠顯示
+  };
+
+  (data.warnings || []).forEach(w => {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.7;';
+    warn.innerHTML = w;
+    container.appendChild(warn);
+  });
+
+  (data.notices || []).forEach(n => {
+    const note = document.createElement('div');
+    note.style.cssText = 'background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;';
+    note.innerHTML = n;
+    container.appendChild(note);
+  });
+
+  // ★ v9.7：介紹免月費會員顯示身份提示
+  if (data.isReferralFree) {
+    const rfNote = document.createElement('div');
+    rfNote.style.cssText = 'background:#E8F5E9;border:2px solid #2E7D32;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1B5E20;line-height:1.7;font-weight:700;';
+    rfNote.innerHTML = '🎁 您為介紹會員，永久免月費，雙數次本人套餐半價優惠持續有效！';
+    container.appendChild(rfNote);
+  }
+
+  const nonPointsOptions = (data.eligibleOptions || []).filter(opt => {
+    const t = opt.type || '';
+    if (t === 'points') return false;
+    if (t in TYPE_FLAG) return TYPE_FLAG[t];
+    return true;
+  });
+  const hasOtherUsable = nonPointsOptions.some(opt => !opt.disabled);
+
+  const _cartQty = _issueQtyFromUrl || 0; const _pairQty = _cartQty;
+  let options = (data.eligibleOptions || []).filter(opt => {
+    const t = opt.type || '';
+    if (t === 'points') return _flags.promoPoints && hasOtherUsable;
+    if (t === 'member_visit') return true;
+    if (t === 'half_redeem') return true;
+    if (t in TYPE_FLAG) return TYPE_FLAG[t];
+    return true;
+  });
+
+  if (_issueItemName && _issueUnitPrice > 0 && _flags.promoHalf) {
+    options = options.filter(opt => opt.type !== 'quota_redeem');
+
+    const _showQuota = (_quotaRemain === -1) ? true : (_quotaRemain > 0);
+    const _effectiveQty = (_quotaRemain > 0)
+      ? Math.min(_issueQtyFromUrl, _quotaRemain)
+      : _issueQtyFromUrl;
+
+    if (_showQuota) {
+      const _qDisc = Math.floor(_issueUnitPrice / 2);
+      options.unshift({
+        type : 'quota_redeem',
+        key  : 'quota_redeem',
+        icon : '🥩',
+        title: '🔥 使用半價額度（本次用 ' + _effectiveQty + ' 份）',
+        sub  : '[' + _issueItemName + '] 每份折 $' + _qDisc + '，共折 $' + (_qDisc * _effectiveQty) + '\n✨ 帳號剩餘總額度：' + (_quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 份',
+        disabled: false
+      });
+    } else {
+      const noQuotaWarn = document.createElement('div');
+      noQuotaWarn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
+      noQuotaWarn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 半價額度已用完</strong>' +
+        '本次訂單的半價額度為 0，無法使用「使用半價額度」優惠。<br>' +
+        '如需半價券，請選擇下方「領取第二件半價券」選項。';
+      container.appendChild(noQuotaWarn);
+    }
+  }
+
+  const _halfCouponStatus = (data.halfCoupon && data.halfCoupon.status) || '';
+  const _hasIssuedHalf    = _halfCouponStatus === 'active' || _halfCouponStatus === 'issued';
+  const _alreadyHasRedeem = options.some(opt => opt.type === 'half_redeem');
+  const _isMemberSys      = data.isMember === true; // ★ v9.6-fix：會員系統不走舊券邏輯
+
+  if (_hasIssuedHalf && !_alreadyHasRedeem && _flags.promoHalf && !_isMemberSys) {
+    options.push({
+      type : 'half_redeem',
+      key  : 'half_redeem',
+      icon : '🎫',
+      title: '🎫 核銷半價優惠（本次折抵 ' + _pairQty + ' 件）',
+      sub  : '✨ 每一份套餐皆折抵「最低價套餐」之半價\n✨ 帳號剩餘總額度：' + (_quotaRemain >= 0 ? _quotaRemain : '查詢中') + ' 件',
+      disabled: false
+    });
+  }
+
+  options.forEach(opt => {
+    // ★ v9.6-fix：會員系統雙數次（canUseHalfPrice）強化顯示文字
+    if (opt.type === 'member_visit' && _isMemberSys) {
+      const _halfCouponActive = (data.halfCoupon && data.halfCoupon.status) === 'active';
+      if (_halfCouponActive) {
+        opt = Object.assign({}, opt, {
+          title: '記錄本次消費（本人套餐半價）',
+          sub  : '🎉 本次為雙數次，本人主餐套餐享半價！\n' + (opt.sub || '')
+        });
       }
+    }
+    if (_hasIssuedHalf && opt.type === 'half_issue' && !_isMemberSys) {
+      const warn = document.createElement('div');
+      warn.style.cssText = 'background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#B71C1C;line-height:1.8;';
+      warn.innerHTML = '<strong style="font-size:13px;display:block;margin-bottom:4px;">⚠️ 您已持有第二件半價券</strong>' +
+        '帳號內已有尚未使用的第二件半價券，<strong>無法再次領取</strong>。<br>' +
+        '請選擇下方「核銷第二件半價券」選項使用，或選其他優惠。';
+      container.appendChild(warn);
+      return;
+    }
 
-      win.document.write(`<!DOCTYPE html>
+    let cls = '';
+    if (opt.type === 'redeem')      cls = 'redeem-opt';
+    if (opt.type === 'half_redeem') cls = 'half-opt';
+    if (opt.type === 'half_issue')  cls = 'half-issue';
+    container.appendChild(makeOpt({
+      id   : 'opt-' + opt.key,
+      key  : opt.key,
+      cls,
+      icon : opt.icon,
+      title: opt.title,
+      sub  : opt.sub,
+      dis  : !!opt.disabled
+    }));
+  });
+
+  customPromos.forEach(cp => {
+    container.appendChild(makeOpt({
+      id   : 'opt-' + cp.key,
+      key  : cp.key,
+      icon : cp.icon,
+      title: cp.label,
+      sub  : cp.desc,
+      dis  : false
+    }));
+  });
+
+  // ★ v9.3-fix4：GAS 也回傳了沒有可選選項 → 自動 skip
+  const hasSelectable = container.querySelectorAll('.opt:not(.dis)').length > 0;
+  if (!hasSelectable) {
+    if (_flags.promoPoints) {
+      setTimeout(() => submitPromoChoice('points', 0, 0), 300);
+    } else {
+      setTimeout(() => submitPromoChoice('skip', 0, 0), 300);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.3-fix5：券詢問畫面的兩個按鈕
+// ══════════════════════════════════════════════════════════════
+async function useCouponNow() {
+  const couponType = window._activeCouponType || 'half_redeem';
+  await submitPromoChoice(couponType, 0, 0);
+}
+
+async function skipCouponNow() {
+  // 略過券：直接送 skip，不集點
+  await submitPromoChoice('skip', 0, 0);
+}
+
+function makeOpt({ id, key, cls, icon, title, sub, dis }) {
+  const div = document.createElement("div");
+  div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
+  div.id = id;
+  if (!dis) div.onclick = () => selectPromo(key);
+  // 避免 title 開頭 emoji 與 opt-icon 重複，移除 title 最前面的 emoji+空白
+  const cleanTitle = title.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s*/u, '');
+  div.innerHTML =
+    '<div class="opt-icon">' + icon + '</div>' +
+    '<div style="flex:1;min-width:0;"><div class="opt-title">' + cleanTitle + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
+    '<div class="opt-check" id="chk-' + key + '">✅</div>';
+  return div;
+}
+
+function selectPromo(key) {
+  const el = document.getElementById("opt-" + key);
+  if (!el || el.classList.contains("dis")) return;
+
+  if (promoSelected === key) {
+    confirmPromo();
+    return;
+  }
+
+  promoSelected = key;
+
+  document.querySelectorAll(".opt").forEach(e => {
+    const k = e.id.replace("opt-", "");
+    const ch = document.getElementById("chk-" + k);
+    if (k === promoSelected) {
+      e.classList.add("sel"); if (ch) ch.style.display = "block";
+    } else {
+      e.classList.remove("sel"); if (ch) ch.style.display = "none";
+    }
+  });
+
+  const btn = document.getElementById("btn-confirm");
+  if (btn) {
+    btn.className = "btn-confirm active";
+    let label = "✅ 再點一次確認";
+    if      (promoSelected === 'redeem')       label = "✅ 再點一次：使用 " + redeemTierPoints + " 點折抵 $" + redeemTierDisc;
+    else if (promoSelected === 'carryout')     label = "✅ 再點一次：外帶第二件半價";
+    else if (promoSelected === 'indoor')       label = "✅ 再點一次：內用回購半價券";
+    else if (promoSelected === 'half_redeem')  label = "✅ 再點一次：使用第二件半價券";
+    else if (promoSelected === 'half_issue')   label = "✅ 再點一次：領取第二件半價券";
+    else if (promoSelected === 'half_keep')    label = "✅ 再點一次：保留券，只集點";
+    else if (promoSelected === 'points')       label = "✅ 再點一次：只集點";
+    else if (promoSelected === 'member_visit') label = "✅ 再點一次：記錄本次消費";
+    else {
+      const cp = customPromos.find(c => c.key === promoSelected);
+      if (cp) label = "✅ 再點一次：" + cp.label;
+    }
+    btn.textContent = label;
+  }
+}
+
+async function confirmPromo() {
+  if (!promoSelected) return;
+
+  const ms = window._memberStatus || {};
+
+  let promoKey = promoSelected;
+
+  if (promoSelected === 'indoor') {
+    const indoorStatus = (ms.indoorCoupon && ms.indoorCoupon.status) || 'unused';
+    promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
+  } else if (promoSelected === 'half_issue') {
+    promoKey = 'half_issue';
+  } else if (promoSelected === 'redeem') {
+    promoKey = 'redeem';
+  } else if (promoSelected === 'member_visit') {
+    // ★ v9.7：雙數次半價，送 member_visit_half + prevHalfAmt 作為 tierDisc
+    const _halfActive = (ms.halfCoupon && ms.halfCoupon.status) === 'active';
+    if (_halfActive) {
+      promoKey = 'member_visit_half';
+      // prevHalfAmt = GAS 回傳的前次最低套餐半價金額
+      const _prevHalfAmt = (ms.prevHalfAmt && ms.prevHalfAmt > 0) ? ms.prevHalfAmt : 0;
+      await submitPromoChoice(promoKey, redeemTierPoints, _prevHalfAmt);
+      return;
+    }
+  }
+
+  await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
+}
+
+async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
+  goScreen("co-sending");
+  tierPoints = tierPoints || 0; tierDisc = tierDisc || 0;
+
+  if (promoKey === 'half_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        console.warn('[LIFF] issue_half_coupon 失敗：' + data.message + '，改為 half_keep');
+        promoKey = 'half_keep';
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'half_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_half_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'indoor_issue') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=issue_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId) + "&expDays=" + indoorExpDays);
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("領取失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'indoor_redeem') {
+    try {
+      const res  = await fetch(GAS_URL + "?action=redeem_indoor_coupon&lineuid=" + encodeURIComponent(profile.userId));
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("核銷失敗：" + (data.message || "請告知店員")); return;
+      }
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  if (promoKey === 'redeem' && curPts < redeemTierPoints && earnPts > 0) {
+    try {
+      const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
+      const data = await res.json();
+      if (data.status !== 'OK') {
+        showFatalError("集點失敗，無法折抵：" + (data.message || "請告知店員")); return;
+      }
+      curPts = data.newTotal || (curPts + earnPts);
+      earnPts = 0;
+    } catch(_) { showFatalError("網路錯誤，請告知店員"); return; }
+  }
+
+  let decisionValue = 'use';
+  if (promoKey === 'points' || promoKey === 'half_issue' || promoKey === 'half_keep' || promoKey === 'indoor_issue' || promoKey === 'skip' || promoKey === 'member_visit' || promoKey === 'member_visit_half') decisionValue = 'skip';
+  if (promoKey === 'redeem') decisionValue = 'redeem';
+
+  const finalPromoChoice = (promoKey === 'redeem' && earnPts === 0) ? 'redeem:pre_earned' : promoKey;
+
+  // ★ v9.3-fix4：若無 sessionKey（純集點 flow 誤入），直接顯示結帳完成
+  if (!sessionKey) {
+    goScreen("pt-skip");
+    return;
+  }
+
+  try {
+    const url = GAS_URL
+      + "?action=set_decision"
+      + "&sessionKey="  + encodeURIComponent(sessionKey)
+      + "&lineuid="     + encodeURIComponent(profile.userId)
+      + "&decision="    + encodeURIComponent(decisionValue)
+      + "&tierPoints="  + tierPoints
+      + "&tierDisc="    + tierDisc
+      + "&promoChoice=" + encodeURIComponent(finalPromoChoice);
+    const res  = await fetch(url);
+    const data = await res.json().catch(() => ({}));
+
+    if (data.status === "OK") {
+      let waitText = "已送出選擇";
+      if      (promoKey === 'redeem')        waitText = "已選擇：點數折抵\n使用 " + tierPoints + " 點，折抵 $" + tierDisc;
+      else if (promoKey === 'carryout')      waitText = "已選擇：外帶第二件半價\n最低價套餐半價折抵";
+      else if (promoKey === 'indoor_issue')  waitText = "已選擇：領取內用回購券\n下次到店內用可享半價";
+      else if (promoKey === 'indoor_redeem') waitText = "已選擇：核銷內用回購券\n最低價套餐半價折抵";
+      else if (promoKey === 'half_issue')    waitText = "✅ 第二件半價券已發出！\n請保留收據，10天內到店使用\n本次照原價結帳";
+      else if (promoKey === 'half_redeem')   waitText = "✅ 第二件半價券已核銷！\n第二件（較便宜）半價折抵\n請等候店員確認";
+      else if (promoKey === 'half_keep')     waitText = "已選擇：保留第二件半價券\n本次只集點，券繼續保留";
+      else if (promoKey === 'quota_redeem')  waitText = "✅ 半價額度已核銷！\n折扣已套用，請等候店員確認";
+      else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
+      else if (promoKey === 'member_visit')      waitText = "✅ 已記錄本次消費\n感謝惠顧，請等候店員完成結帳";
+      else if (promoKey === 'member_visit_half') waitText = "✅ 已記錄本次消費（雙數次）\n🎉 本人套餐半價折抵 $" + (tierDisc > 0 ? tierDisc : "（計算中）") + "\n請等候店員完成結帳";
+      else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
+      else {
+        const cp = customPromos.find(c => c.key === promoKey);
+        if (cp) waitText = "已選擇：" + cp.label + (cp.desc ? "\n" + cp.desc : "");
+      }
+      document.getElementById("co-wait-sub").textContent = waitText + "\n\n請勿關閉此頁面";
+      goScreen("co-waiting");
+    } else {
+      showFatalError("送出失敗：" + (data.message || "請告知店員"));
+    }
+  } catch (_) { showFatalError("網路錯誤，請告知店員"); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.4：結帳時加入會員詢問
+// ══════════════════════════════════════════════════════════════
+function _isMemberFlowPending(gasData) {
+  // member_status 不直接回傳是否為會員，用 halfCoupon/indoorCoupon 等有資料代表曾交互
+  // 最可靠方式：若 GAS 有 isMember 欄位則直接用；否則保守顯示（總是問）
+  if (typeof gasData.isMember === 'boolean') return !gasData.isMember;
+  // 無欄位時：若點數為 NEW 狀態且無任何半價券紀錄 → 視為非會員
+  const ptsStatus  = (gasData.points && gasData.points.ptsStatus) || 'NEW';
+  const halfStatus = (gasData.halfCoupon && gasData.halfCoupon.status) || 'none';
+  return ptsStatus === 'NEW' && halfStatus === 'none';
+}
+
+async function memberAskJoin() {
+  // 導向加入會員流程，加入完成後回 co-promo
+  goScreen('mem-joining');
+  try {
+    const url  = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId)
+      + '&displayName=' + encodeURIComponent(profile.displayName);
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status === 'OK') {
+      if (window._memberAskFromCheckout) {
+        // ★ 來自結帳流程：通知 POS 新會員已加入，由 POS 自動將月費 $600 加入帳單
+        try {
+          const decUrl = GAS_URL
+            + '?action=set_decision'
+            + '&sessionKey='  + encodeURIComponent(sessionKey)
+            + '&lineuid='     + encodeURIComponent(profile.userId)
+            + '&decision=join_member'
+            + '&feeStatus='   + encodeURIComponent('待收')
+            + '&tierPoints=0&tierDisc=0&promoChoice=join_member';
+          await fetch(decUrl);
+        } catch(_) {}
+        const _isRefFree = (data.isReferralFree === true);
+        document.getElementById('co-wait-sub').textContent = _isRefFree
+          ? '✅ 加入成功！\n您為介紹會員，免月費\n請等候店員完成結帳\n\n請勿關閉此頁面'
+          : '✅ 加入成功！\n月費 $600 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
+        goScreen('co-waiting');
+      } else {
+        // 來自會員專用入口：顯示加入成功畫面
+        const sub = data.isNew
+          ? '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠'
+          : (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
+        document.getElementById('mem-done-sub').innerHTML = sub;
+        goScreen('mem-done');
+      }
+    } else {
+      showFatalError('加入失敗：' + (data.message || '請告知店員'));
+    }
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
+
+function memberAskSkip() {
+  // 略過加入會員
+  if (window._memberAskFromCheckout) {
+    // 來自結帳流程：直接送 skip 給 POS
+    submitPromoChoice('skip', 0, 0);
+  } else {
+    // 來自會員專用入口：進優惠選擇
+    goScreen('co-promo');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  集點流程
+// ══════════════════════════════════════════════════════════════
+async function startPointsFlow() {
+  if (!_flags.promoPoints) {
+    goScreen("pt-skip");
+    return;
+  }
+
+  hideLoading();
+  curPts = 0;
+  try {
+    const res  = await fetch(GAS_URL + "?action=get_points&lineuid=" + encodeURIComponent(profile.userId));
+    const data = await res.json();
+    if (data.status === "OK") curPts = data.currentPoints || 0;
+  } catch(_) {}
+  newTotal = curPts + earnPts;
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("pt-cur-show").textContent   = curPts + " 點";
+  document.getElementById("pt-earn-show").textContent  = "+" + earnPts + " 點";
+  document.getElementById("pt-after-show").textContent = newTotal + " 點";
+  document.getElementById("pt-earn-badge").textContent = "本次 +" + earnPts + " 點";
+  document.getElementById("pt-confirm-sub").textContent= "本次可獲得 " + earnPts + " 點";
+  document.getElementById("pt-user-info").textContent  = "👤 " + profile.displayName;
+  document.getElementById("pt-draw-sub").textContent   = "使用 " + lo.threshold + " 點抽取本次優惠";
+  document.getElementById("bal-goal-label").textContent= "目標 " + lo.threshold + " 點";
+  goScreen("pt-confirm");
+}
+
+async function confirmCollect() {
+  if (!_flags.promoPoints) { goScreen("pt-skip"); return; }
+
+  goScreen("pt-collecting");
+  try {
+    const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=" + earnPts + "&spent=0");
+    const data = await res.json();
+    if (data.status === "OK") {
+      newTotal = data.newTotal || newTotal;
+      showBalance();
+      printPointsReceipt(newTotal);
+    } else {
+      showError("集點失敗：" + (data.message || "請向店員確認"));
+    }
+  } catch(_) { showError("網路錯誤，請向店員確認"); }
+}
+
+function printPointsReceipt(total) {
+  const lo     = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
+  const left   = Math.max(0, lo.threshold - total);
+  const now    = new Date();
+  const nowStr = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  const name   = profile ? profile.displayName : '';
+
+  const win = window.open('', '_blank', 'width=360,height=420');
+  if (!win) {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:12px;padding:10px 18px;border-radius:20px;z-index:9999;';
+    tip.textContent = '⚠️ 請允許彈出視窗以列印集點明細';
+    document.body.appendChild(tip);
+    setTimeout(() => tip.remove(), 4000);
+    return;
+  }
+
+  win.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
 <style>
@@ -2205,390 +1399,281 @@
     <button onclick="window.print();window.close();" style="padding:10px 32px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">🖨️ 列印</button>
   </div>
 </body></html>`);
-      win.document.close();
-      setTimeout(() => {
-        try {
-          win.print();
-        } catch (_) {}
-        setTimeout(() => {
-          try {
-            win.close();
-          } catch (_) {}
-        }, 1000);
-      }, 400);
-    }
+  win.document.close();
+  setTimeout(() => {
+    try { win.print(); } catch(_) {}
+    setTimeout(() => { try { win.close(); } catch(_) {} }, 1000);
+  }, 400);
+}
 
-    function skipCollect() {
-      goScreen("pt-skip");
-    }
+function skipCollect() { goScreen("pt-skip"); }
 
-    function showBalance() {
-      const lo = redeemTiers[0] || {
-        threshold: goalThreshold
-      };
-      document.getElementById("bal-num").textContent = newTotal;
-      const starsEl = document.getElementById("bal-stars");
-      starsEl.innerHTML = "";
-      for (let i = 1; i <= lo.threshold; i++) {
-        const s = document.createElement("div");
-        s.className = "star";
-        s.textContent = i <= newTotal ? "★" : "☆";
-        s.style.color = i <= newTotal ? "#fff" : "#bbb";
-        if (i <= newTotal) setTimeout(() => s.classList.add("filled"), i * 80);
-        starsEl.appendChild(s);
+function showBalance() {
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("bal-num").textContent = newTotal;
+  const starsEl = document.getElementById("bal-stars"); starsEl.innerHTML = "";
+  for (let i = 1; i <= lo.threshold; i++) {
+    const s = document.createElement("div"); s.className = "star";
+    s.textContent = i <= newTotal ? "★" : "☆"; s.style.color = i <= newTotal ? "#fff" : "#bbb";
+    if (i <= newTotal) setTimeout(() => s.classList.add("filled"), i * 80);
+    starsEl.appendChild(s);
+  }
+  const pct = newTotal >= lo.threshold ? 100 : (newTotal / lo.threshold * 100);
+  setTimeout(() => { document.getElementById("bal-bar").style.width = pct + "%"; }, 100);
+  const eligible = redeemTiers.find(t => newTotal >= t.threshold);
+  const action = document.getElementById("bal-action");
+  if (eligible) {
+    const remain = newTotal - eligible.threshold;
+    action.innerHTML =
+      '<div style="padding:0 20px;margin-bottom:16px;"><div class="redeem-box">' +
+        '<p>🎰 已集滿 ' + eligible.threshold + ' 點！可以參加抽獎</p>' +
+        '<small>使用 ' + eligible.threshold + ' 點抽獎 → 剩 ' + remain + ' 點</small>' +
+      '</div><div class="use-btns">' +
+        '<button class="use-yes" onclick="goDraw()">🎰 參加抽獎</button>' +
+        '<button class="use-no" onclick="skipDraw()">繼續累積</button>' +
+      '</div></div>';
+  } else {
+    const left = lo.threshold - newTotal;
+    action.innerHTML = '<div style="text-align:center;padding:0 20px;"><p style="font-size:13px;color:#aaa;margin-bottom:14px;">再集 ' + left + ' 點可參加抽獎 🎁</p>' +
+      '<button class="btn-main" style="margin:0;" onclick="ptDone()">完成結帳 ✓</button></div>';
+  }
+  goScreen("pt-balance");
+}
+
+function goDraw()   { goScreen("pt-draw"); resetDrum(); }
+function skipDraw() { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
+function ptDone()   { finalPts = newTotal; renderDone(); goScreen("pt-done"); }
+
+function renderDone() {
+  const lo = redeemTiers[0] || { threshold: goalThreshold };
+  document.getElementById("done-pts").textContent     = finalPts + " 點";
+  document.getElementById("done-pts-sub").textContent = finalPts >= lo.threshold ? "已可折抵優惠 🎁" : "再集 " + (lo.threshold - finalPts) + " 點可折抵";
+}
+
+function resetDrum() {
+  clearInterval(drawTimer); drawTimer = null; drawnPrize = null;
+  const face = document.getElementById("drum-face");
+  face.textContent = "?"; face.classList.remove("spinning");
+  document.getElementById("draw-hint").textContent = "";
+  const btn = document.getElementById("draw-btn");
+  btn.disabled = false; btn.textContent = "開始抽獎"; btn.onclick = startDraw;
+}
+function startDraw() {
+  const btn = document.getElementById("draw-btn"); btn.disabled = true; btn.textContent = "抽獎中…";
+  const face = document.getElementById("drum-face");
+  const emojis = ["🎫","🎟","🍰","🎁","✨","🎊","🎈","🌟"]; let count = 0;
+  face.classList.add("spinning");
+  drawTimer  = setInterval(() => { face.textContent = emojis[count % emojis.length]; count++; }, 100);
+  drawnPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+  setTimeout(async () => {
+    clearInterval(drawTimer); face.classList.remove("spinning"); face.textContent = drawnPrize.icon;
+    document.getElementById("draw-hint").textContent = "🎉 " + drawnPrize.name + "！";
+    const useT = (redeemTiers[0] || { threshold: goalThreshold }).threshold;
+    try {
+      const res  = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) + "&points=-" + useT);
+      const data = await res.json();
+      finalPts = data.status === "OK" ? (data.newTotal || 0) : Math.max(0, newTotal - useT);
+    } catch(_) { finalPts = Math.max(0, newTotal - useT); }
+    btn.disabled = false; btn.textContent = "查看獎品"; btn.onclick = showPrize;
+  }, 2800);
+}
+function showPrize() {
+  if (!drawnPrize) return;
+  const useT = (redeemTiers[0] || { threshold: goalThreshold }).threshold;
+  document.getElementById("prize-icon").textContent = drawnPrize.icon;
+  document.getElementById("prize-name").textContent = drawnPrize.name;
+  document.getElementById("prize-desc").textContent = drawnPrize.desc;
+  let html = "";
+  if      (drawnPrize.disc < 1) { html += row("折扣優惠","<span style='color:#E65100;'>"+drawnPrize.name+"</span>"); html += row("套用方式","現場直接折抵"); }
+  else if (drawnPrize.extra)     { html += row("贈品","<span style='color:#1B5E20;'>"+drawnPrize.extra+" 🍰</span>"); html += row("套用方式","向店員領取"); }
+  else                           { html += row("優惠","<span style='color:#1B5E20;'>"+drawnPrize.name+"</span>"); html += row("套用方式","下次到店使用"); }
+  html += row("扣除點數","<span style='color:#888;'>−"+useT+" 點</span>");
+  html += row("剩餘點數","<span style='color:#1B5E20;'>"+finalPts+" 點</span>");
+  document.getElementById("prize-bill").innerHTML = html;
+  goScreen("pt-prize");
+}
+function row(label, val) {
+  return '<div class="info-row"><span class="info-label">'+label+'</span><span class="info-val">'+val+'</span></div>';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  簽到流程
+// ══════════════════════════════════════════════════════════════
+function startSigninFlow(type) {
+  hideLoading();
+  document.getElementById("si-icon").textContent  = SIGNIN_INFO[type].icon;
+  document.getElementById("si-label").textContent = SIGNIN_INFO[type].label;
+  document.getElementById("si-user").textContent  = "👤 " + profile.displayName;
+  goScreen("si-main");
+  fetch(GAS_URL + "?action=check_today&lineuid=" + encodeURIComponent(profile.userId) + "&type=" + encodeURIComponent(type))
+    .then(r => r.json()).then(data => {
+      if (data.status === "DENY") {
+        showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
+        const btn = document.getElementById("si-btn"); btn.disabled = true; btn.textContent = "今日已簽到";
       }
-      const pct = newTotal >= lo.threshold ? 100 : (newTotal / lo.threshold * 100);
-      setTimeout(() => {
-        document.getElementById("bal-bar").style.width = pct + "%";
-      }, 100);
-      const eligible = redeemTiers.find(t => newTotal >= t.threshold);
-      const action = document.getElementById("bal-action");
-      if (eligible) {
-        const remain = newTotal - eligible.threshold;
-        action.innerHTML =
-          '<div style="padding:0 20px;margin-bottom:16px;"><div class="redeem-box">' +
-          '<p>🎰 已集滿 ' + eligible.threshold + ' 點！可以參加抽獎</p>' +
-          '<small>使用 ' + eligible.threshold + ' 點抽獎 → 剩 ' + remain + ' 點</small>' +
-          '</div><div class="use-btns">' +
-          '<button class="use-yes" onclick="goDraw()">🎰 參加抽獎</button>' +
-          '<button class="use-no" onclick="skipDraw()">繼續累積</button>' +
-          '</div></div>';
-      } else {
-        const left = lo.threshold - newTotal;
-        action.innerHTML =
-          '<div style="text-align:center;padding:0 20px;"><p style="font-size:13px;color:#aaa;margin-bottom:14px;">再集 ' +
-          left + ' 點可參加抽獎 🎁</p>' +
-          '<button class="btn-main" style="margin:0;" onclick="ptDone()">完成結帳 ✓</button></div>';
-      }
-      goScreen("pt-balance");
+    }).catch(()=>{});
+}
+async function doCheckin() {
+  const type = new URL(location.href).searchParams.get("type") || "";
+  const btn  = document.getElementById("si-btn"); btn.disabled = true; btn.textContent = "簽到中...";
+  try {
+    const p   = new URLSearchParams({ action:"sign_in", lineuid:profile.userId, displayName:profile.displayName, type });
+    const res  = await fetch(GAS_URL + "?" + p.toString()); const data = await res.json();
+    if (data.status === "OK") {
+      const today = new Date();
+      const dateStr = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0") + "-" + String(today.getDate()).padStart(2,"0");
+      showSiResult("success", "🎉 簽到成功！\n活動：" + SIGNIN_INFO[type].label + "\n日期：" + dateStr +
+        "\n玩家編號：" + (data.uid4||"----") + "\n" +
+        (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "📅 第 " + data.visitCount + " 次參加此活動") +
+        "\n\n⚠️ 請勿關閉此視窗\n店員確認後方可離開");
+      btn.textContent = "已簽到 ✓";
+    } else if (data.status === "DENY") {
+      showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟"); btn.textContent = "今日已簽到";
+    } else {
+      showSiResult("error", "簽到失敗：" + (data.message||"未知錯誤")); btn.disabled = false; btn.textContent = "重試";
+    }
+  } catch(_) { showSiResult("error", "連線錯誤，請稍後再試"); btn.disabled = false; btn.textContent = "重試"; }
+}
+function showSiResult(type, msg) {
+  const box = document.getElementById("si-result"); box.className = "result " + type; box.textContent = msg; box.style.display = "block";
+}
+
+// ══════════════════════════════════════════════════════════════
+//  工具函式
+// ══════════════════════════════════════════════════════════════
+function goScreen(id) {
+  document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
+  const el = document.getElementById(id); if (el) el.classList.add("active");
+  window.scrollTo(0, 0);
+}
+function hideLoading() { const el = document.getElementById("global-loading"); if (el) el.style.display = "none"; }
+function showError(msg) {
+  hideLoading();
+  document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".err-block").forEach(e => e.remove());
+  const div = document.createElement("div");
+  div.className = "err-block";
+  div.style.cssText = "color:#B71C1C;font-size:14px;text-align:center;padding:40px 24px;line-height:1.8;";
+  div.innerHTML = "<div style='font-size:36px;margin-bottom:14px;'>⚠️</div><div style='font-weight:700;margin-bottom:8px;'>發生錯誤</div><div style='font-size:13px;color:#888;white-space:pre-line;'>" + msg + "</div>";
+  document.getElementById("app").appendChild(div);
+}
+function showFatalError(msg) { showError(msg); }
+
+// ══════════════════════════════════════════════════════════════
+//  ★ 會員系統 — mode=member
+// ══════════════════════════════════════════════════════════════
+async function startMemberFlow() {
+  goScreen('mem-loading');
+  try {
+    const url = GAS_URL + '?action=get_member&lineuid=' + encodeURIComponent(profile.userId);
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'NOT_MEMBER') {
+      // 未加入會員 → 顯示加入頁
+      document.getElementById('mem-join-user').innerHTML =
+        '<strong>👤 ' + profile.displayName + '</strong><br>' +
+        '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
+      goScreen('mem-join');
+      return;
+    }
+    if (data.status !== 'OK') {
+      showFatalError('查詢失敗：' + (data.message || '請告知店員'));
+      return;
     }
 
-    function goDraw() {
-      goScreen("pt-draw");
-      resetDrum();
+    const m = data.member;
+    renderMemberStatus(m);
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
+
+function renderMemberStatus(m) {
+  document.getElementById('mem-status-name').textContent = '👤 ' + m.displayName;
+  document.getElementById('mem-visit-num').textContent   = m.visitCount || 0;
+  document.getElementById('mem-remain-num').textContent  = m.remaining >= 0 ? m.remaining : '-';
+  const threshold = m.threshold || 5;
+
+  // 有效券：從 get_member 拿不到券清單，要再查 check_member_coupon
+  // 用 feeStatus 顯示月費
+  const feeBox = document.getElementById('mem-fee-box');
+  if (m.feeStatus === '待收') {
+    feeBox.style.display = 'block';
+    feeBox.textContent = '⚠️ 本月月費尚未繳交，請至櫃台繳費（$600）以享用本月優惠';
+  } else if (m.feeStatus === '免收') {
+    feeBox.style.display = 'block';
+    feeBox.style.background = '#e8f5e9'; feeBox.style.borderColor = '#a5d6a7'; feeBox.style.color = '#1b5e20';
+    feeBox.textContent = '🎉 本月月費免收（上月已達標）';
+  } else {
+    feeBox.style.display = 'none';
+  }
+
+  // 免費提示
+  const freeBox = document.getElementById('mem-free-box');
+  freeBox.style.display = m.nextMonthFree ? 'block' : 'none';
+
+  // 進度條
+  const pct = Math.min(100, Math.round((m.visitCount || 0) / threshold * 100));
+  document.getElementById('mem-progress-label').textContent = (m.visitCount || 0) + ' / ' + threshold + ' 次';
+  setTimeout(() => { document.getElementById('mem-progress-bar').style.width = pct + '%'; }, 100);
+
+  // 停權 badge
+  const badge = document.getElementById('mem-badge');
+  if (m.status === 'suspended') {
+    badge.textContent = '⚠️ 已停權'; badge.style.background = '#c62828';
+  } else if (m.status === 'active') {
+    badge.textContent = '✅ 有效會員'; badge.style.background = '#2e7d32';
+  }
+
+  // 查詢券清單
+  fetchAndShowCoupons();
+  goScreen('mem-status');
+}
+
+async function fetchAndShowCoupons() {
+  try {
+    const url  = GAS_URL + '?action=check_member_coupon&lineuid=' + encodeURIComponent(profile.userId);
+    const res  = await fetch(url);
+    const data = await res.json();
+    const box  = document.getElementById('mem-coupons-box');
+    const coupons = (data.coupons || []);
+    document.getElementById('mem-coupon-num').textContent = coupons.length;
+    if (coupons.length === 0) {
+      box.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:#aaa;">目前無有效券</div>';
+      return;
     }
+    box.innerHTML = coupons.map(c =>
+      '<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:2px dashed #7c3aed;border-radius:12px;padding:12px 14px;margin-bottom:8px;">' +
+      '<div style="font-size:13px;font-weight:800;color:#5b21b6;margin-bottom:3px;">' + c.label + '</div>' +
+      '<div style="font-size:11px;color:#6d28d9;line-height:1.6;">券號：' + c.couponId + '　有效至：' + c.expiry +
+      '　剩餘 ' + c.daysLeft + ' 天</div></div>'
+    ).join('');
+  } catch(_) { document.getElementById('mem-coupon-num').textContent = '?'; }
+}
 
-    function skipDraw() {
-      finalPts = newTotal;
-      renderDone();
-      goScreen("pt-done");
+async function doJoinMember() {
+  goScreen('mem-joining');
+  try {
+    const url  = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId)
+      + '&displayName=' + encodeURIComponent(profile.displayName);
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status === 'OK') {
+      const sub = data.isNew
+        ? '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠'
+        : (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
+      document.getElementById('mem-done-sub').innerHTML = sub;
+      goScreen('mem-done');
+    } else {
+      showFatalError('加入失敗：' + (data.message || '請告知店員'));
     }
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
 
-    function ptDone() {
-      finalPts = newTotal;
-      renderDone();
-      goScreen("pt-done");
-    }
-
-    function renderDone() {
-      const lo = redeemTiers[0] || {
-        threshold: goalThreshold
-      };
-      document.getElementById("done-pts").textContent = finalPts + " 點";
-      document.getElementById("done-pts-sub").textContent = finalPts >= lo.threshold ? "已可折抵優惠 🎁" : "再集 " + (lo
-        .threshold - finalPts) + " 點可折抵";
-    }
-
-    function resetDrum() {
-      clearInterval(drawTimer);
-      drawTimer = null;
-      drawnPrize = null;
-      const face = document.getElementById("drum-face");
-      face.textContent = "?";
-      face.classList.remove("spinning");
-      document.getElementById("draw-hint").textContent = "";
-      const btn = document.getElementById("draw-btn");
-      btn.disabled = false;
-      btn.textContent = "開始抽獎";
-      btn.onclick = startDraw;
-    }
-
-    function startDraw() {
-      const btn = document.getElementById("draw-btn");
-      btn.disabled = true;
-      btn.textContent = "抽獎中…";
-      const face = document.getElementById("drum-face");
-      const emojis = ["🎫", "🎟", "🍰", "🎁", "✨", "🎊", "🎈", "🌟"];
-      let count = 0;
-      face.classList.add("spinning");
-      drawTimer = setInterval(() => {
-        face.textContent = emojis[count % emojis.length];
-        count++;
-      }, 100);
-      drawnPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-      setTimeout(async () => {
-        clearInterval(drawTimer);
-        face.classList.remove("spinning");
-        face.textContent = drawnPrize.icon;
-        document.getElementById("draw-hint").textContent = "🎉 " + drawnPrize.name + "！";
-        const useT = (redeemTiers[0] || {
-          threshold: goalThreshold
-        }).threshold;
-        try {
-          const res = await fetch(GAS_URL + "?action=add_points&lineuid=" + encodeURIComponent(profile.userId) +
-            "&points=-" + useT);
-          const data = await res.json();
-          finalPts = data.status === "OK" ? (data.newTotal || 0) : Math.max(0, newTotal - useT);
-        } catch (_) {
-          finalPts = Math.max(0, newTotal - useT);
-        }
-        btn.disabled = false;
-        btn.textContent = "查看獎品";
-        btn.onclick = showPrize;
-      }, 2800);
-    }
-
-    function showPrize() {
-      if (!drawnPrize) return;
-      const useT = (redeemTiers[0] || {
-        threshold: goalThreshold
-      }).threshold;
-      document.getElementById("prize-icon").textContent = drawnPrize.icon;
-      document.getElementById("prize-name").textContent = drawnPrize.name;
-      document.getElementById("prize-desc").textContent = drawnPrize.desc;
-      let html = "";
-      if (drawnPrize.disc < 1) {
-        html += row("折扣優惠", "<span style='color:#E65100;'>" + drawnPrize.name + "</span>");
-        html += row("套用方式", "現場直接折抵");
-      } else if (drawnPrize.extra) {
-        html += row("贈品", "<span style='color:#1B5E20;'>" + drawnPrize.extra + " 🍰</span>");
-        html += row("套用方式", "向店員領取");
-      } else {
-        html += row("優惠", "<span style='color:#1B5E20;'>" + drawnPrize.name + "</span>");
-        html += row("套用方式", "下次到店使用");
-      }
-      html += row("扣除點數", "<span style='color:#888;'>−" + useT + " 點</span>");
-      html += row("剩餘點數", "<span style='color:#1B5E20;'>" + finalPts + " 點</span>");
-      document.getElementById("prize-bill").innerHTML = html;
-      goScreen("pt-prize");
-    }
-
-    function row(label, val) {
-      return '<div class="info-row"><span class="info-label">' + label + '</span><span class="info-val">' + val +
-        '</span></div>';
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  簽到流程
-    // ══════════════════════════════════════════════════════════════
-    function startSigninFlow(type) {
-      hideLoading();
-      document.getElementById("si-icon").textContent = SIGNIN_INFO[type].icon;
-      document.getElementById("si-label").textContent = SIGNIN_INFO[type].label;
-      document.getElementById("si-user").textContent = "👤 " + profile.displayName;
-      goScreen("si-main");
-      fetch(GAS_URL + "?action=check_today&lineuid=" + encodeURIComponent(profile.userId) + "&type=" +
-          encodeURIComponent(type))
-        .then(r => r.json()).then(data => {
-          if (data.status === "DENY") {
-            showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
-            const btn = document.getElementById("si-btn");
-            btn.disabled = true;
-            btn.textContent = "今日已簽到";
-          }
-        }).catch(() => {});
-    }
-    async function doCheckin() {
-      const type = new URL(location.href).searchParams.get("type") || "";
-      const btn = document.getElementById("si-btn");
-      btn.disabled = true;
-      btn.textContent = "簽到中...";
-      try {
-        const p = new URLSearchParams({
-          action: "sign_in",
-          lineuid: profile.userId,
-          displayName: profile.displayName,
-          type
-        });
-        const res = await fetch(GAS_URL + "?" + p.toString());
-        const data = await res.json();
-        if (data.status === "OK") {
-          const today = new Date();
-          const dateStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(
-            today.getDate()).padStart(2, "0");
-          showSiResult("success", "🎉 簽到成功！\n活動：" + SIGNIN_INFO[type].label + "\n日期：" + dateStr +
-            "\n玩家編號：" + (data.uid4 || "----") + "\n" +
-            (data.isFirstEver ? "🌟 首次參加！歡迎加入！" : "📅 第 " + data.visitCount + " 次參加此活動") +
-            "\n\n⚠️ 請勿關閉此視窗\n店員確認後方可離開");
-          btn.textContent = "已簽到 ✓";
-        } else if (data.status === "DENY") {
-          showSiResult("warn", "你今天已經簽到過了！\n明天再來 🌟");
-          btn.textContent = "今日已簽到";
-        } else {
-          showSiResult("error", "簽到失敗：" + (data.message || "未知錯誤"));
-          btn.disabled = false;
-          btn.textContent = "重試";
-        }
-      } catch (_) {
-        showSiResult("error", "連線錯誤，請稍後再試");
-        btn.disabled = false;
-        btn.textContent = "重試";
-      }
-    }
-
-    function showSiResult(type, msg) {
-      const box = document.getElementById("si-result");
-      box.className = "result " + type;
-      box.textContent = msg;
-      box.style.display = "block";
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  工具函式
-    // ══════════════════════════════════════════════════════════════
-    function goScreen(id) {
-      document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
-      const el = document.getElementById(id);
-      if (el) el.classList.add("active");
-      window.scrollTo(0, 0);
-    }
-
-    function hideLoading() {
-      const el = document.getElementById("global-loading");
-      if (el) el.style.display = "none";
-    }
-
-    function showError(msg) {
-      hideLoading();
-      document.querySelectorAll(".scn").forEach(s => s.classList.remove("active"));
-      document.querySelectorAll(".err-block").forEach(e => e.remove());
-      const div = document.createElement("div");
-      div.className = "err-block";
-      div.style.cssText = "color:#B71C1C;font-size:14px;text-align:center;padding:40px 24px;line-height:1.8;";
-      div.innerHTML =
-        "<div style='font-size:36px;margin-bottom:14px;'>⚠️</div><div style='font-weight:700;margin-bottom:8px;'>發生錯誤</div><div style='font-size:13px;color:#888;white-space:pre-line;'>" +
-        msg + "</div>";
-      document.getElementById("app").appendChild(div);
-    }
-
-    function showFatalError(msg) {
-      showError(msg);
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  ★ 會員系統 — mode=member
-    // ══════════════════════════════════════════════════════════════
-    async function startMemberFlow() {
-      goScreen('mem-loading');
-      try {
-        const url = GAS_URL + '?action=get_member&lineuid=' + encodeURIComponent(profile.userId);
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.status === 'NOT_MEMBER') {
-          // 未加入會員 → 顯示加入頁
-          document.getElementById('mem-join-user').innerHTML =
-            '<strong>👤 ' + profile.displayName + '</strong><br>' +
-            '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() +
-            '</span>';
-          goScreen('mem-join');
-          return;
-        }
-        if (data.status !== 'OK') {
-          showFatalError('查詢失敗：' + (data.message || '請告知店員'));
-          return;
-        }
-
-        const m = data.member;
-        renderMemberStatus(m);
-      } catch (err) {
-        showFatalError('網路錯誤：' + err.message);
-      }
-    }
-
-    function renderMemberStatus(m) {
-      document.getElementById('mem-status-name').textContent = '👤 ' + m.displayName;
-      document.getElementById('mem-visit-num').textContent = m.visitCount || 0;
-      document.getElementById('mem-remain-num').textContent = m.remaining >= 0 ? m.remaining : '-';
-      const threshold = m.threshold || 5;
-
-      // 有效券：從 get_member 拿不到券清單，要再查 check_member_coupon
-      // 用 feeStatus 顯示月費
-      const feeBox = document.getElementById('mem-fee-box');
-      if (m.feeStatus === '待收') {
-        feeBox.style.display = 'block';
-        feeBox.textContent = '⚠️ 本月月費尚未繳交，請至櫃台繳費（$600）以享用本月優惠';
-      } else if (m.feeStatus === '免收') {
-        feeBox.style.display = 'block';
-        feeBox.style.background = '#e8f5e9';
-        feeBox.style.borderColor = '#a5d6a7';
-        feeBox.style.color = '#1b5e20';
-        feeBox.textContent = '🎉 本月月費免收（上月已達標）';
-      } else {
-        feeBox.style.display = 'none';
-      }
-
-      // 免費提示
-      const freeBox = document.getElementById('mem-free-box');
-      freeBox.style.display = m.nextMonthFree ? 'block' : 'none';
-
-      // 進度條
-      const pct = Math.min(100, Math.round((m.visitCount || 0) / threshold * 100));
-      document.getElementById('mem-progress-label').textContent = (m.visitCount || 0) + ' / ' + threshold + ' 次';
-      setTimeout(() => {
-        document.getElementById('mem-progress-bar').style.width = pct + '%';
-      }, 100);
-
-      // 停權 badge
-      const badge = document.getElementById('mem-badge');
-      if (m.status === 'suspended') {
-        badge.textContent = '⚠️ 已停權';
-        badge.style.background = '#c62828';
-      } else if (m.status === 'active') {
-        badge.textContent = '✅ 有效會員';
-        badge.style.background = '#2e7d32';
-      }
-
-      // 查詢券清單
-      fetchAndShowCoupons();
-      goScreen('mem-status');
-    }
-
-    async function fetchAndShowCoupons() {
-      try {
-        const url = GAS_URL + '?action=check_member_coupon&lineuid=' + encodeURIComponent(profile.userId);
-        const res = await fetch(url);
-        const data = await res.json();
-        const box = document.getElementById('mem-coupons-box');
-        const coupons = (data.coupons || []);
-        document.getElementById('mem-coupon-num').textContent = coupons.length;
-        if (coupons.length === 0) {
-          box.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:#aaa;">目前無有效券</div>';
-          return;
-        }
-        box.innerHTML = coupons.map(c =>
-          '<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:2px dashed #7c3aed;border-radius:12px;padding:12px 14px;margin-bottom:8px;">' +
-          '<div style="font-size:13px;font-weight:800;color:#5b21b6;margin-bottom:3px;">' + c.label + '</div>' +
-          '<div style="font-size:11px;color:#6d28d9;line-height:1.6;">券號：' + c.couponId + '　有效至：' + c.expiry +
-          '　剩餘 ' + c.daysLeft + ' 天</div></div>'
-        ).join('');
-      } catch (_) {
-        document.getElementById('mem-coupon-num').textContent = '?';
-      }
-    }
-
-    async function doJoinMember() {
-      goScreen('mem-joining');
-      try {
-        const url = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId) +
-          '&displayName=' + encodeURIComponent(profile.displayName);
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.status === 'OK') {
-          const sub = data.isNew ?
-            '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠' :
-            (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
-          document.getElementById('mem-done-sub').innerHTML = sub;
-          goScreen('mem-done');
-        } else {
-          showFatalError('加入失敗：' + (data.message || '請告知店員'));
-        }
-      } catch (err) {
-        showFatalError('網路錯誤：' + err.message);
-      }
-    }
-
-    init().catch(err => showFatalError("啟動失敗：" + err.message));
-  </script>
+init().catch(err => showFatalError("啟動失敗：" + err.message));
+</script>
 </body>
 </html>
