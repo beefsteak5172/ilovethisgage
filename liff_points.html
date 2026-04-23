@@ -812,7 +812,13 @@ async function startCheckoutPromoFlow() {
 function buildPromoOptionsFromGAS(data) {
   const container = document.getElementById("promo-options-container");
   container.innerHTML = "";
-  document.getElementById("co-promo-sub").textContent = "本次消費可獲得 " + earnPts + " 點";
+
+  // ★ v9.6-debug：顯示 GAS 回傳的 halfCoupon.status 與 isMember，方便驗證
+  const _dbgHalf = (data.halfCoupon && data.halfCoupon.status) || '無';
+  const _dbgMem  = data.isMember === true ? 'true' : 'false';
+  const _dbgVisit = (data.member && data.member.visitCount) || 0;
+  document.getElementById("co-promo-sub").textContent =
+    `第 ${_dbgVisit + 1} 次 ｜ halfCoupon=${_dbgHalf} ｜ isMember=${_dbgMem}`;
 
   const TYPE_FLAG = {
     'redeem'          : _flags.promoRedeem,
