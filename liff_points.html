@@ -508,7 +508,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbybdoTOXUAANrhVAA5y9jtPGuVdKmdf3az0nVQQ7XFIWD1hTp6Zn4EnKSaJckvwWleL/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwVZwndxiUUo5F1BmR5_CexnB1vY_ITFqoA1pw_AU02OGcBb3pEdw0dFdFMoluQI3xk/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -642,6 +642,20 @@ async function init() {
     if (!hasAnyPromoOrPoints() && window._pendingFlow !== "signin_chicken" && !window._pendingFlow.startsWith("signin_")) {
       goScreen("pt-skip");
       return;
+    }
+
+    // ★ v9.6：checkout flow 老會員 → 先查詢身份，是會員直接跳主題，不顯示規則
+    if (window._pendingFlow === "checkout") {
+      try {
+        const chkRes  = await fetch(GAS_URL + '?action=member_checkin&lineuid=' + encodeURIComponent(profile.userId));
+        const chkData = await chkRes.json();
+        if (chkData.status === 'OK') {
+          // 已是會員，直接進結帳優惠流程
+          window._memberAskFromCheckout = true;
+          await startCheckoutPromoFlow();
+          return;
+        }
+      } catch(_) {}
     }
 
     goScreen("terms-screen");
