@@ -357,7 +357,45 @@ body {
     </div>
   </div>
 
-  <!-- ★ v9.4：結帳時詢問是否加入會員 -->
+  <!-- ★ v9.8：達標獎勵畫面 -->
+  <div class="scn" id="milestone-screen">
+    <div class="hdr" style="background:linear-gradient(135deg,#b45309,#d97706);">
+      <div class="hdr-icon">🏆</div>
+      <h2>恭喜達標！</h2>
+      <p>本月消費已達 14 次</p>
+    </div>
+    <div style="padding:24px 20px 0;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:56px;margin-bottom:8px;">🎉</div>
+        <div style="font-size:20px;font-weight:900;color:#92400e;margin-bottom:6px;">恭喜您本月達標！</div>
+        <div style="font-size:13px;color:#888;line-height:1.8;">感謝您本月的支持與惠顧</div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:16px;padding:18px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:800;color:#78350f;margin-bottom:12px;">🎁 您的達標獎勵</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;background:#fff8;border-radius:10px;padding:10px 12px;">
+            <span style="font-size:22px;">💰</span>
+            <div><div style="font-size:14px;font-weight:700;color:#78350f;">退還本月會費</div><div style="font-size:12px;color:#92400e;">$600 退款，請告知服務人員</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:#fff8;border-radius:10px;padding:10px 12px;">
+            <span style="font-size:22px;">🥩</span>
+            <div><div style="font-size:14px;font-weight:700;color:#78350f;">贈送指定套餐一份</div><div style="font-size:12px;color:#92400e;">請告知服務人員領取</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:#fff8;border-radius:10px;padding:10px 12px;">
+            <span style="font-size:22px;">🍱</span>
+            <div><div style="font-size:14px;font-weight:700;color:#78350f;">贈送簡餐一份</div><div style="font-size:12px;color:#92400e;">請告知服務人員領取</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#fff3e0;border:1.5px solid #ffcc80;border-radius:12px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#e65100;line-height:1.8;text-align:center;">
+        ⚠️ 獎勵由服務人員手動發放<br>請在結帳前出示此畫面告知服務人員
+      </div>
+
+      <div id="milestone-wait-sub" style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:13px;color:#1b5e20;text-align:center;line-height:1.8;"></div>
+    </div>
+  </div>
   <div class="scn" id="member-ask">
     <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
       <div class="hdr-icon">🥩</div>
@@ -863,6 +901,8 @@ function buildPromoOptionsFromGAS(data) {
 
   // ★ v9.6-debug：顯示 GAS 回傳的 halfCoupon.status 與 isMember，方便驗證
   const _dbgVisit = (data.member && data.member.visitCount) || 0;
+  window._currentVisitCount = _dbgVisit;
+  window._memberThreshold   = (data.member && data.member.threshold) || 14;
   document.getElementById("co-promo-sub").textContent =
     `第 ${_dbgVisit + 1} 次消費　選擇後即完成確認`;
 
@@ -1213,6 +1253,16 @@ async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
       else if (promoKey === 'points')        waitText = "已選擇：只集點\n本次累積 " + earnPts + " 點";
       else if (promoKey === 'member_visit')      waitText = "✅ 已記錄本次消費\n感謝惠顧，請等候店員完成結帳";
       else if (promoKey === 'member_visit_half') waitText = "✅ 已記錄本次消費（雙數次）\n🎉 本人套餐半價折抵 $" + (tierDisc > 0 ? tierDisc : "（計算中）") + "\n請等候店員完成結帳";
+
+      // ★ v9.8：member_visit 達標判斷
+      const _newVisitCount = (window._currentVisitCount || 0) + 1;
+      const _threshold     = window._memberThreshold || 14;
+      if ((promoKey === 'member_visit' || promoKey === 'member_visit_half') && _newVisitCount >= _threshold) {
+        const milestoneSub = document.getElementById('milestone-wait-sub');
+        if (milestoneSub) milestoneSub.textContent = '✅ 本次消費已記錄（第 ' + _newVisitCount + ' 次）\n請在結帳前告知服務人員領取獎勵';
+        goScreen('milestone-screen');
+        return;
+      }
       else if (promoKey === 'skip')          waitText = "已確認，直接結帳\n感謝惠顧";
       else {
         const cp = customPromos.find(c => c.key === promoKey);
