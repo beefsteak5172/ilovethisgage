@@ -38,7 +38,7 @@ body {
 .opt.half-issue { border-color: #0369A1; background: #F0F9FF; }
 .opt.half-issue.sel { border-color: #075985; background: #E0F2FE; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; white-space: nowrap; }
 .opt.sel .opt-title { color: #15803d; }
 .opt.half-opt .opt-title { color: #5B21B6; }
 .opt.half-opt.sel .opt-title { color: #4C1D95; }
@@ -203,7 +203,7 @@ body {
       <button class="terms-agree-btn" onclick="agreeTerms()">✅ 我已閱讀並同意以上規則</button>
       <button class="terms-disagree-btn" onclick="disagreeTerms()">✗ 不同意，直接結帳付款</button>
     </div>
-  </div></div>
+  </div>
 
   <div class="scn" id="co-checking">
     <div class="hdr"><div class="hdr-icon">🔍</div><h2>查詢優惠中</h2><p>請稍候…</p></div>
@@ -1027,7 +1027,7 @@ function makeOpt({ id, key, cls, icon, title, sub, dis }) {
   if (!dis) div.onclick = () => selectPromo(key);
   div.innerHTML =
     '<div class="opt-icon">' + icon + '</div>' +
-    '<div style="flex:1;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
+    '<div style="flex:1; min-width: 0;"><div class="opt-title">' + title + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
     '<div class="opt-check" id="chk-' + key + '">✅</div>';
   return div;
 }
