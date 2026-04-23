@@ -330,14 +330,14 @@ body {
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
         <div style="font-size:12px;color:#3949ab;line-height:2;">
-          🎫 每月 4 張第二件半價券<br>
-          🎉 本月到訪 5 次，次月月費全免<br>
-          📊 專屬消費紀錄追蹤
+          💰 月費 $200 / 30天<br>
+          🎉 30天內消費14次以上：單數次正常價，雙數次本人套餐半價<br>
+          🎁 到期退還 $200 並加送指定套餐 + 簡餐各一份
         </div>
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
         ⚠️ 月費 <strong>$200/月</strong>，加入後本月費用請至櫃台繳交。<br>
-        繳費後方可享本月優惠。
+        繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
       <div id="member-ask-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -403,17 +403,17 @@ body {
           <span id="mem-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#2e7d32;color:#fff;">有效會員</span>
         </div>
         <div style="display:flex;justify-content:space-around;text-align:center;">
-          <div><div style="font-size:28px;font-weight:900;color:#1b5e20;" id="mem-visit-num">0</div><div style="font-size:11px;color:#666;">本月到訪</div></div>
+          <div><div style="font-size:28px;font-weight:900;color:#1b5e20;" id="mem-visit-num">0</div><div style="font-size:11px;color:#666;">本月消費</div></div>
           <div style="width:1px;background:#c8e6c9;"></div>
-          <div><div style="font-size:28px;font-weight:900;color:#e65100;" id="mem-remain-num">5</div><div style="font-size:11px;color:#666;">離免費還差</div></div>
+          <div><div style="font-size:28px;font-weight:900;color:#e65100;" id="mem-remain-num">14</div><div style="font-size:11px;color:#666;">達標還差</div></div>
           <div style="width:1px;background:#c8e6c9;"></div>
-          <div><div style="font-size:28px;font-weight:900;color:#0d47a1;" id="mem-coupon-num">0</div><div style="font-size:11px;color:#666;">有效券張數</div></div>
+          <div><div style="font-size:28px;font-weight:900;color:#0d47a1;" id="mem-coupon-num">0</div><div style="font-size:11px;color:#666;">已獲半價</div></div>
         </div>
       </div>
       <!-- 進度條 -->
       <div style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
-          <span>本月到訪進度</span><span id="mem-progress-label">0 / 5 次</span>
+          <span>消費次數進度</span><span id="mem-progress-label">0 / 14 次</span>
         </div>
         <div style="height:10px;background:#eee;border-radius:99px;overflow:hidden;">
           <div id="mem-progress-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#1b5e20,#4caf50);width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);"></div>
@@ -422,11 +422,11 @@ body {
       <!-- 月費狀態 -->
       <div id="mem-fee-box" style="background:#fff3e0;border:1.5px solid #ffcc80;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;display:none;"></div>
       <!-- 免費提示 -->
-      <div id="mem-free-box" style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#1b5e20;text-align:center;display:none;">🎉 本月已達標！下月月費免收</div>
+      <div id="mem-free-box" style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#1b5e20;text-align:center;display:none;">🎉 已達標！到期可獲得獎勵及退費</div>
       <!-- 有效券清單 -->
       <div id="mem-coupons-box"></div>
       <!-- 底部說明 -->
-      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">每月月費 $200 · 每月贈 4 張半價券<br>每月到訪 5 次次月免費</div>
+      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $200 / 30天 · 消費14次以上雙數次半價<br>到期退還 $200 並加送套餐 + 簡餐各一份
     </div>
   </div>
 
@@ -440,14 +440,14 @@ body {
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
         <div style="font-size:12px;color:#3949ab;line-height:2;">
-          🎫 每月 4 張第二件半價券<br>
-          🎉 本月到訪 5 次，次月月費全免<br>
-          📊 專屬消費紀錄追蹤
+          💰 月費 $200 / 30天<br>
+          🎉 30天內消費14次以上：單數次正常價，雙數次本人套餐半價<br>
+          🎁 到期退還 $200 並加送指定套餐 + 簡餐各一份
         </div>
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
         ⚠️ 月費 <strong>$200/月</strong>，加入後本月費用請至櫃台繳交。<br>
-        繳費後方可享本月優惠。
+        繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
       <div id="mem-join-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
       <button onclick="doJoinMember()" style="display:block;width:100%;padding:15px;border-radius:12px;background:#1a237e;color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ 確認加入會員</button>
@@ -485,7 +485,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzcwa8MValTQGdR3-4tm0WzdTRkHpwqOxyBWx_7frdApHa9fMpXu8UBxeioCdPCSnFS3A/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx8npp7hIP6YSieeQ_gDVvgT7rSbW6kwgr8R3oJOmB2ycnRnQs_2dx1RfuleGVXTOHpIA/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
