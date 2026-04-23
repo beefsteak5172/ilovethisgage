@@ -349,6 +349,92 @@ body {
     </div>
   </div>
 
+  <!-- ══ 會員系統畫面 ══ -->
+  <div class="scn" id="mem-loading">
+    <div class="hdr"><div class="hdr-icon">👤</div><h2>會員系統</h2><p>查詢中…</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在查詢會員資料…</div>
+  </div>
+
+  <div class="scn" id="mem-status">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
+      <div class="hdr-icon">🥩</div>
+      <h2>無名牛排 會員</h2>
+      <p id="mem-status-name">載入中…</p>
+    </div>
+    <div style="padding:16px 16px 0;">
+      <!-- 狀態卡 -->
+      <div id="mem-status-card" style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:2px solid #a5d6a7;border-radius:16px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:700;color:#1b5e20;">會員狀態</span>
+          <span id="mem-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#2e7d32;color:#fff;">有效會員</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;text-align:center;">
+          <div><div style="font-size:28px;font-weight:900;color:#1b5e20;" id="mem-visit-num">0</div><div style="font-size:11px;color:#666;">本月到訪</div></div>
+          <div style="width:1px;background:#c8e6c9;"></div>
+          <div><div style="font-size:28px;font-weight:900;color:#e65100;" id="mem-remain-num">5</div><div style="font-size:11px;color:#666;">離免費還差</div></div>
+          <div style="width:1px;background:#c8e6c9;"></div>
+          <div><div style="font-size:28px;font-weight:900;color:#0d47a1;" id="mem-coupon-num">0</div><div style="font-size:11px;color:#666;">有效券張數</div></div>
+        </div>
+      </div>
+      <!-- 進度條 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
+          <span>本月到訪進度</span><span id="mem-progress-label">0 / 5 次</span>
+        </div>
+        <div style="height:10px;background:#eee;border-radius:99px;overflow:hidden;">
+          <div id="mem-progress-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#1b5e20,#4caf50);width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);"></div>
+        </div>
+      </div>
+      <!-- 月費狀態 -->
+      <div id="mem-fee-box" style="background:#fff3e0;border:1.5px solid #ffcc80;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#e65100;display:none;"></div>
+      <!-- 免費提示 -->
+      <div id="mem-free-box" style="background:#e8f5e9;border:2px solid #66bb6a;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#1b5e20;text-align:center;display:none;">🎉 本月已達標！下月月費免收</div>
+      <!-- 有效券清單 -->
+      <div id="mem-coupons-box"></div>
+      <!-- 底部說明 -->
+      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">每月月費 $200 · 每月贈 4 張半價券<br>每月到訪 5 次次月免費</div>
+    </div>
+  </div>
+
+  <div class="scn" id="mem-join">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);">
+      <div class="hdr-icon">🥩</div>
+      <h2>加入無名牛排會員</h2>
+      <p>每月享專屬優惠</p>
+    </div>
+    <div style="padding:16px 16px 0;">
+      <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
+        <div style="font-size:12px;color:#3949ab;line-height:2;">
+          🎫 每月 4 張第二件半價券<br>
+          🎉 本月到訪 5 次，次月月費全免<br>
+          📊 專屬消費紀錄追蹤
+        </div>
+      </div>
+      <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
+        ⚠️ 月費 <strong>$200/月</strong>，加入後本月費用請至櫃台繳交。<br>
+        繳費後方可享本月優惠。
+      </div>
+      <div id="mem-join-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
+      <button onclick="doJoinMember()" style="display:block;width:100%;padding:15px;border-radius:12px;background:#1a237e;color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;">✅ 確認加入會員</button>
+      <button onclick="goScreen('pt-skip')" style="display:block;width:100%;padding:12px;border-radius:12px;background:#f5f5f5;color:#666;border:1.5px solid #ddd;font-size:14px;font-weight:600;cursor:pointer;">✗ 暫不加入</button>
+    </div>
+  </div>
+
+  <div class="scn" id="mem-joining">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);"><div class="hdr-icon">📡</div><h2>加入中…</h2><p>請稍候</p></div>
+    <div class="loading" style="padding:48px 20px;"><div class="spinner"></div>正在建立會員資料…</div>
+  </div>
+
+  <div class="scn" id="mem-done">
+    <div class="hdr" style="background:linear-gradient(135deg,#1a237e,#283593);"><div class="hdr-icon">🎉</div><h2>加入成功！</h2><p>歡迎成為無名牛排會員</p></div>
+    <div class="done-wrap">
+      <div class="done-icon">🥩</div>
+      <div class="done-title" style="color:#1a237e;">歡迎加入！</div>
+      <div class="done-sub" id="mem-done-sub">本月月費 $200 請至櫃台繳交<br>繳費後即享全部會員福利</div>
+    </div>
+  </div>
+
   <div class="scn" id="si-main">
     <div class="hdr">
       <div class="hdr-icon" id="si-icon">🎮</div>
@@ -365,7 +451,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzE9MAmB7PFnnpBsLmiIMn3vRkoGwxCOphnp-t6h73rxwnP8mfyDxpxGV_2gg8KSCRt/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzCYTnv6vCCv3bJqYXbh-QY381ob9anI3IxbYnEU7v5u8D2G_zXBD_SY5JhDgdAiQ9nLg/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -468,8 +554,16 @@ async function init() {
     const ptsParam   = p.get("points");
     const orderParam = p.get("orderId");
     const typeParam  = p.get("type");
+    const modeParam  = p.get("mode");
 
     hideLoading();
+
+    // ★ mode=member → 會員入口（加入/查詢）
+    if (modeParam === "member") {
+      window._pendingFlow = "member";
+      await startMemberFlow();
+      return;
+    }
 
     if (skParam && !ptsParam) {
       sessionKey = skParam;
@@ -1207,6 +1301,120 @@ function showError(msg) {
   document.getElementById("app").appendChild(div);
 }
 function showFatalError(msg) { showError(msg); }
+
+// ══════════════════════════════════════════════════════════════
+//  ★ 會員系統 — mode=member
+// ══════════════════════════════════════════════════════════════
+async function startMemberFlow() {
+  goScreen('mem-loading');
+  try {
+    const url = GAS_URL + '?action=get_member&lineuid=' + encodeURIComponent(profile.userId);
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.status === 'NOT_MEMBER') {
+      // 未加入會員 → 顯示加入頁
+      document.getElementById('mem-join-user').innerHTML =
+        '<strong>👤 ' + profile.displayName + '</strong><br>' +
+        '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
+      goScreen('mem-join');
+      return;
+    }
+    if (data.status !== 'OK') {
+      showFatalError('查詢失敗：' + (data.message || '請告知店員'));
+      return;
+    }
+
+    const m = data.member;
+    renderMemberStatus(m);
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
+
+function renderMemberStatus(m) {
+  document.getElementById('mem-status-name').textContent = '👤 ' + m.displayName;
+  document.getElementById('mem-visit-num').textContent   = m.visitCount || 0;
+  document.getElementById('mem-remain-num').textContent  = m.remaining >= 0 ? m.remaining : '-';
+  const threshold = m.threshold || 5;
+
+  // 有效券：從 get_member 拿不到券清單，要再查 check_member_coupon
+  // 用 feeStatus 顯示月費
+  const feeBox = document.getElementById('mem-fee-box');
+  if (m.feeStatus === '待收') {
+    feeBox.style.display = 'block';
+    feeBox.textContent = '⚠️ 本月月費尚未繳交，請至櫃台繳費（$200）以享用本月優惠';
+  } else if (m.feeStatus === '免收') {
+    feeBox.style.display = 'block';
+    feeBox.style.background = '#e8f5e9'; feeBox.style.borderColor = '#a5d6a7'; feeBox.style.color = '#1b5e20';
+    feeBox.textContent = '🎉 本月月費免收（上月已達標）';
+  } else {
+    feeBox.style.display = 'none';
+  }
+
+  // 免費提示
+  const freeBox = document.getElementById('mem-free-box');
+  freeBox.style.display = m.nextMonthFree ? 'block' : 'none';
+
+  // 進度條
+  const pct = Math.min(100, Math.round((m.visitCount || 0) / threshold * 100));
+  document.getElementById('mem-progress-label').textContent = (m.visitCount || 0) + ' / ' + threshold + ' 次';
+  setTimeout(() => { document.getElementById('mem-progress-bar').style.width = pct + '%'; }, 100);
+
+  // 停權 badge
+  const badge = document.getElementById('mem-badge');
+  if (m.status === 'suspended') {
+    badge.textContent = '⚠️ 已停權'; badge.style.background = '#c62828';
+  } else if (m.status === 'active') {
+    badge.textContent = '✅ 有效會員'; badge.style.background = '#2e7d32';
+  }
+
+  // 查詢券清單
+  fetchAndShowCoupons();
+  goScreen('mem-status');
+}
+
+async function fetchAndShowCoupons() {
+  try {
+    const url  = GAS_URL + '?action=check_member_coupon&lineuid=' + encodeURIComponent(profile.userId);
+    const res  = await fetch(url);
+    const data = await res.json();
+    const box  = document.getElementById('mem-coupons-box');
+    const coupons = (data.coupons || []);
+    document.getElementById('mem-coupon-num').textContent = coupons.length;
+    if (coupons.length === 0) {
+      box.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:#aaa;">目前無有效券</div>';
+      return;
+    }
+    box.innerHTML = coupons.map(c =>
+      '<div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:2px dashed #7c3aed;border-radius:12px;padding:12px 14px;margin-bottom:8px;">' +
+      '<div style="font-size:13px;font-weight:800;color:#5b21b6;margin-bottom:3px;">' + c.label + '</div>' +
+      '<div style="font-size:11px;color:#6d28d9;line-height:1.6;">券號：' + c.couponId + '　有效至：' + c.expiry +
+      '　剩餘 ' + c.daysLeft + ' 天</div></div>'
+    ).join('');
+  } catch(_) { document.getElementById('mem-coupon-num').textContent = '?'; }
+}
+
+async function doJoinMember() {
+  goScreen('mem-joining');
+  try {
+    const url  = GAS_URL + '?action=join_member&lineuid=' + encodeURIComponent(profile.userId)
+      + '&displayName=' + encodeURIComponent(profile.displayName);
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status === 'OK') {
+      const sub = data.isNew
+        ? '本月月費 $200 請至櫃台繳交<br>繳費後即享全部會員優惠'
+        : (data.reJoin ? '歡迎重新加入！月費 $200 請至櫃台繳交' : '您已是有效會員');
+      document.getElementById('mem-done-sub').innerHTML = sub;
+      goScreen('mem-done');
+    } else {
+      showFatalError('加入失敗：' + (data.message || '請告知店員'));
+    }
+  } catch(err) {
+    showFatalError('網路錯誤：' + err.message);
+  }
+}
 
 init().catch(err => showFatalError("啟動失敗：" + err.message));
 </script>
