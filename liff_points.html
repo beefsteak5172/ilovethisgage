@@ -508,7 +508,7 @@ body {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyx5d0A8NZtRGJbW7k0W1wzYCLfJV4Q085RkZqVTdRTXFbX1dLYq_7VIH00J3mG8syz/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwVZwndxiUUo5F1BmR5_CexnB1vY_ITFqoA1pw_AU02OGcBb3pEdw0dFdFMoluQI3xk/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -1144,43 +1144,28 @@ async function memberAskJoin() {
     const res  = await fetch(url);
     const data = await res.json();
     if (data.status === 'OK') {
-      // 顯示加入成功提示，再導回 co-promo
-      const sub = data.isNew
-        ? '本月月費 $200 請至櫃台繳交，繳費後即享全部優惠'
-        : (data.reJoin ? '歡迎重新加入！月費 $200 請至櫃台繳交' : '您已是有效會員');
-      document.getElementById('mem-done-sub').innerHTML = sub + '<br><small style="color:#888;font-size:11px;">3 秒後繼續結帳…</small>';
-      goScreen('mem-done');
-      
-      // ★ 修改：結帳流程中加入會員後，需要重新查詢會員狀態並進入優惠選擇
       if (window._memberAskFromCheckout) {
-        // 來自結帳流程：重新查詢會員資格並進入優惠選擇
-        setTimeout(async () => {
-          try {
-            const lo = redeemTiers[0] || { threshold: goalThreshold, discount: redeemDisc };
-            const url = GAS_URL
-              + "?action=member_status"
-              + "&lineuid=" + encodeURIComponent(profile.userId)
-              + "&earnPts=" + earnPts
-              + "&threshold=" + lo.threshold
-              + "&discount=" + lo.discount
-              + "&indoorExpDays=" + indoorExpDays;
-            const res  = await fetch(url);
-            const data = await res.json();
-            if (data.status === 'OK') {
-              window._memberStatus = data;
-              curPts = (data.points && data.points.current) || 0;
-              buildPromoOptionsFromGAS(data);
-              goScreen('co-promo');
-            } else {
-              showFatalError('重新查詢失敗：' + (data.message || '請告知店員'));
-            }
-          } catch(err) {
-            showFatalError('網路錯誤：' + err.message);
-          }
-        }, 3000);
+        // ★ 來自結帳流程：通知 POS 新會員已加入，由 POS 自動將月費 $200 加入帳單
+        try {
+          const decUrl = GAS_URL
+            + '?action=set_decision'
+            + '&sessionKey='  + encodeURIComponent(sessionKey)
+            + '&lineuid='     + encodeURIComponent(profile.userId)
+            + '&decision=join_member'
+            + '&feeStatus='   + encodeURIComponent('待收')
+            + '&tierPoints=0&tierDisc=0&promoChoice=join_member';
+          await fetch(decUrl);
+        } catch(_) {}
+        document.getElementById('co-wait-sub').textContent =
+          '✅ 加入成功！\n月費 $200 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
+        goScreen('co-waiting');
       } else {
-        // 來自會員專用入口：直接進優惠選擇
-        setTimeout(() => goScreen('co-promo'), 3000);
+        // 來自會員專用入口：顯示加入成功畫面
+        const sub = data.isNew
+          ? '本月月費 $200 請至櫃台繳交<br>繳費後即享全部會員優惠'
+          : (data.reJoin ? '歡迎重新加入！月費 $200 請至櫃台繳交' : '您已是有效會員');
+        document.getElementById('mem-done-sub').innerHTML = sub;
+        goScreen('mem-done');
       }
     } else {
       showFatalError('加入失敗：' + (data.message || '請告知店員'));
