@@ -169,13 +169,15 @@ body {
           <div>
             <div class="slot-name">早餐時段</div>
             <div class="slot-time">每天 07:00 ～ 10:30</div>
+            <div class="slot-limit">⚠️ 限量供應，售完為止</div>
           </div>
         </div>
         <div class="slot-row" id="slot-nightsnack">
           <div class="slot-icon">🌙</div>
           <div>
             <div class="slot-name">宵夜時段</div>
-            <div class="slot-time">每天 20:30 ～ 21:30</div>
+            <div class="slot-time">每天 20:00 ～ 21:30</div>
+            <div class="slot-limit">⚠️ 限量供應，售完為止</div>
           </div>
         </div>
       </div>
@@ -198,7 +200,7 @@ body {
         <span class="meal-btn-icon">🌙</span>
         <div>
           <div class="meal-btn-title">宵夜</div>
-          <div class="meal-btn-sub">限宵夜時段 20:30–21:30 領取</div>
+          <div class="meal-btn-sub">限宵夜時段 20:00–21:30 領取</div>
         </div>
       </button>
     </div>
@@ -263,7 +265,7 @@ const LIFF_ID   = '2009772018-xroV1qbk'; // ← 填入領餐 LIFF 的 ID
 // ════════════════════════════════════════════════
 const SLOTS = {
   breakfast:  { start: 7*60,      end: 10*60+30 },  // 07:00–10:30
-  nightsnack: { start: 20*60+30,  end: 21*60+30 }   // 20:30–21:30
+  nightsnack: { start: 20*60,      end: 21*60+30 }   // 20:00–21:30
 };
 
 // ════════════════════════════════════════════════
@@ -346,7 +348,7 @@ function selectMeal(type) {
   if (type !== slot) {
     alert(type === 'breakfast'
       ? '目前不是早餐時段（07:00–10:30），請在早餐時段內選擇。'
-      : '目前不是宵夜時段（20:30–21:30），請在宵夜時段內選擇。');
+      : '目前不是宵夜時段（20:00–21:30），請在宵夜時段內選擇。');
     return;
   }
   selectedMeal = type;
