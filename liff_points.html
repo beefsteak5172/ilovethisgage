@@ -118,6 +118,43 @@ body {
 
 #liff-spinner, .liff-spinner, [class*="liff-loading"], [id*="liff-loading"] { display: none !important; }
 
+/* ══ v9.8：早餐/宵夜畫面 ══════════════════════════════════════ */
+#bf-screen { display:none; }
+#bf-screen.active { display:flex; flex-direction:column; }
+.bf-hdr { background:linear-gradient(135deg,#7c3aed,#a78bfa); padding:22px 20px 18px; text-align:center; color:#fff; }
+.bf-hdr .bf-logo { font-size:34px; margin-bottom:5px; }
+.bf-hdr h2 { font-size:17px; font-weight:700; margin:0 0 2px; }
+.bf-hdr p  { font-size:12px; opacity:.8; margin:0; }
+.bf-body { padding:16px 16px 24px; display:flex; flex-direction:column; gap:12px; }
+.bf-status-card { border-radius:14px; padding:18px 16px; text-align:center; border:2px solid transparent; }
+.bf-status-card.eligible     { background:#f0fdf4; border-color:#86efac; }
+.bf-status-card.no-eligibility { background:#f8fafc; border-color:#e2e8f0; }
+.bf-status-card.expired      { background:#fff7ed; border-color:#fed7aa; }
+.bf-status-card .bf-icon     { font-size:44px; margin-bottom:8px; }
+.bf-status-card .bf-title    { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px; }
+.bf-status-card .bf-sub      { font-size:12px; color:#64748b; line-height:1.7; }
+.bf-expire-note { font-size:11px; color:#b45309; margin-top:6px; }
+.bf-slots { display:flex; gap:10px; }
+.bf-slot { flex:1; border-radius:12px; padding:12px 8px; text-align:center; background:#f8fafc; border:1.5px solid #e2e8f0; }
+.bf-slot.on { background:#fef9c3; border-color:#fde047; }
+.bf-slot .s-icon { font-size:22px; margin-bottom:3px; }
+.bf-slot .s-name { font-size:12px; font-weight:700; color:#1e293b; margin-bottom:1px; }
+.bf-slot .s-time { font-size:10px; color:#94a3b8; }
+.bf-btn-grp { display:flex; flex-direction:column; gap:10px; }
+.bf-btn { display:block; width:100%; padding:15px; border-radius:12px; border:none; font-size:15px; font-weight:700; cursor:pointer; transition:all .15s; }
+.bf-btn:disabled { opacity:.35; cursor:not-allowed; }
+.bf-btn.morning { background:linear-gradient(135deg,#f59e0b,#fbbf24); color:#78350f; }
+.bf-btn.night   { background:linear-gradient(135deg,#7c3aed,#a78bfa); color:#fff; }
+.bf-btn.morning:not(:disabled):hover { filter:brightness(1.06); }
+.bf-btn.night:not(:disabled):hover   { filter:brightness(1.06); }
+.bf-result-box { border-radius:12px; padding:16px; text-align:center; display:none; }
+.bf-result-box.ok  { background:#f0fdf4; border:1.5px solid #86efac; }
+.bf-result-box.err { background:#fff7ed; border:1.5px solid #fed7aa; }
+.bf-result-box .br-icon { font-size:36px; margin-bottom:6px; }
+.bf-result-box .br-msg  { font-size:15px; font-weight:800; color:#1e293b; }
+.bf-result-box .br-sub  { font-size:12px; color:#64748b; margin-top:3px; }
+.bf-disclaimer { font-size:10px; color:#94a3b8; line-height:1.7; text-align:center; padding:0 4px; }
+
 .terms-body { padding: 14px 16px 0; max-height: 56vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .terms-section { margin-bottom: 12px; }
 .terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20; border-left: 4px solid #2E7D32; padding-left: 8px; margin-bottom: 5px; }
@@ -591,6 +628,47 @@ body {
     <div class="result" id="si-result"></div>
   </div>
 
+  <!-- ★ v9.8：早餐/宵夜領取畫面 -->
+  <div class="scn" id="bf-screen">
+    <div class="bf-hdr">
+      <div class="bf-logo">🌅</div>
+      <h2>晨間好禮 · 宵夜餽贈</h2>
+      <p>無名牛排 · 會員專屬</p>
+    </div>
+    <div id="bf-loading" class="loading" style="padding:48px 20px;">
+      <div class="spinner" style="border-top-color:#7c3aed;"></div>查詢資格中…
+    </div>
+    <div id="bf-content" class="bf-body" style="display:none;">
+      <div id="bf-status-card" class="bf-status-card no-eligibility">
+        <div class="bf-icon" id="bf-icon">⏳</div>
+        <div class="bf-title" id="bf-title">確認中…</div>
+        <div class="bf-sub" id="bf-sub"></div>
+        <div class="bf-expire-note" id="bf-expire" style="display:none;"></div>
+      </div>
+      <div class="bf-slots">
+        <div class="bf-slot" id="bf-slot-morning">
+          <div class="s-icon">🌅</div><div class="s-name">早餐</div><div class="s-time">10:30 前</div>
+        </div>
+        <div class="bf-slot" id="bf-slot-night">
+          <div class="s-icon">🌙</div><div class="s-name">宵夜</div><div class="s-time">20:00 ～ 21:30</div>
+        </div>
+      </div>
+      <div id="bf-btn-grp" class="bf-btn-grp" style="display:none;">
+        <button class="bf-btn morning" id="bf-btn-morning" onclick="claimBreakfast('breakfast')">🌅 領取早餐</button>
+        <button class="bf-btn night"   id="bf-btn-night"   onclick="claimBreakfast('nightsnack')">🌙 領取宵夜</button>
+      </div>
+      <div id="bf-result-box" class="bf-result-box">
+        <div class="br-icon" id="bf-result-icon">✅</div>
+        <div class="br-msg"  id="bf-result-msg"></div>
+        <div class="br-sub"  id="bf-result-sub"></div>
+      </div>
+      <div class="bf-disclaimer">
+        本晨間好禮及宵夜餽贈為本店會員專屬活動，非商業契約義務之一部分。<br>
+        本店保留隨時調整、暫停或終止本活動之權利，恕不另行通知，亦不補發或折換現金。
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -707,6 +785,13 @@ async function init() {
     if (modeParam === "member") {
       window._pendingFlow = "member";
       await startMemberFlow();
+      return;
+    }
+
+    // ★ v9.8：mode=breakfast → 早餐/宵夜領取入口
+    if (modeParam === "breakfast") {
+      goScreen("bf-screen");
+      await initBreakfastScreen();
       return;
     }
 
@@ -1768,6 +1853,127 @@ async function doJoinMember() {
     }
   } catch(err) {
     showFatalError('網路錯誤：' + err.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ v9.8：早餐/宵夜功能
+// ══════════════════════════════════════════════════════════════
+async function initBreakfastScreen() {
+  document.getElementById('bf-loading').style.display = 'block';
+  document.getElementById('bf-content').style.display = 'none';
+
+  // 前端判斷台灣時間時段（輔助顯示用）
+  const now = new Date();
+  const twMin = ((now.getUTCHours() + 8) % 24) * 60 + now.getUTCMinutes();
+  const isBreakfastTime = twMin < 630;          // < 10:30
+  const isNightTime     = twMin >= 1200 && twMin <= 1290; // 20:00~21:30
+  if (isBreakfastTime) document.getElementById('bf-slot-morning').classList.add('on');
+  if (isNightTime)     document.getElementById('bf-slot-night').classList.add('on');
+
+  try {
+    const uid = profile ? profile.userId : '';
+    if (!uid) throw new Error('無法取得 LINE UID');
+
+    const res  = await fetch(GAS_URL + '?action=member_checkin&lineuid=' + encodeURIComponent(uid));
+    const data = await res.json();
+
+    document.getElementById('bf-loading').style.display = 'none';
+    document.getElementById('bf-content').style.display = 'flex';
+
+    if (data.status !== 'OK') {
+      bfSetStatus('no-eligibility', '❌', '無法查詢資格', data.message || '請告知店員');
+      return;
+    }
+
+    const bStatus = data.breakfastStatus; // 'none' | 'eligible' | 'expired'
+
+    if (bStatus === 'eligible') {
+      bfSetStatus('eligible', '🎁', '恭喜！您有一份餐點資格',
+        '請選擇早餐或宵夜，按確認後出示給店員。',
+        data.breakfastDate ? '資格產生日：' + data.breakfastDate + '（7天內有效）' : '');
+      document.getElementById('bf-btn-grp').style.display = 'flex';
+      document.getElementById('bf-btn-morning').disabled = !isBreakfastTime;
+      document.getElementById('bf-btn-night').disabled   = !isNightTime;
+      if (!isBreakfastTime && !isNightTime) {
+        document.getElementById('bf-sub').textContent =
+          '⏰ 目前不在領取時段，請於早餐（10:30前）或宵夜（20:00～21:30）回來。';
+      }
+    } else if (bStatus === 'expired') {
+      bfSetStatus('expired', '⌛', '資格已過期',
+        '上次消費的餐點資格已超過 7 天，下次消費後即可重新獲得。');
+    } else {
+      bfSetStatus('no-eligibility', '🍽️', '目前沒有資格',
+        '每次消費套餐後即可獲得一份早餐或宵夜資格（7天內有效）。');
+    }
+  } catch (err) {
+    document.getElementById('bf-loading').style.display = 'none';
+    document.getElementById('bf-content').style.display = 'flex';
+    bfSetStatus('expired', '⚠️', '載入失敗', err.message || '請關閉後重試');
+  }
+}
+
+function bfSetStatus(type, icon, title, sub, expireNote) {
+  const card = document.getElementById('bf-status-card');
+  card.className = 'bf-status-card ' + type;
+  document.getElementById('bf-icon').textContent  = icon;
+  document.getElementById('bf-title').textContent = title;
+  document.getElementById('bf-sub').textContent   = sub || '';
+  const expEl = document.getElementById('bf-expire');
+  if (expireNote) { expEl.style.display = 'block'; expEl.textContent = expireNote; }
+  else            { expEl.style.display = 'none'; }
+}
+
+async function claimBreakfast(mealType) {
+  document.getElementById('bf-btn-morning').disabled = true;
+  document.getElementById('bf-btn-night').disabled   = true;
+
+  const uid = profile ? profile.userId : '';
+  const url = GAS_URL + '?action=claim_breakfast&lineuid=' + encodeURIComponent(uid) + '&mealType=' + mealType;
+
+  const resultBox = document.getElementById('bf-result-box');
+  const iconEl    = document.getElementById('bf-result-icon');
+  const msgEl     = document.getElementById('bf-result-msg');
+  const subEl     = document.getElementById('bf-result-sub');
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    resultBox.style.display = 'block';
+
+    if (data.status === 'OK') {
+      resultBox.className = 'bf-result-box ok';
+      iconEl.textContent  = '✅';
+      msgEl.textContent   = data.message;
+      subEl.textContent   = '請將此畫面出示給店員確認。';
+      document.getElementById('bf-btn-grp').style.display = 'none';
+      bfSetStatus('no-eligibility', '✅', '核銷完成！', '感謝您的光顧，祝您用餐愉快！');
+    } else if (data.status === 'WRONG_TIME') {
+      resultBox.className = 'bf-result-box err';
+      iconEl.textContent  = '⏰';
+      msgEl.textContent   = '現在不在領取時段';
+      subEl.textContent   = data.message;
+      document.getElementById('bf-btn-morning').disabled = !document.getElementById('bf-slot-morning').classList.contains('on');
+      document.getElementById('bf-btn-night').disabled   = !document.getElementById('bf-slot-night').classList.contains('on');
+    } else if (data.status === 'EXPIRED') {
+      resultBox.className = 'bf-result-box err';
+      iconEl.textContent  = '⌛';
+      msgEl.textContent   = '資格已過期';
+      subEl.textContent   = data.message;
+      document.getElementById('bf-btn-grp').style.display = 'none';
+    } else {
+      resultBox.className = 'bf-result-box err';
+      iconEl.textContent  = '❌';
+      msgEl.textContent   = '核銷失敗';
+      subEl.textContent   = data.message || '請告知店員';
+    }
+  } catch (err) {
+    resultBox.style.display = 'block';
+    resultBox.className     = 'bf-result-box err';
+    iconEl.textContent      = '⚠️';
+    msgEl.textContent       = '連線失敗，請重試';
+    subEl.textContent       = err.message || '';
   }
 }
 
