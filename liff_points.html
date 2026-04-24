@@ -404,20 +404,27 @@ body {
     </div>
     <div style="padding:16px 16px 0;">
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利 (限本人內用)</div>
-        <div style="font-size:13px;color:#3949ab;line-height:1.9;">
+        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利</div>
+        <div style="font-size:13px;color:#3949ab;line-height:2.0;">
           💰 <strong>月費 $300 / 30天</strong><br>
-          🎉 <strong>雙數次套餐半價</strong>（第2、4、6…次）<br>
-          🎁 <strong>達標獎勵</strong>：30天消費滿4次 → <strong>$300折抵券</strong><br>
-          🌟 <strong>介紹獎勵</strong>：介紹滿6名新會員 → 永久免月費
+          🎉 <strong>30天內消費4次以上：</strong><br>
+          <span style="padding-left:18px;display:block;">・單數次（1、3、5…）正常價</span>
+          <span style="padding-left:18px;display:block;">・雙數次（2、4、6…）本人套餐半價</span>
+          <span style="padding-left:18px;display:block;font-size:12px;color:#5c6bc0;">・半價以本次與前次較低套餐計算</span>
+          🎁 <strong>達標獎勵：</strong><br>
+          <span style="padding-left:18px;display:block;">・退還月費 $300</span>
+          <span style="padding-left:18px;display:block;">・加送指定套餐 + 簡餐各一份</span>
+          🌟 <strong>介紹獎勵：</strong><br>
+          <span style="padding-left:18px;display:block;">・介紹滿 6 名新會員 → 永久免月費</span>
+          <span style="padding-left:18px;display:block;font-size:12px;color:#5c6bc0;">・免月費後半價優惠依然保留</span>
         </div>
       </div>
       <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
         <strong>📋 重要說明：</strong><br>
-        ✓ 優惠不列入消費記錄<br>
-        ✓ 本人套餐指主餐部分<br>
+        ✓ 優惠不列入消費記錄（半價次不累積次數）<br>
+        ✓ 本人套餐指主餐部分（限內用）<br>
         ✓ 30天週期自加入日起計算<br>
-        ✓ 達標獎勵於30天後發放<br>
+        ✓ 達標獎勵於30天到期後發放<br>
         ✓ 介紹人數由店員確認更新
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
@@ -524,12 +531,19 @@ body {
     </div>
     <div style="padding:16px 16px 0;">
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利 (限本人內用)</div>
-        <div style="font-size:13px;color:#3949ab;line-height:1.9;">
+        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利</div>
+        <div style="font-size:13px;color:#3949ab;line-height:2.0;">
           💰 <strong>月費 $300 / 30天</strong><br>
-          🎉 <strong>雙數次套餐半價</strong>（第2、4、6…次）<br>
-          🎁 <strong>達標獎勵</strong>：30天消費滿4次 → <strong>$300折抵券</strong><br>
-          🌟 <strong>介紹獎勵</strong>：介紹滿6名新會員 → 永久免月費
+          🎉 <strong>30天內消費4次以上：</strong><br>
+          <span style="padding-left:18px;display:block;">・單數次（1、3、5…）正常價</span>
+          <span style="padding-left:18px;display:block;">・雙數次（2、4、6…）本人套餐半價</span>
+          <span style="padding-left:18px;display:block;font-size:12px;color:#5c6bc0;">・半價以本次與前次較低套餐計算</span>
+          🎁 <strong>達標獎勵：</strong><br>
+          <span style="padding-left:18px;display:block;">・退還月費 $300</span>
+          <span style="padding-left:18px;display:block;">・加送指定套餐 + 簡餐各一份</span>
+          🌟 <strong>介紹獎勵：</strong><br>
+          <span style="padding-left:18px;display:block;">・介紹滿 6 名新會員 → 永久免月費</span>
+          <span style="padding-left:18px;display:block;font-size:12px;color:#5c6bc0;">・免月費後半價優惠依然保留</span>
         </div>
       </div>
       <div style="background:#f3e5f5;border:1.5px solid #ce93d8;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:#6a1b9a;line-height:1.8;">
@@ -1143,13 +1157,104 @@ async function confirmPromo() {
     }
   }
 
-  // ★ 會員互斥折扣提示：若本次有會員半價，但選了其他折扣 (redeem/indoor/half_redeem/carryout)
+  // ★ 會員互斥折扣提示（onDecide handler）
+  // 若本次為會員雙數次半價（_halfActive），但選了其他折扣，需提示互斥
   if (_halfActive && ['redeem','indoor','half_redeem','carryout'].includes(promoSelected)) {
-    const ok = confirm("⚠️ 優惠互斥提醒\n\n您本次消費已享有「會員雙數次半價」，依規則不可與其他折扣併用。\n\n若您堅持使用此折扣，本次將「取消」會員半價優惠，且不計入會員消費次數。\n\n確定要更換嗎？");
-    if (!ok) return;
+    await showMutexWarning(promoKey, redeemTierPoints, redeemTierDisc);
+    return;
   }
 
   await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ★ 互斥折扣提示 Modal（onDecide handler 完整實作）
+//  呼叫時機：用戶為會員雙數次（_halfActive=true），但選擇了非 member_visit 的折扣
+// ══════════════════════════════════════════════════════════════
+function showMutexWarning(promoKey, tierPoints, tierDisc) {
+  return new Promise(resolve => {
+    // 計算互斥說明文字
+    const PROMO_LABEL = {
+      redeem     : `點數折抵（使用 ${tierPoints} 點，折抵 $${tierDisc}）`,
+      indoor     : '內用回購半價券',
+      half_redeem: '核銷第二件半價券',
+      carryout   : '外帶第二件半價'
+    };
+    const selectedLabel = PROMO_LABEL[promoSelected] || promoSelected;
+
+    // 建立 Modal overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'mutex-overlay';
+    overlay.style.cssText = [
+      'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999',
+      'display:flex;align-items:center;justify-content:center;padding:20px',
+      'animation:fadeIn .2s ease'
+    ].join(';');
+
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:20px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+        <!-- 警示標頭 -->
+        <div style="background:linear-gradient(135deg,#b45309,#d97706);padding:18px 20px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:6px;">⚠️</div>
+          <div style="font-size:16px;font-weight:800;color:#fff;">優惠互斥提醒</div>
+        </div>
+        <!-- 說明內容 -->
+        <div style="padding:18px 20px;">
+          <div style="background:#FEF3C7;border:1.5px solid #FCD34D;border-radius:12px;padding:13px 14px;margin-bottom:14px;font-size:13px;color:#92400E;line-height:1.8;">
+            <strong>您本次消費為「雙數次」</strong>，依規則享有：<br>
+            🎉 <strong>本人套餐半價</strong>（member_visit_half）<br><br>
+            此優惠<strong>不可與以下折扣併用</strong>：<br>
+            ❌ ${selectedLabel}
+          </div>
+          <div style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:16px;padding:0 2px;">
+            若堅持更換，本次將：<br>
+            ・<strong>取消</strong>會員雙數次半價優惠<br>
+            ・本次<strong>不計入</strong>會員消費次數<br>
+            ・改以所選折扣方式結帳
+          </div>
+          <!-- 操作按鈕 -->
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button id="mutex-keep-btn" style="padding:14px;border-radius:12px;background:#15803d;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;">
+              ← 返回，保留雙數次半價
+            </button>
+            <button id="mutex-switch-btn" style="padding:12px;border-radius:12px;background:#f5f5f5;color:#b45309;border:1.5px solid #fcd34d;font-size:13px;font-weight:600;cursor:pointer;">
+              確定更換為「${selectedLabel}」
+            </button>
+          </div>
+        </div>
+      </div>`;
+
+    // 注入動畫
+    if (!document.getElementById('mutex-anim-style')) {
+      const st = document.createElement('style');
+      st.id = 'mutex-anim-style';
+      st.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}';
+      document.head.appendChild(st);
+    }
+
+    document.body.appendChild(overlay);
+
+    // 按鈕事件
+    document.getElementById('mutex-keep-btn').onclick = () => {
+      overlay.remove();
+      resolve(false); // 使用者選擇返回，不做任何提交
+    };
+
+    document.getElementById('mutex-switch-btn').onclick = async () => {
+      overlay.remove();
+      resolve(true);
+      // 確定更換：以所選折扣提交（非 member_visit，不計入會員次數）
+      await submitPromoChoice(promoKey, tierPoints, tierDisc);
+    };
+
+    // 點 overlay 背景也可關閉（等同返回）
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
 }
 
 async function submitPromoChoice(promoKey, tierPoints, tierDisc) {
