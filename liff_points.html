@@ -38,7 +38,7 @@ body {
 .opt.half-issue { border-color: #0369A1; background: #F0F9FF; }
 .opt.half-issue.sel { border-color: #075985; background: #E0F2FE; }
 .opt-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-.opt-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+.opt-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 3px; word-break: break-word; }
 .opt.sel .opt-title { color: #15803d; }
 .opt.half-opt .opt-title { color: #5B21B6; }
 .opt.half-opt.sel .opt-title { color: #4C1D95; }
@@ -1080,11 +1080,19 @@ function makeOpt({ id, key, cls, icon, title, sub, dis }) {
   div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
   div.id = id;
   if (!dis) div.onclick = () => selectPromo(key);
-  // 避免 title 開頭 emoji 與 opt-icon 重複，移除 title 最前面的 emoji+空白
-  const cleanTitle = title.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s*/u, '');
+  // 移除 title 開頭 emoji+空白
+  let cleanTitle = title.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s*/u, '');
+  // 若 title 含括號補充說明，截出來放到 sub 最前面
+  let extraSub = '';
+  const bracketMatch = cleanTitle.match(/^([^（(]+)([（(].+)$/u);
+  if (bracketMatch) {
+    cleanTitle = bracketMatch[1].trim();
+    extraSub   = bracketMatch[2];
+  }
+  const fullSub = extraSub ? (extraSub + (sub ? '<br>' + sub : '')) : (sub || '');
   div.innerHTML =
     '<div class="opt-icon">' + icon + '</div>' +
-    '<div style="flex:1;min-width:0;"><div class="opt-title">' + cleanTitle + '</div><div class="opt-sub">' + (sub||'').replace(/\n/g,'<br>') + '</div></div>' +
+    '<div style="flex:1;min-width:0;"><div class="opt-title">' + cleanTitle + '</div><div class="opt-sub">' + fullSub.replace(/\n/g,'<br>') + '</div></div>' +
     '<div class="opt-check" id="chk-' + key + '">✅</div>';
   return div;
 }
