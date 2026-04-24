@@ -118,43 +118,6 @@ body {
 
 #liff-spinner, .liff-spinner, [class*="liff-loading"], [id*="liff-loading"] { display: none !important; }
 
-/* ══ v9.8：早餐/宵夜畫面 ══════════════════════════════════════ */
-#bf-screen { display:none; }
-#bf-screen.active { display:flex; flex-direction:column; }
-.bf-hdr { background:linear-gradient(135deg,#7c3aed,#a78bfa); padding:22px 20px 18px; text-align:center; color:#fff; }
-.bf-hdr .bf-logo { font-size:34px; margin-bottom:5px; }
-.bf-hdr h2 { font-size:17px; font-weight:700; margin:0 0 2px; }
-.bf-hdr p  { font-size:12px; opacity:.8; margin:0; }
-.bf-body { padding:16px 16px 24px; display:flex; flex-direction:column; gap:12px; }
-.bf-status-card { border-radius:14px; padding:18px 16px; text-align:center; border:2px solid transparent; }
-.bf-status-card.eligible     { background:#f0fdf4; border-color:#86efac; }
-.bf-status-card.no-eligibility { background:#f8fafc; border-color:#e2e8f0; }
-.bf-status-card.expired      { background:#fff7ed; border-color:#fed7aa; }
-.bf-status-card .bf-icon     { font-size:44px; margin-bottom:8px; }
-.bf-status-card .bf-title    { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px; }
-.bf-status-card .bf-sub      { font-size:12px; color:#64748b; line-height:1.7; }
-.bf-expire-note { font-size:11px; color:#b45309; margin-top:6px; }
-.bf-slots { display:flex; gap:10px; }
-.bf-slot { flex:1; border-radius:12px; padding:12px 8px; text-align:center; background:#f8fafc; border:1.5px solid #e2e8f0; }
-.bf-slot.on { background:#fef9c3; border-color:#fde047; }
-.bf-slot .s-icon { font-size:22px; margin-bottom:3px; }
-.bf-slot .s-name { font-size:12px; font-weight:700; color:#1e293b; margin-bottom:1px; }
-.bf-slot .s-time { font-size:10px; color:#94a3b8; }
-.bf-btn-grp { display:flex; flex-direction:column; gap:10px; }
-.bf-btn { display:block; width:100%; padding:15px; border-radius:12px; border:none; font-size:15px; font-weight:700; cursor:pointer; transition:all .15s; }
-.bf-btn:disabled { opacity:.35; cursor:not-allowed; }
-.bf-btn.morning { background:linear-gradient(135deg,#f59e0b,#fbbf24); color:#78350f; }
-.bf-btn.night   { background:linear-gradient(135deg,#7c3aed,#a78bfa); color:#fff; }
-.bf-btn.morning:not(:disabled):hover { filter:brightness(1.06); }
-.bf-btn.night:not(:disabled):hover   { filter:brightness(1.06); }
-.bf-result-box { border-radius:12px; padding:16px; text-align:center; display:none; }
-.bf-result-box.ok  { background:#f0fdf4; border:1.5px solid #86efac; }
-.bf-result-box.err { background:#fff7ed; border:1.5px solid #fed7aa; }
-.bf-result-box .br-icon { font-size:36px; margin-bottom:6px; }
-.bf-result-box .br-msg  { font-size:15px; font-weight:800; color:#1e293b; }
-.bf-result-box .br-sub  { font-size:12px; color:#64748b; margin-top:3px; }
-.bf-disclaimer { font-size:10px; color:#94a3b8; line-height:1.7; text-align:center; padding:0 4px; }
-
 .terms-body { padding: 14px 16px 0; max-height: 56vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .terms-section { margin-bottom: 12px; }
 .terms-section-title { font-size: 13px; font-weight: 800; color: #1B5E20; border-left: 4px solid #2E7D32; padding-left: 8px; margin-bottom: 5px; }
@@ -189,58 +152,82 @@ body {
     <div class="terms-body">
 
       <div class="terms-section">
-        <div class="terms-section-title">一、會員資格</div>
+        <div class="terms-section-title">一、會員資格與月費</div>
         <ul class="terms-item">
-          <li>月費 <span class="terms-tag tag-org">$600 / 30 天</span>，繳費後當日起算。</li>
-          <li>月費到期前系統會提醒是否續約。</li>
-          <li>逾期未續約，優惠暫停，消費次數保留。</li>
+          <li>月費 <span class="terms-tag tag-org">$300 / 30 天</span>，繳費後當日起算，第 31 天自動到期。</li>
+          <li>月費一律於消費當下繳交，恕不接受事後補繳或預繳。</li>
+          <li>逾期未續約者，所有會員優惠即日起暫停，歷史消費次數保留，續約後重新累計新週期次數。</li>
+          <li>月費一經收取，<span class="terms-tag tag-red">概不退款</span>，亦不得轉讓他人使用。</li>
+          <li>會員資格以 <span class="terms-tag tag-blu">LINE 帳號</span> 為唯一識別，請勿與他人共用帳號，共用導致的優惠損失由會員自行承擔。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">二、消費半價優惠</div>
+        <div class="terms-section-title">二、雙數次套餐半價</div>
         <ul class="terms-item">
-          <li>雙數次（第 2、4、6…次）本人套餐享 <span class="terms-tag tag-grn">半價</span>。</li>
-          <li>半價金額以「本次」與「前次」最低套餐較小者計算。</li>
-          <li>限 <span class="terms-tag tag-grn">本人內用</span>，不可外帶。</li>
-          <li>不可與其他優惠 <span class="terms-tag tag-red">併用</span>。</li>
-          <li>半價品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料、配菜、加點。</li>
+          <li>會員於 30 天週期內，第 2、4、6、8⋯次（<span class="terms-tag tag-grn">雙數次</span>）消費，本人套餐享 <strong>5 折</strong>優惠。</li>
+          <li>半價金額以「本次最低套餐」與「上次最低套餐」兩者較小者計算，以防止刻意調換高價品項。</li>
+          <li>每日限計消費 <span class="terms-tag tag-red">1 次</span>，同一天內無論消費幾筆，僅計為 1 次，不得拆單累次。</li>
+          <li>半價優惠限 <span class="terms-tag tag-grn">本人單份套餐</span>，同桌其他人之餐點恕不適用。</li>
+          <li>午餐／晚餐時段（非早餐宵夜時段）限 <span class="terms-tag tag-grn">內用</span> 方可享有半價，外帶恕不適用。</li>
+          <li>適用品項限套餐、組合餐、簡餐，<span class="terms-tag tag-red">不含</span>飲料單點、配菜加購、加價升級品項。</li>
+          <li>不可與其他折扣或優惠券 <span class="terms-tag tag-red">併用</span>。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">三、達標獎勵</div>
+        <div class="terms-section-title">三、30 天達標獎勵</div>
         <ul class="terms-item">
-          <li>30 天內消費滿 <span class="terms-tag tag-blu">14 次</span> 即達標。</li>
-          <li>獎勵內容：退還月費 <strong>$600</strong> + 指定套餐 + 簡餐各一份。</li>
-          <li>獎勵由店員手動發放，<span class="terms-tag tag-gry">不自動折抵</span>。</li>
+          <li>30 天週期內累積消費滿 <span class="terms-tag tag-blu">4 次</span>，即達標。</li>
+          <li>獎勵內容：退還當期月費 <strong>$300</strong> ＋ 指定套餐一份 ＋ 簡餐一份，合計三項。</li>
+          <li>獎勵由 <span class="terms-tag tag-gry">店員手動發放</span>，不自動折抵，請於結帳時主動告知店員。</li>
+          <li>達標獎勵限當期有效，<span class="terms-tag tag-red">逾期不補發</span>，亦不得折換現金或轉讓。</li>
+          <li>每一會員週期限領一次，重複達標不重複給獎。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">四、介紹獎勵</div>
+        <div class="terms-section-title">四、晨間好禮 · 宵夜餽贈</div>
         <ul class="terms-item">
-          <li>成功介紹滿 <span class="terms-tag tag-grn">6 名</span> 新會員加入，即可 <strong>永久免月費</strong>。</li>
-          <li>免月費後仍保留雙數次本人套餐 <span class="terms-tag tag-grn">半價</span> 優惠。</li>
-          <li>介紹人數由店員確認後更新，達 6 人時月費自動改為「免收」。</li>
+          <li>每次消費套餐後，自動獲得一份早餐或宵夜領取資格，有效期限為消費日起 <span class="terms-tag tag-blu">7 天</span>。</li>
+          <li>早餐領取時段：每日 <span class="terms-tag tag-grn">10:30 前</span>；宵夜領取時段：每日 <span class="terms-tag tag-grn">20:00 ～ 21:30</span>。</li>
+          <li>每日限核銷 <span class="terms-tag tag-red">1 次</span>，超過時段或已核銷者，當日恕不補領。</li>
+          <li>早餐與宵夜 <span class="terms-tag tag-grn">僅限外帶</span>，不提供內用座位。</li>
+          <li>核銷方式：掃描 LINE 圖文選單「領餐」按鈕，出示畫面給店員確認後方可取餐。<span class="terms-tag tag-red">不接受</span>截圖、轉傳或口頭聲稱。</li>
+          <li>資格逾期自動失效，<span class="terms-tag tag-red">不得遞延或補領</span>。</li>
         </ul>
       </div>
 
       <div class="terms-section">
-        <div class="terms-section-title">五、注意事項</div>
+        <div class="terms-section-title">五、介紹新會員獎勵</div>
         <ul class="terms-item">
-          <li>優惠限 <span class="terms-tag tag-red">本人使用</span>，不可轉讓。</li>
-          <li>客人不得以 <span class="terms-tag tag-red">口頭方式</span> 聲稱享有任何優惠，一律不予受理。</li>
-          <li>如遇系統異常，持當次收據向店員確認，依收據票面辦理。</li>
+          <li>成功介紹滿 <span class="terms-tag tag-grn">6 名</span> 新朋友完成加入並繳交月費，即獲得 <strong>永久免月費</strong> 資格。</li>
+          <li>「成功介紹」定義：被介紹人須以全新 LINE 帳號加入，且<strong>完成月費繳交</strong>，才計為 1 人；僅加入未繳費者不計。</li>
+          <li>介紹人數由店員確認後手動更新，達 6 人時系統自動將月費狀態改為「免收」。</li>
+          <li>永久免月費會員仍保有 <span class="terms-tag tag-grn">雙數次半價</span> 及所有其他會員優惠，不受影響。</li>
+          <li>若日後發現有偽造、重複帳號等違規情形，商家保留取消免月費資格之權利。</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <div class="terms-section-title">六、會員行為守則</div>
+        <ul class="terms-item">
+          <li>所有優惠均限 <span class="terms-tag tag-red">本人當下消費</span> 使用，不得代他人使用、預先兌換或事後補領。</li>
+          <li>禁止以任何方式 <span class="terms-tag tag-red">惡意刷次數</span>，包括但不限於：同日拆單多次結帳、借用他人帳號、虛假消費等行為。一經發現，商家有權立即停權並取消所有累積優惠，不予退款。</li>
+          <li>客人 <span class="terms-tag tag-red">不得以口頭方式</span> 聲稱享有任何優惠，一律以系統顯示為準，店員無義務手動補算。</li>
+          <li>所有優惠核銷均以 <span class="terms-tag tag-blu">LINE 掃碼當下</span> 的系統資料為準，事後爭議恕不受理。</li>
+          <li>如有任何對規則的疑問，請於消費前主動詢問店員，不接受結帳後的異議。</li>
         </ul>
       </div>
 
       <div class="terms-section terms-disclaimer">
-        <div class="terms-section-title">六、免責聲明</div>
+        <div class="terms-section-title">七、免責聲明</div>
         <ul class="terms-item">
-          <li>本優惠屬商家 <span class="terms-tag tag-grn">純善意提供</span>，非商業契約之一部分。</li>
-          <li>因系統故障、斷網或其他不可抗力因素導致優惠未能使用，<span class="terms-tag tag-red">商家不負任何補償責任</span>，恕不補發或折換現金。</li>
-          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，並得隨時修改或終止本方案，恕不另行通知。</li>
+          <li>本會員方案屬商家 <span class="terms-tag tag-grn">純善意提供之附加福利</span>，非消費契約之一部分，不構成任何法律義務。</li>
+          <li>因網路中斷、系統維護、LINE 平台異常、設備故障或其他不可抗力因素，導致優惠無法使用或資料遺失，<span class="terms-tag tag-red">商家不負任何補償、賠償或替代責任</span>，恕不補發、補貼或折換現金。</li>
+          <li>商家保留隨時 <span class="terms-tag tag-gry">修改、暫停或終止</span> 本方案之全部或部分內容之權利，無須事先通知，修改後繼續使用即視為同意新版條款。</li>
+          <li>商家保留本活動之 <span class="terms-tag tag-gry">最終解釋權</span>，如遇規則爭議，以店方判斷為最終依據。</li>
+          <li>會員同意：因參與本方案所產生之任何爭議，以 <span class="terms-tag tag-blu">友好協商</span> 為優先原則，商家不接受透過第三方平台或網路公開平台進行惡意評論作為施壓手段。</li>
         </ul>
       </div>
 
@@ -399,7 +386,7 @@ body {
     <div class="hdr" style="background:linear-gradient(135deg,#b45309,#d97706);">
       <div class="hdr-icon">🏆</div>
       <h2>恭喜達標！</h2>
-      <p>本月消費已達 14 次</p>
+      <p>本月消費已達 4 次</p>
     </div>
     <div style="padding:24px 20px 0;">
       <div style="text-align:center;margin-bottom:20px;">
@@ -443,13 +430,13 @@ body {
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
         <div style="font-size:12px;color:#3949ab;line-height:2;">
-          💰 <strong>月費 $600 / 30天</strong><br>
-          🎉 <strong>30天內消費14次以上</strong>：<br>
+          💰 <strong>月費 $300 / 30天</strong><br>
+          🎉 <strong>30天內消費4次以上</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $300<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
           🌟 <strong>介紹獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
@@ -465,7 +452,7 @@ body {
         ✓ 介紹人數由店員確認更新
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
-        ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
+        ⚠️ 月費 <strong>$300/月</strong>，加入後本月費用請至櫃台繳交。<br>
         繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
       <div id="member-ask-sub" style="margin-bottom:14px;"></div>
@@ -543,7 +530,7 @@ body {
       <!-- 進度條 -->
       <div style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
-          <span>消費次數進度</span><span id="mem-progress-label">0 / 14 次</span>
+          <span>消費次數進度</span><span id="mem-progress-label">0 / 4 次</span>
         </div>
         <div style="height:10px;background:#eee;border-radius:99px;overflow:hidden;">
           <div id="mem-progress-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#1b5e20,#4caf50);width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);"></div>
@@ -556,7 +543,7 @@ body {
       <!-- 有效券清單 -->
       <div id="mem-coupons-box"></div>
       <!-- 底部說明 -->
-      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $600 / 30天 · 消費14次以上雙數次半價<br>到期退還 $600 並加送套餐 + 簡餐各一份<br>🌟 介紹滿 6 名新會員可永久免月費
+      <div style="font-size:11px;color:#aaa;text-align:center;line-height:1.8;margin-top:4px;">月費 $300 / 30天 · 消費4次以上雙數次半價<br>到期退還 $300 並加送套餐 + 簡餐各一份<br>🌟 介紹滿 6 名新會員可永久免月費
     </div>
   </div>
 
@@ -570,13 +557,13 @@ body {
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:800;color:#1a237e;margin-bottom:10px;">✨ 會員專屬福利</div>
         <div style="font-size:12px;color:#3949ab;line-height:2;">
-          💰 <strong>月費 $600 / 30天</strong><br>
-          🎉 <strong>30天內消費14次以上</strong>：<br>
+          💰 <strong>月費 $300 / 30天</strong><br>
+          🎉 <strong>30天內消費4次以上</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 單數次（1、3、5...）正常價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 雙數次（2、4、6...）本人套餐半價<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 半價以本次與前次較低套餐計算<br>
           🎁 <strong>達標獎勵</strong>：<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $600<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;• 退還月費 $300<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 加送指定套餐 + 簡餐各一份<br>
           🌟 <strong>介紹獎勵</strong>：<br>
           &nbsp;&nbsp;&nbsp;&nbsp;• 介紹滿 6 名新會員 → 永久免月費<br>
@@ -592,7 +579,7 @@ body {
         ✓ 介紹人數由店員確認更新
       </div>
       <div style="background:#fff8e1;border:1.5px solid #ffe082;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#b45309;line-height:1.8;">
-        ⚠️ 月費 <strong>$600/月</strong>，加入後本月費用請至櫃台繳交。<br>
+        ⚠️ 月費 <strong>$300/月</strong>，加入後本月費用請至櫃台繳交。<br>
         繳費後方可享本月優惠。達成消費次數即可獲得獎勵。
       </div>
       <div id="mem-join-user" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;"></div>
@@ -611,7 +598,7 @@ body {
     <div class="done-wrap">
       <div class="done-icon">🥩</div>
       <div class="done-title" style="color:#1a237e;">歡迎加入！</div>
-      <div class="done-sub" id="mem-done-sub">本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員福利</div>
+      <div class="done-sub" id="mem-done-sub">本月月費 $300 請至櫃台繳交<br>繳費後即享全部會員福利</div>
     </div>
   </div>
 
@@ -628,51 +615,10 @@ body {
     <div class="result" id="si-result"></div>
   </div>
 
-  <!-- ★ v9.8：早餐/宵夜領取畫面 -->
-  <div class="scn" id="bf-screen">
-    <div class="bf-hdr">
-      <div class="bf-logo">🌅</div>
-      <h2>晨間好禮 · 宵夜餽贈</h2>
-      <p>無名牛排 · 會員專屬</p>
-    </div>
-    <div id="bf-loading" class="loading" style="padding:48px 20px;">
-      <div class="spinner" style="border-top-color:#7c3aed;"></div>查詢資格中…
-    </div>
-    <div id="bf-content" class="bf-body" style="display:none;">
-      <div id="bf-status-card" class="bf-status-card no-eligibility">
-        <div class="bf-icon" id="bf-icon">⏳</div>
-        <div class="bf-title" id="bf-title">確認中…</div>
-        <div class="bf-sub" id="bf-sub"></div>
-        <div class="bf-expire-note" id="bf-expire" style="display:none;"></div>
-      </div>
-      <div class="bf-slots">
-        <div class="bf-slot" id="bf-slot-morning">
-          <div class="s-icon">🌅</div><div class="s-name">早餐</div><div class="s-time">10:30 前</div>
-        </div>
-        <div class="bf-slot" id="bf-slot-night">
-          <div class="s-icon">🌙</div><div class="s-name">宵夜</div><div class="s-time">20:00 ～ 21:30</div>
-        </div>
-      </div>
-      <div id="bf-btn-grp" class="bf-btn-grp" style="display:none;">
-        <button class="bf-btn morning" id="bf-btn-morning" onclick="claimBreakfast('breakfast')">🌅 領取早餐</button>
-        <button class="bf-btn night"   id="bf-btn-night"   onclick="claimBreakfast('nightsnack')">🌙 領取宵夜</button>
-      </div>
-      <div id="bf-result-box" class="bf-result-box">
-        <div class="br-icon" id="bf-result-icon">✅</div>
-        <div class="br-msg"  id="bf-result-msg"></div>
-        <div class="br-sub"  id="bf-result-sub"></div>
-      </div>
-      <div class="bf-disclaimer">
-        本晨間好禮及宵夜餽贈為本店會員專屬活動，非商業契約義務之一部分。<br>
-        本店保留隨時調整、暫停或終止本活動之權利，恕不另行通知，亦不補發或折換現金。
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxSSgn3aPxVEYTLJFe9JYcU5HCpIuwsTBOXw9Debb-sL-z0vIgCj39fbVSETT1Bl7zw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzogq1JartMGHRBrACoqparW33QcWIk1kBkhP9ZRb9f2Dh9zHl3XRVWLMdbXQmAYgoZ/exec";
 const LIFF_ID = "2009772018-M8WxXgeO";
 const PRIZES  = [
   { icon:"🎫", name:"85 折優惠",  desc:"本次消費享 85 折，現場折抵",    disc: 0.85 },
@@ -785,13 +731,6 @@ async function init() {
     if (modeParam === "member") {
       window._pendingFlow = "member";
       await startMemberFlow();
-      return;
-    }
-
-    // ★ v9.8：mode=breakfast → 早餐/宵夜領取入口
-    if (modeParam === "breakfast") {
-      goScreen("bf-screen");
-      await initBreakfastScreen();
       return;
     }
 
@@ -910,7 +849,7 @@ async function startCheckoutPromoFlow() {
         '<span style="font-size:11px;color:#888;">LINE ID 末4碼：' + profile.userId.slice(-4).toUpperCase() + '</span>';
       document.getElementById('member-ask-sub').innerHTML =
         '<strong style="font-size:14px;color:#1B5E20;">🎉 加入會員享優惠</strong><br>' +
-        '<span style="font-size:12px;color:#666;line-height:1.6;">月費 $600 / 30天<br>30天內消費滿14次：單數次正常價，雙數次本人套餐半價<br>到期退還 $600 並加送指定套餐 + 簡餐各一份</span>';
+        '<span style="font-size:12px;color:#666;line-height:1.6;">月費 $300 / 30天<br>30天內消費滿4次：單數次正常價，雙數次本人套餐半價<br>到期退還 $300 並加送指定套餐 + 簡餐各一份</span>';
       window._memberAskPending = true;
       window._memberAskFromCheckout = true; // 標記來自結帳流程
       goScreen('member-ask');
@@ -1432,7 +1371,7 @@ async function memberAskJoin() {
     const data = await res.json();
     if (data.status === 'OK') {
       if (window._memberAskFromCheckout) {
-        // ★ 來自結帳流程：通知 POS 新會員已加入，由 POS 自動將月費 $600 加入帳單
+        // ★ 來自結帳流程：通知 POS 新會員已加入，由 POS 自動將月費 $300 加入帳單
         try {
           const decUrl = GAS_URL
             + '?action=set_decision'
@@ -1446,13 +1385,13 @@ async function memberAskJoin() {
         const _isRefFree = (data.isReferralFree === true);
         document.getElementById('co-wait-sub').textContent = _isRefFree
           ? '✅ 加入成功！\n您為介紹會員，免月費\n請等候店員完成結帳\n\n請勿關閉此頁面'
-          : '✅ 加入成功！\n月費 $600 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
+          : '✅ 加入成功！\n月費 $300 已自動加入帳單\n請等候店員完成收費\n\n請勿關閉此頁面';
         goScreen('co-waiting');
       } else {
         // 來自會員專用入口：顯示加入成功畫面
         const sub = data.isNew
-          ? '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠'
-          : (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
+          ? '本月月費 $300 請至櫃台繳交<br>繳費後即享全部會員優惠'
+          : (data.reJoin ? '歡迎重新加入！月費 $300 請至櫃台繳交' : '您已是有效會員');
         document.getElementById('mem-done-sub').innerHTML = sub;
         goScreen('mem-done');
       }
@@ -1783,7 +1722,7 @@ function renderMemberStatus(m) {
   const feeBox = document.getElementById('mem-fee-box');
   if (m.feeStatus === '待收') {
     feeBox.style.display = 'block';
-    feeBox.textContent = '⚠️ 本月月費尚未繳交，請至櫃台繳費（$600）以享用本月優惠';
+    feeBox.textContent = '⚠️ 本月月費尚未繳交，請至櫃台繳費（$300）以享用本月優惠';
   } else if (m.feeStatus === '免收') {
     feeBox.style.display = 'block';
     feeBox.style.background = '#e8f5e9'; feeBox.style.borderColor = '#a5d6a7'; feeBox.style.color = '#1b5e20';
@@ -1844,8 +1783,8 @@ async function doJoinMember() {
     const data = await res.json();
     if (data.status === 'OK') {
       const sub = data.isNew
-        ? '本月月費 $600 請至櫃台繳交<br>繳費後即享全部會員優惠'
-        : (data.reJoin ? '歡迎重新加入！月費 $600 請至櫃台繳交' : '您已是有效會員');
+        ? '本月月費 $300 請至櫃台繳交<br>繳費後即享全部會員優惠'
+        : (data.reJoin ? '歡迎重新加入！月費 $300 請至櫃台繳交' : '您已是有效會員');
       document.getElementById('mem-done-sub').innerHTML = sub;
       goScreen('mem-done');
     } else {
@@ -1853,127 +1792,6 @@ async function doJoinMember() {
     }
   } catch(err) {
     showFatalError('網路錯誤：' + err.message);
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-//  ★ v9.8：早餐/宵夜功能
-// ══════════════════════════════════════════════════════════════
-async function initBreakfastScreen() {
-  document.getElementById('bf-loading').style.display = 'block';
-  document.getElementById('bf-content').style.display = 'none';
-
-  // 前端判斷台灣時間時段（輔助顯示用）
-  const now = new Date();
-  const twMin = ((now.getUTCHours() + 8) % 24) * 60 + now.getUTCMinutes();
-  const isBreakfastTime = twMin < 630;          // < 10:30
-  const isNightTime     = twMin >= 1200 && twMin <= 1290; // 20:00~21:30
-  if (isBreakfastTime) document.getElementById('bf-slot-morning').classList.add('on');
-  if (isNightTime)     document.getElementById('bf-slot-night').classList.add('on');
-
-  try {
-    const uid = profile ? profile.userId : '';
-    if (!uid) throw new Error('無法取得 LINE UID');
-
-    const res  = await fetch(GAS_URL + '?action=member_checkin&lineuid=' + encodeURIComponent(uid));
-    const data = await res.json();
-
-    document.getElementById('bf-loading').style.display = 'none';
-    document.getElementById('bf-content').style.display = 'flex';
-
-    if (data.status !== 'OK') {
-      bfSetStatus('no-eligibility', '❌', '無法查詢資格', data.message || '請告知店員');
-      return;
-    }
-
-    const bStatus = data.breakfastStatus; // 'none' | 'eligible' | 'expired'
-
-    if (bStatus === 'eligible') {
-      bfSetStatus('eligible', '🎁', '恭喜！您有一份餐點資格',
-        '請選擇早餐或宵夜，按確認後出示給店員。',
-        data.breakfastDate ? '資格產生日：' + data.breakfastDate + '（7天內有效）' : '');
-      document.getElementById('bf-btn-grp').style.display = 'flex';
-      document.getElementById('bf-btn-morning').disabled = !isBreakfastTime;
-      document.getElementById('bf-btn-night').disabled   = !isNightTime;
-      if (!isBreakfastTime && !isNightTime) {
-        document.getElementById('bf-sub').textContent =
-          '⏰ 目前不在領取時段，請於早餐（10:30前）或宵夜（20:00～21:30）回來。';
-      }
-    } else if (bStatus === 'expired') {
-      bfSetStatus('expired', '⌛', '資格已過期',
-        '上次消費的餐點資格已超過 7 天，下次消費後即可重新獲得。');
-    } else {
-      bfSetStatus('no-eligibility', '🍽️', '目前沒有資格',
-        '每次消費套餐後即可獲得一份早餐或宵夜資格（7天內有效）。');
-    }
-  } catch (err) {
-    document.getElementById('bf-loading').style.display = 'none';
-    document.getElementById('bf-content').style.display = 'flex';
-    bfSetStatus('expired', '⚠️', '載入失敗', err.message || '請關閉後重試');
-  }
-}
-
-function bfSetStatus(type, icon, title, sub, expireNote) {
-  const card = document.getElementById('bf-status-card');
-  card.className = 'bf-status-card ' + type;
-  document.getElementById('bf-icon').textContent  = icon;
-  document.getElementById('bf-title').textContent = title;
-  document.getElementById('bf-sub').textContent   = sub || '';
-  const expEl = document.getElementById('bf-expire');
-  if (expireNote) { expEl.style.display = 'block'; expEl.textContent = expireNote; }
-  else            { expEl.style.display = 'none'; }
-}
-
-async function claimBreakfast(mealType) {
-  document.getElementById('bf-btn-morning').disabled = true;
-  document.getElementById('bf-btn-night').disabled   = true;
-
-  const uid = profile ? profile.userId : '';
-  const url = GAS_URL + '?action=claim_breakfast&lineuid=' + encodeURIComponent(uid) + '&mealType=' + mealType;
-
-  const resultBox = document.getElementById('bf-result-box');
-  const iconEl    = document.getElementById('bf-result-icon');
-  const msgEl     = document.getElementById('bf-result-msg');
-  const subEl     = document.getElementById('bf-result-sub');
-
-  try {
-    const res  = await fetch(url);
-    const data = await res.json();
-
-    resultBox.style.display = 'block';
-
-    if (data.status === 'OK') {
-      resultBox.className = 'bf-result-box ok';
-      iconEl.textContent  = '✅';
-      msgEl.textContent   = data.message;
-      subEl.textContent   = '請將此畫面出示給店員確認。';
-      document.getElementById('bf-btn-grp').style.display = 'none';
-      bfSetStatus('no-eligibility', '✅', '核銷完成！', '感謝您的光顧，祝您用餐愉快！');
-    } else if (data.status === 'WRONG_TIME') {
-      resultBox.className = 'bf-result-box err';
-      iconEl.textContent  = '⏰';
-      msgEl.textContent   = '現在不在領取時段';
-      subEl.textContent   = data.message;
-      document.getElementById('bf-btn-morning').disabled = !document.getElementById('bf-slot-morning').classList.contains('on');
-      document.getElementById('bf-btn-night').disabled   = !document.getElementById('bf-slot-night').classList.contains('on');
-    } else if (data.status === 'EXPIRED') {
-      resultBox.className = 'bf-result-box err';
-      iconEl.textContent  = '⌛';
-      msgEl.textContent   = '資格已過期';
-      subEl.textContent   = data.message;
-      document.getElementById('bf-btn-grp').style.display = 'none';
-    } else {
-      resultBox.className = 'bf-result-box err';
-      iconEl.textContent  = '❌';
-      msgEl.textContent   = '核銷失敗';
-      subEl.textContent   = data.message || '請告知店員';
-    }
-  } catch (err) {
-    resultBox.style.display = 'block';
-    resultBox.className     = 'bf-result-box err';
-    iconEl.textContent      = '⚠️';
-    msgEl.textContent       = '連線失敗，請重試';
-    subEl.textContent       = err.message || '';
   }
 }
 
