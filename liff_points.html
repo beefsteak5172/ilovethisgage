@@ -1080,9 +1080,7 @@ function makeOpt({ id, key, cls, icon, title, sub, dis }) {
   div.className = "opt" + (cls ? " " + cls : "") + (dis ? " dis" : "");
   div.id = id;
   if (!dis) div.onclick = () => selectPromo(key);
-  // 移除 title 開頭 emoji+空白
   let cleanTitle = title.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s*/u, '');
-  // 若 title 含括號補充說明，截出來放到 sub 最前面
   let extraSub = '';
   const bracketMatch = cleanTitle.match(/^([^（(]+)([（(].+)$/u);
   if (bracketMatch) {
@@ -1092,8 +1090,7 @@ function makeOpt({ id, key, cls, icon, title, sub, dis }) {
   const fullSub = extraSub ? (extraSub + (sub ? '<br>' + sub : '')) : (sub || '');
   div.innerHTML =
     '<div class="opt-icon">' + icon + '</div>' +
-    '<div style="flex:1;min-width:0;"><div class="opt-title">' + cleanTitle + '</div><div class="opt-sub">' + fullSub.replace(/\n/g,'<br>') + '</div></div>' +
-    '<div class="opt-check" id="chk-' + key + '">✅</div>';
+    '<div style="flex:1;min-width:0;"><div class="opt-title">' + cleanTitle + '</div><div class="opt-sub">' + fullSub.replace(/\n/g,'<br>') + '</div></div>';
   return div;
 }
 
@@ -1110,11 +1107,10 @@ function selectPromo(key) {
 
   document.querySelectorAll(".opt").forEach(e => {
     const k = e.id.replace("opt-", "");
-    const ch = document.getElementById("chk-" + k);
     if (k === promoSelected) {
-      e.classList.add("sel"); if (ch) ch.style.display = "block";
+      e.classList.add("sel");
     } else {
-      e.classList.remove("sel"); if (ch) ch.style.display = "none";
+      e.classList.remove("sel");
     }
   });
 
