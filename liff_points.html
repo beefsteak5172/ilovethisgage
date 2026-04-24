@@ -404,7 +404,7 @@ body {
     </div>
     <div style="padding:16px 16px 0;">
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利</div>
+        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利 (限本人內用)</div>
         <div style="font-size:13px;color:#3949ab;line-height:1.9;">
           💰 <strong>月費 $300 / 30天</strong><br>
           🎉 <strong>雙數次套餐半價</strong>（第2、4、6…次）<br>
@@ -524,7 +524,7 @@ body {
     </div>
     <div style="padding:16px 16px 0;">
       <div style="background:#e8eaf6;border:2px solid #9fa8da;border-radius:16px;padding:16px;margin-bottom:14px;">
-        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利</div>
+        <div style="font-size:14px;font-weight:800;color:#1a237e;margin-bottom:12px;">✨ 會員專屬福利 (限本人內用)</div>
         <div style="font-size:13px;color:#3949ab;line-height:1.9;">
           💰 <strong>月費 $300 / 30天</strong><br>
           🎉 <strong>雙數次套餐半價</strong>（第2、4、6…次）<br>
@@ -1123,6 +1123,8 @@ async function confirmPromo() {
 
   let promoKey = promoSelected;
 
+  const _halfActive = (ms.halfCoupon && ms.halfCoupon.status) === 'active';
+
   if (promoSelected === 'indoor') {
     const indoorStatus = (ms.indoorCoupon && ms.indoorCoupon.status) || 'unused';
     promoKey = (indoorStatus === 'issued') ? 'indoor_redeem' : 'indoor_issue';
@@ -1132,7 +1134,6 @@ async function confirmPromo() {
     promoKey = 'redeem';
   } else if (promoSelected === 'member_visit') {
     // ★ v9.7：雙數次半價，送 member_visit_half + prevHalfAmt 作為 tierDisc
-    const _halfActive = (ms.halfCoupon && ms.halfCoupon.status) === 'active';
     if (_halfActive) {
       promoKey = 'member_visit_half';
       // prevHalfAmt = GAS 回傳的前次最低套餐半價金額
@@ -1140,6 +1141,12 @@ async function confirmPromo() {
       await submitPromoChoice(promoKey, redeemTierPoints, _prevHalfAmt);
       return;
     }
+  }
+
+  // ★ 會員互斥折扣提示：若本次有會員半價，但選了其他折扣 (redeem/indoor/half_redeem/carryout)
+  if (_halfActive && ['redeem','indoor','half_redeem','carryout'].includes(promoSelected)) {
+    const ok = confirm("⚠️ 優惠互斥提醒\n\n您本次消費已享有「會員雙數次半價」，依規則不可與其他折扣併用。\n\n若您堅持使用此折扣，本次將「取消」會員半價優惠，且不計入會員消費次數。\n\n確定要更換嗎？");
+    if (!ok) return;
   }
 
   await submitPromoChoice(promoKey, redeemTierPoints, redeemTierDisc);
